@@ -11,12 +11,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap" rel="stylesheet">
 
 <style>
-*{
-    margin:0;
-    padding:0;
-    box-sizing:border-box;
-    font-family:'Inter';
-}
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Inter';}
 
 body{
     background:
@@ -58,9 +53,8 @@ header h1{
     max-width:650px;
     padding:16px;
     border-radius:14px;
-    border:1px solid rgba(255,0,0,.2);
+    border:1px solid rgba(255,0,0,.25);
     background:white;
-    outline:none;
     transition:.3s;
 }
 
@@ -103,7 +97,6 @@ header h1{
     transform:translateX(-100%);
 }
 
-/* glow border */
 .team::after{
     content:'';
     position:absolute;
@@ -113,7 +106,6 @@ header h1{
     opacity:0;
 }
 
-/* hover */
 .team:hover::before{
     transform:translateX(100%);
     transition:.7s;
@@ -149,10 +141,6 @@ header h1{
     background:white;
     padding:6px;
     border-radius:10px;
-}
-
-.team h3{
-    font-weight:800;
 }
 
 /* CAP BAR */
@@ -236,10 +224,11 @@ const teamList = [
 
 /* LOGOS */
 const logos = {
-"Brooklyn Nets":"https://loodibee.com/wp-content/uploads/nba-brooklyn-nets-logo.png",
+"Atlanta Hawks":"https://loodibee.com/wp-content/uploads/nba-atlanta-hawks-logo.png",
 "Boston Celtics":"https://loodibee.com/wp-content/uploads/nba-boston-celtics-logo.png",
-"Chicago Bulls":"https://loodibee.com/wp-content/uploads/nba-chicago-bulls-logo.png",
+"Brooklyn Nets":"https://loodibee.com/wp-content/uploads/nba-brooklyn-nets-logo.png",
 "Charlotte Hornets":"https://loodibee.com/wp-content/uploads/nba-charlotte-hornets-logo.png",
+"Chicago Bulls":"https://loodibee.com/wp-content/uploads/nba-chicago-bulls-logo.png",
 "Dallas Mavericks":"https://loodibee.com/wp-content/uploads/nba-dallas-mavericks-logo.png",
 "Detroit Pistons":"https://loodibee.com/wp-content/uploads/nba-detroit-pistons-logo.png",
 "Indiana Pacers":"https://loodibee.com/wp-content/uploads/nba-indiana-pacers-logo.png",
@@ -259,9 +248,178 @@ const logos = {
 "Free Agent":"https://upload.wikimedia.org/wikipedia/commons/8/89/HD_transparent_picture.png"
 };
 
-/* PLAYERS (already yours) */
-let players = []; // keep your existing list
+let players = [
 
+/* NETS */
+{name:"zxtting1",team:"Brooklyn Nets",salary:2000000},
+{name:"reverxsee",team:"Brooklyn Nets",salary:2000000},
+
+/* CELTICS */
+{name:"mmeeeooowwww",team:"Boston Celtics",salary:2000000},
+{name:".ioqqrs",team:"Boston Celtics",salary:2000000},
+{name:"kasotheboss100",team:"Boston Celtics",salary:2000000},
+{name:"mxya0909",team:"Boston Celtics",salary:2000000},
+{name:"k_ai6",team:"Boston Celtics",salary:2000000},
+
+/* BULLS */
+{name:"zadw",team:"Chicago Bulls",salary:2000000},
+{name:"n0designer",team:"Chicago Bulls",salary:2000000},
+{name:"pelonooo",team:"Chicago Bulls",salary:2000000},
+{name:"dayday.buck",team:"Chicago Bulls",salary:2000000},
+
+/* HORNETS */
+{name:"ucalr.",team:"Charlotte Hornets",salary:2000000},
+{name:"forvercam",team:"Charlotte Hornets",salary:2000000},
+{name:"shawnster5",team:"Charlotte Hornets",salary:2000000},
+{name:"drakee4425",team:"Charlotte Hornets",salary:2000000},
+{name:"benlovesjesuschrist",team:"Charlotte Hornets",salary:2000000},
+
+/* MAVS */
+{name:"aetherxxv",team:"Dallas Mavericks",salary:2000000},
+{name:"mawkished",team:"Dallas Mavericks",salary:2000000},
+{name:"myprideishurt",team:"Dallas Mavericks",salary:2000000},
+{name:"zi._.on40",team:"Dallas Mavericks",salary:2000000},
+{name:"omvry",team:"Dallas Mavericks",salary:2000000},
+{name:"eazyy._",team:"Dallas Mavericks",salary:2000000},
+{name:"cjoi.10",team:"Dallas Mavericks",salary:2000000},
+
+/* PISTONS */
+{name:"qt_combat",team:"Detroit Pistons",salary:2000000},
+{name:"getithowyliveit",team:"Detroit Pistons",salary:2000000},
+{name:"7_7.techa_jr",team:"Detroit Pistons",salary:2000000},
+{name:"mysafeplacee",team:"Detroit Pistons",salary:2000000},
+{name:"treywillmossyou_13",team:"Detroit Pistons",salary:2000000},
+
+/* PACERS */
+{name:"seriouslymood",team:"Indiana Pacers",salary:2000000},
+
+/* CLIPPERS */
+{name:"1amn.",team:"LA Clippers",salary:2000000},
+{name:".disrupted",team:"LA Clippers",salary:2000000},
+{name:"7seazzons._",team:"LA Clippers",salary:2000000},
+{name:"gwobal",team:"LA Clippers",salary:2000000},
+{name:".45specialist",team:"LA Clippers",salary:2000000},
+{name:"lockbaii",team:"LA Clippers",salary:2000000},
+{name:"._.ace._.",team:"LA Clippers",salary:2000000},
+{name:"durklo",team:"LA Clippers",salary:2000000},
+
+/* LAKERS */
+{name:"underr4te1",team:"Los Angeles Lakers",salary:2000000},
+{name:"kzkuhenske",team:"Los Angeles Lakers",salary:2000000},
+{name:"ch_ef",team:"Los Angeles Lakers",salary:2000000},
+{name:"berrywt",team:"Los Angeles Lakers",salary:2000000},
+{name:"aimcancel.",team:"Los Angeles Lakers",salary:2000000},
+{name:"utakala",team:"Los Angeles Lakers",salary:2000000},
+{name:"neaz6",team:"Los Angeles Lakers",salary:2000000},
+{name:"slapclosed.",team:"Los Angeles Lakers",salary:2000000},
+{name:"whysinsdagoatmatcha",team:"Los Angeles Lakers",salary:2000000},
+
+/* BUCKS */
+{name:"dwixgh",team:"Milwaukee Bucks",salary:2000000},
+
+/* GRIZZLIES */
+{name:"foreverkam",team:"Memphis Grizzlies",salary:2000000},
+
+/* WOLVES */
+{name:"logss._",team:"Minnesota Timberwolves",salary:2000000},
+{name:"aysemmetrically",team:"Minnesota Timberwolves",salary:2000000},
+{name:"saveguap",team:"Minnesota Timberwolves",salary:2000000},
+{name:"scofieldiso",team:"Minnesota Timberwolves",salary:2000000},
+{name:"zercified",team:"Minnesota Timberwolves",salary:2000000},
+{name:"jsxn",team:"Minnesota Timberwolves",salary:2000000},
+{name:"sirpartum",team:"Minnesota Timberwolves",salary:2000000},
+
+/* PELICANS */
+{name:"1.602",team:"New Orleans Pelicans",salary:2000000},
+{name:"lfwq",team:"New Orleans Pelicans",salary:2000000},
+{name:"thethoughtsraceverynight",team:"New Orleans Pelicans",salary:2000000},
+{name:"bagworkcam",team:"New Orleans Pelicans",salary:2000000},
+
+/* KNICKS */
+{name:"chicagomadee",team:"New York Knicks",salary:2000000},
+{name:"049860._",team:"New York Knicks",salary:2000000},
+{name:"mikezzzway",team:"New York Knicks",salary:2000000},
+
+/* MAGIC */
+{name:"mrcantgobacc",team:"Orlando Magic",salary:2000000},
+{name:"margel_a",team:"Orlando Magic",salary:2000000},
+{name:"mathe04br",team:"Orlando Magic",salary:2000000},
+{name:"mal_4u.",team:"Orlando Magic",salary:2000000},
+
+/* 76ERS */
+{name:"stephencurryfan30",team:"Philadelphia 76ers",salary:2000000},
+{name:"chris.206",team:"Philadelphia 76ers",salary:2000000},
+{name:"cyim",team:"Philadelphia 76ers",salary:2000000},
+{name:"errolistic",team:"Philadelphia 76ers",salary:2000000},
+{name:"taxevasionsupporter",team:"Philadelphia 76ers",salary:2000000},
+{name:"cantholdcarson",team:"Philadelphia 76ers",salary:2000000},
+{name:"dukecapalot",team:"Philadelphia 76ers",salary:2000000},
+{name:"jaxx9999",team:"Philadelphia 76ers",salary:2000000},
+
+/* BLAZERS */
+{name:"boshrpl",team:"Portland Trail Blazers",salary:2000000},
+
+/* SPURS */
+{name:"dohziez",team:"San Antonio Spurs",salary:2000000},
+{name:"melo_chatt",team:"San Antonio Spurs",salary:2000000},
+{name:"v33223fs",team:"San Antonio Spurs",salary:2000000},
+{name:"jogkarma",team:"San Antonio Spurs",salary:2000000},
+{name:"consortofmiquella2",team:"San Antonio Spurs",salary:2000000},
+{name:"1v_k",team:"San Antonio Spurs",salary:2000000},
+{name:"conzlx",team:"San Antonio Spurs",salary:2000000},
+{name:"lifestylebrazy",team:"San Antonio Spurs",salary:2000000},
+
+/* RAPTORS */
+{name:"chrisj0096_95792",team:"Toronto Raptors",salary:2000000},
+{name:"ghostyprodz",team:"Toronto Raptors",salary:2000000},
+{name:"4bigguys957.",team:"Toronto Raptors",salary:2000000},
+{name:"youreckoned",team:"Toronto Raptors",salary:2000000},
+
+/* JAZZ */
+{name:"aaronpavonis",team:"Utah Jazz",salary:2000000},
+{name:"alexthegod2k",team:"Utah Jazz",salary:2000000},
+{name:"lazerboy12334",team:"Utah Jazz",salary:2000000},
+{name:"nateyurr",team:"Utah Jazz",salary:2000000},
+
+{name:"yurr0757",team:"Free Agent",salary:2000000},
+{name:"devvyls",team:"Free Agent",salary:2000000},
+{name:"scofieldiso",team:"Free Agent",salary:2000000},
+{name:"seriouslymood",team:"Free Agent",salary:2000000},
+{name:"melo_chatt",team:"Free Agent",salary:2000000},
+{name:"LOCOIIIIIIIIIIIII3",team:"Free Agent",salary:2000000},
+{name:"aydenworld40",team:"Free Agent",salary:2000000},
+{name:"Masonisthatguy12",team:"Free Agent",salary:2000000},
+{name:"JaxTatum0",team:"Free Agent",salary:2000000},
+{name:"202Franklin",team:"Free Agent",salary:2000000},
+{name:"10K_Trxyy",team:"Free Agent",salary:2000000},
+{name:"GodBaconSama",team:"Free Agent",salary:2000000},
+{name:"mrgchives",team:"Free Agent",salary:2000000},
+{name:"B_ones",team:"Free Agent",salary:2000000},
+{name:"fyuwu",team:"Free Agent",salary:2000000},
+{name:"ttehdyhidgdyf",team:"Free Agent",salary:2000000},
+{name:"SimplyMikey",team:"Free Agent",salary:2000000},
+{name:"tysoncatsbruh",team:"Free Agent",salary:2000000},
+{name:"MarkelleFultz",team:"Free Agent",salary:2000000},
+{name:"underr4te",team:"Free Agent",salary:2000000},
+{name:"mysafeplacee",team:"Free Agent",salary:2000000},
+{name:"exlehsksee",team:"Free Agent",salary:2000000},
+{name:"boshrpl",team:"Free Agent",salary:2000000},
+{name:"4bigguys957",team:"Free Agent",salary:2000000},
+{name:"Tylerpokeifan20",team:"Free Agent",salary:2000000},
+{name:"KageWrld",team:"Free Agent",salary:2000000},
+{name:"p_avle",team:"Free Agent",salary:2000000},
+{name:"imheemothy",team:"Free Agent",salary:2000000},
+
+/* from other tiers */
+{name:"minis",team:"Free Agent",salary:2000000},
+{name:"KvngDraco_omq",team:"Free Agent",salary:2000000},
+{name:"MaybeLaMelo",team:"Free Agent",salary:2000000},
+{name:"AupKf",team:"Free Agent",salary:2000000},
+{name:"carsonthomase",team:"Free Agent",salary:2000000}
+
+];
+
+/* GROUP */
 function groupTeams(){
     const teams = {};
     teamList.forEach(t=>teams[t]=[]);
@@ -339,6 +497,7 @@ function render(){
     });
 }
 
+/* SEARCH */
 document.getElementById("search").addEventListener("input",(e)=>{
     const val = e.target.value.toLowerCase();
 
