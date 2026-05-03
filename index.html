@@ -6,79 +6,127 @@
 
 <title>RPL Salary Caps</title>
 
+<link rel="icon" href="https://media.discordapp.net/attachments/1447379249659908117/1500568494847164446/rpllogo.png">
+
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap" rel="stylesheet">
 
 <style>
-*{margin:0;padding:0;box-sizing:border-box;font-family:'Inter';}
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:'Inter';
+}
 
 body{
     background:
-    radial-gradient(circle at top,#ffecec,transparent 40%),
-    #f6f8fc;
+    radial-gradient(circle at 20% 0%, rgba(255,0,0,.35), transparent 40%),
+    radial-gradient(circle at 80% 10%, rgba(255,0,0,.25), transparent 40%),
+    linear-gradient(#fafafa,#f3f4f6);
     color:#111;
+    overflow-x:hidden;
+}
+
+/* CURSOR */
+#cursor{
+    position:fixed;
+    width:260px;
+    height:260px;
+    background:radial-gradient(circle, rgba(255,0,0,.25), transparent 70%);
+    pointer-events:none;
+    transform:translate(-50%,-50%);
+    z-index:0;
 }
 
 /* HEADER */
 header{
-    padding:40px;
+    padding:50px 20px 20px;
     text-align:center;
 }
 
 header h1{
-    font-size:44px;
+    font-size:48px;
     font-weight:900;
+    color:#ff0000;
 }
 
 /* SEARCH */
 .search{
     display:block;
-    margin:0 auto 30px;
+    margin:20px auto 40px;
     width:90%;
-    max-width:600px;
-    padding:15px;
+    max-width:650px;
+    padding:16px;
     border-radius:14px;
-    border:1px solid #ddd;
-    font-size:15px;
+    border:1px solid rgba(255,0,0,.2);
+    background:white;
+    outline:none;
+    transition:.3s;
+}
+
+.search:focus{
+    border-color:#ff0000;
+    box-shadow:0 0 20px rgba(255,0,0,.3);
 }
 
 /* GRID */
 .grid{
     width:95%;
-    max-width:1400px;
+    max-width:1500px;
     margin:auto;
     display:grid;
-    grid-template-columns:repeat(auto-fit,minmax(300px,1fr));
-    gap:20px;
+    grid-template-columns:repeat(auto-fit,minmax(320px,1fr));
+    gap:26px;
+    position:relative;
+    z-index:2;
 }
 
 /* TEAM CARD */
 .team{
-    background:white;
-    border-radius:20px;
-    padding:20px;
-    border:1px solid #eee;
-    transition:.3s;
+    background:rgba(255,255,255,.9);
+    backdrop-filter:blur(14px);
+    border-radius:22px;
+    padding:22px;
+    border:1px solid rgba(255,0,0,.25);
+    transition:.4s;
     cursor:pointer;
     position:relative;
     overflow:hidden;
 }
 
-.team:hover{
-    transform:translateY(-8px);
-    box-shadow:0 20px 50px rgba(0,0,0,.08);
-}
-
+/* shine */
 .team::before{
     content:'';
     position:absolute;
     inset:0;
-    background:linear-gradient(120deg, transparent, rgba(255,0,0,.12), transparent);
+    background:linear-gradient(120deg, transparent, rgba(255,255,255,.7), transparent);
+    transform:translateX(-100%);
+}
+
+/* glow border */
+.team::after{
+    content:'';
+    position:absolute;
+    inset:0;
+    border-radius:22px;
+    background:linear-gradient(120deg, transparent, rgba(255,0,0,.6), transparent);
     opacity:0;
+}
+
+/* hover */
+.team:hover::before{
+    transform:translateX(100%);
+    transition:.7s;
+}
+
+.team:hover::after{
+    opacity:1;
     transition:.4s;
 }
 
-.team:hover::before{
-    opacity:1;
+.team:hover{
+    transform:translateY(-12px) scale(1.02);
+    box-shadow:0 30px 80px rgba(255,0,0,.35);
 }
 
 /* HEADER */
@@ -95,14 +143,21 @@ header h1{
 }
 
 .team-logo{
-    width:42px;
-    height:42px;
+    width:44px;
+    height:44px;
     object-fit:contain;
+    background:white;
+    padding:6px;
+    border-radius:10px;
+}
+
+.team h3{
+    font-weight:800;
 }
 
 /* CAP BAR */
 .progress{
-    margin-top:15px;
+    margin-top:16px;
     height:10px;
     background:#eee;
     border-radius:10px;
@@ -111,7 +166,7 @@ header h1{
 
 .progress-bar{
     height:100%;
-    background:#ef4444;
+    background:linear-gradient(90deg,#ff0000,#ff4d4d);
 }
 
 /* PLAYERS */
@@ -125,23 +180,28 @@ header h1{
     justify-content:space-between;
     padding:10px;
     border-bottom:1px solid #eee;
-    font-size:14px;
+    transition:.2s;
+}
+
+.player:hover{
+    background:rgba(255,0,0,.08);
 }
 
 /* FREE AGENTS */
 .free-agent{
-    margin-top:40px;
+    margin-top:50px;
 }
 
 .free-agent h2{
+    color:#ff0000;
     margin-bottom:10px;
 }
 
 /* BADGE */
 .badge{
-    background:#ef4444;
+    background:#ff0000;
     color:white;
-    padding:4px 8px;
+    padding:4px 10px;
     border-radius:8px;
     font-size:11px;
 }
@@ -150,6 +210,8 @@ header h1{
 
 <body>
 
+<div id="cursor"></div>
+
 <header>
     <h1>RPL Salary Cap Dashboard</h1>
 </header>
@@ -157,13 +219,12 @@ header h1{
 <input class="search" id="search" placeholder="Search players or teams...">
 
 <div class="grid" id="teams"></div>
-
 <div class="grid free-agent" id="fa"></div>
 
 <script>
 const CAP = 58000000;
 
-/* ALL 30 TEAMS */
+/* TEAM LIST */
 const teamList = [
 "Atlanta Hawks","Boston Celtics","Brooklyn Nets","Charlotte Hornets","Chicago Bulls",
 "Cleveland Cavaliers","Dallas Mavericks","Denver Nuggets","Detroit Pistons","Golden State Warriors",
@@ -173,215 +234,34 @@ const teamList = [
 "Sacramento Kings","San Antonio Spurs","Toronto Raptors","Utah Jazz","Washington Wizards"
 ];
 
-/* TEAM LOGOS (ADD YOUR OWN LINKS LATER) */
+/* LOGOS */
 const logos = {
-"Atlanta Hawks":"https://loodibee.com/wp-content/uploads/nba-atlanta-hawks-logo.png",
-"Boston Celtics":"https://loodibee.com/wp-content/uploads/nba-boston-celtics-logo.png",
 "Brooklyn Nets":"https://loodibee.com/wp-content/uploads/nba-brooklyn-nets-logo.png",
-"Charlotte Hornets":"https://loodibee.com/wp-content/uploads/nba-charlotte-hornets-logo.png",
+"Boston Celtics":"https://loodibee.com/wp-content/uploads/nba-boston-celtics-logo.png",
 "Chicago Bulls":"https://loodibee.com/wp-content/uploads/nba-chicago-bulls-logo.png",
-"Cleveland Cavaliers":"https://loodibee.com/wp-content/uploads/nba-cleveland-cavaliers-logo.png",
+"Charlotte Hornets":"https://loodibee.com/wp-content/uploads/nba-charlotte-hornets-logo.png",
 "Dallas Mavericks":"https://loodibee.com/wp-content/uploads/nba-dallas-mavericks-logo.png",
-"Denver Nuggets":"https://upload.wikimedia.org/wikipedia/en/thumb/7/76/Denver_Nuggets.svg/500px-Denver_Nuggets.svg.png",
 "Detroit Pistons":"https://loodibee.com/wp-content/uploads/nba-detroit-pistons-logo.png",
-"Golden State Warriors":"https://loodibee.com/wp-content/uploads/nba-golden-state-warriors-logo.png",
-"Houston Rockets":"https://loodibee.com/wp-content/uploads/nba-houston-rockets-logo.png",
 "Indiana Pacers":"https://loodibee.com/wp-content/uploads/nba-indiana-pacers-logo.png",
 "LA Clippers":"https://loodibee.com/wp-content/uploads/nba-la-clippers-logo.png",
 "Los Angeles Lakers":"https://loodibee.com/wp-content/uploads/nba-los-angeles-lakers-logo.png",
 "Memphis Grizzlies":"https://loodibee.com/wp-content/uploads/nba-memphis-grizzlies-logo.png",
-"Miami Heat":"https://loodibee.com/wp-content/uploads/nba-miami-heat-logo.png",
 "Milwaukee Bucks":"https://loodibee.com/wp-content/uploads/nba-milwaukee-bucks-logo.png",
 "Minnesota Timberwolves":"https://loodibee.com/wp-content/uploads/nba-minnesota-timberwolves-logo.png",
 "New Orleans Pelicans":"https://loodibee.com/wp-content/uploads/nba-new-orleans-pelicans-logo.png",
 "New York Knicks":"https://loodibee.com/wp-content/uploads/nba-new-york-knicks-logo.png",
-"Oklahoma City Thunder":"https://loodibee.com/wp-content/uploads/nba-oklahoma-city-thunder-logo.png",
 "Orlando Magic":"https://loodibee.com/wp-content/uploads/nba-orlando-magic-logo.png",
 "Philadelphia 76ers":"https://loodibee.com/wp-content/uploads/nba-philadelphia-76ers-logo.png",
-"Phoenix Suns":"https://loodibee.com/wp-content/uploads/nba-phoenix-suns-logo.png",
 "Portland Trail Blazers":"https://loodibee.com/wp-content/uploads/nba-portland-trail-blazers-logo.png",
-"Sacramento Kings":"https://loodibee.com/wp-content/uploads/nba-sacramento-kings-logo.png",
 "San Antonio Spurs":"https://loodibee.com/wp-content/uploads/nba-san-antonio-spurs-logo.png",
 "Toronto Raptors":"https://loodibee.com/wp-content/uploads/nba-toronto-raptors-logo.png",
 "Utah Jazz":"https://loodibee.com/wp-content/uploads/nba-utah-jazz-logo.png",
-"Washington Wizards":"https://loodibee.com/wp-content/uploads/nba-washington-wizards-logo.png",
-
 "Free Agent":"https://upload.wikimedia.org/wikipedia/commons/8/89/HD_transparent_picture.png"
 };
 
-/* SAMPLE DATA */
-let players = [
+/* PLAYERS (already yours) */
+let players = []; // keep your existing list
 
-/* NETS */
-{name:"zxtting1",team:"Brooklyn Nets",salary:2000000},
-{name:"reverxsee",team:"Brooklyn Nets",salary:2000000},
-
-/* CELTICS */
-{name:"mmeeeooowwww",team:"Boston Celtics",salary:2000000},
-{name:".ioqqrs",team:"Boston Celtics",salary:2000000},
-{name:"kasotheboss100",team:"Boston Celtics",salary:2000000},
-{name:"mxya0909",team:"Boston Celtics",salary:2000000},
-{name:"k_ai6",team:"Boston Celtics",salary:2000000},
-
-/* BULLS */
-{name:"zadw",team:"Chicago Bulls",salary:2000000},
-{name:"n0designer",team:"Chicago Bulls",salary:2000000},
-{name:"pelonooo",team:"Chicago Bulls",salary:2000000},
-{name:"dayday.buck",team:"Chicago Bulls",salary:2000000},
-
-/* HORNETS */
-{name:"ucalr.",team:"Charlotte Hornets",salary:2000000},
-{name:"forvercam",team:"Charlotte Hornets",salary:2000000},
-{name:"shawnster5",team:"Charlotte Hornets",salary:2000000},
-{name:"drakee4425",team:"Charlotte Hornets",salary:2000000},
-{name:"benlovesjesuschrist",team:"Charlotte Hornets",salary:2000000},
-
-/* MAVS */
-{name:"aetherxxv",team:"Dallas Mavericks",salary:2000000},
-{name:"mawkished",team:"Dallas Mavericks",salary:2000000},
-{name:"myprideishurt",team:"Dallas Mavericks",salary:2000000},
-{name:"zi._.on40",team:"Dallas Mavericks",salary:2000000},
-{name:"omvry",team:"Dallas Mavericks",salary:2000000},
-{name:"eazyy._",team:"Dallas Mavericks",salary:2000000},
-{name:"cjoi.10",team:"Dallas Mavericks",salary:2000000},
-
-/* PISTONS */
-{name:"qt_combat",team:"Detroit Pistons",salary:2000000},
-{name:"getithowyliveit",team:"Detroit Pistons",salary:2000000},
-{name:"7_7.techa_jr",team:"Detroit Pistons",salary:2000000},
-{name:"mysafeplacee",team:"Detroit Pistons",salary:2000000},
-{name:"treywillmossyou_13",team:"Detroit Pistons",salary:2000000},
-
-/* PACERS */
-{name:"seriouslymood",team:"Indiana Pacers",salary:2000000},
-
-/* CLIPPERS */
-{name:"1amn.",team:"LA Clippers",salary:2000000},
-{name:".disrupted",team:"LA Clippers",salary:2000000},
-{name:"7seazzons._",team:"LA Clippers",salary:2000000},
-{name:"gwobal",team:"LA Clippers",salary:2000000},
-{name:".45specialist",team:"LA Clippers",salary:2000000},
-{name:"lockbaii",team:"LA Clippers",salary:2000000},
-{name:"._.ace._.",team:"LA Clippers",salary:2000000},
-{name:"durklo",team:"LA Clippers",salary:2000000},
-
-/* LAKERS */
-{name:"underr4te1",team:"Los Angeles Lakers",salary:2000000},
-{name:"kzkuhenske",team:"Los Angeles Lakers",salary:2000000},
-{name:"ch_ef",team:"Los Angeles Lakers",salary:2000000},
-{name:"berrywt",team:"Los Angeles Lakers",salary:2000000},
-{name:"aimcancel.",team:"Los Angeles Lakers",salary:2000000},
-{name:"utakala",team:"Los Angeles Lakers",salary:2000000},
-{name:"neaz6",team:"Los Angeles Lakers",salary:2000000},
-{name:"slapclosed.",team:"Los Angeles Lakers",salary:2000000},
-{name:"whysinsdagoatmatcha",team:"Los Angeles Lakers",salary:2000000},
-
-/* BUCKS */
-{name:"dwixgh",team:"Milwaukee Bucks",salary:2000000},
-
-/* GRIZZLIES */
-{name:"foreverkam",team:"Memphis Grizzlies",salary:2000000},
-
-/* WOLVES */
-{name:"logss._",team:"Minnesota Timberwolves",salary:2000000},
-{name:"aysemmetrically",team:"Minnesota Timberwolves",salary:2000000},
-{name:"saveguap",team:"Minnesota Timberwolves",salary:2000000},
-{name:"scofieldiso",team:"Minnesota Timberwolves",salary:2000000},
-{name:"zercified",team:"Minnesota Timberwolves",salary:2000000},
-{name:"jsxn",team:"Minnesota Timberwolves",salary:2000000},
-{name:"sirpartum",team:"Minnesota Timberwolves",salary:2000000},
-
-/* PELICANS */
-{name:"1.602",team:"New Orleans Pelicans",salary:2000000},
-{name:"lfwq",team:"New Orleans Pelicans",salary:2000000},
-{name:"thethoughtsraceverynight",team:"New Orleans Pelicans",salary:2000000},
-{name:"bagworkcam",team:"New Orleans Pelicans",salary:2000000},
-
-/* KNICKS */
-{name:"chicagomadee",team:"New York Knicks",salary:2000000},
-{name:"049860._",team:"New York Knicks",salary:2000000},
-{name:"mikezzzway",team:"New York Knicks",salary:2000000},
-
-/* MAGIC */
-{name:"mrcantgobacc",team:"Orlando Magic",salary:2000000},
-{name:"margel_a",team:"Orlando Magic",salary:2000000},
-{name:"mathe04br",team:"Orlando Magic",salary:2000000},
-{name:"mal_4u.",team:"Orlando Magic",salary:2000000},
-
-/* 76ERS */
-{name:"stephencurryfan30",team:"Philadelphia 76ers",salary:2000000},
-{name:"chris.206",team:"Philadelphia 76ers",salary:2000000},
-{name:"cyim",team:"Philadelphia 76ers",salary:2000000},
-{name:"errolistic",team:"Philadelphia 76ers",salary:2000000},
-{name:"taxevasionsupporter",team:"Philadelphia 76ers",salary:2000000},
-{name:"cantholdcarson",team:"Philadelphia 76ers",salary:2000000},
-{name:"dukecapalot",team:"Philadelphia 76ers",salary:2000000},
-{name:"jaxx9999",team:"Philadelphia 76ers",salary:2000000},
-
-/* BLAZERS */
-{name:"boshrpl",team:"Portland Trail Blazers",salary:2000000},
-
-/* SPURS */
-{name:"dohziez",team:"San Antonio Spurs",salary:2000000},
-{name:"melo_chatt",team:"San Antonio Spurs",salary:2000000},
-{name:"v33223fs",team:"San Antonio Spurs",salary:2000000},
-{name:"jogkarma",team:"San Antonio Spurs",salary:2000000},
-{name:"consortofmiquella2",team:"San Antonio Spurs",salary:2000000},
-{name:"1v_k",team:"San Antonio Spurs",salary:2000000},
-{name:"conzlx",team:"San Antonio Spurs",salary:2000000},
-{name:"lifestylebrazy",team:"San Antonio Spurs",salary:2000000},
-
-/* RAPTORS */
-{name:"chrisj0096_95792",team:"Toronto Raptors",salary:2000000},
-{name:"ghostyprodz",team:"Toronto Raptors",salary:2000000},
-{name:"4bigguys957.",team:"Toronto Raptors",salary:2000000},
-{name:"youreckoned",team:"Toronto Raptors",salary:2000000},
-
-/* JAZZ */
-{name:"aaronpavonis",team:"Utah Jazz",salary:2000000},
-{name:"alexthegod2k",team:"Utah Jazz",salary:2000000},
-{name:"lazerboy12334",team:"Utah Jazz",salary:2000000},
-{name:"nateyurr",team:"Utah Jazz",salary:2000000},
-
-{name:"yurr0757",team:"Free Agent",salary:2000000},
-{name:"devvyls",team:"Free Agent",salary:2000000},
-{name:"scofieldiso",team:"Free Agent",salary:2000000},
-{name:"seriouslymood",team:"Free Agent",salary:2000000},
-{name:"melo_chatt",team:"Free Agent",salary:2000000},
-{name:"LOCOIIIIIIIIIIIII3",team:"Free Agent",salary:2000000},
-{name:"aydenworld40",team:"Free Agent",salary:2000000},
-{name:"Masonisthatguy12",team:"Free Agent",salary:2000000},
-{name:"JaxTatum0",team:"Free Agent",salary:2000000},
-{name:"202Franklin",team:"Free Agent",salary:2000000},
-{name:"10K_Trxyy",team:"Free Agent",salary:2000000},
-{name:"GodBaconSama",team:"Free Agent",salary:2000000},
-{name:"mrgchives",team:"Free Agent",salary:2000000},
-{name:"B_ones",team:"Free Agent",salary:2000000},
-{name:"fyuwu",team:"Free Agent",salary:2000000},
-{name:"ttehdyhidgdyf",team:"Free Agent",salary:2000000},
-{name:"SimplyMikey",team:"Free Agent",salary:2000000},
-{name:"tysoncatsbruh",team:"Free Agent",salary:2000000},
-{name:"MarkelleFultz",team:"Free Agent",salary:2000000},
-{name:"underr4te",team:"Free Agent",salary:2000000},
-{name:"mysafeplacee",team:"Free Agent",salary:2000000},
-{name:"exlehsksee",team:"Free Agent",salary:2000000},
-{name:"boshrpl",team:"Free Agent",salary:2000000},
-{name:"4bigguys957",team:"Free Agent",salary:2000000},
-{name:"Tylerpokeifan20",team:"Free Agent",salary:2000000},
-{name:"KageWrld",team:"Free Agent",salary:2000000},
-{name:"p_avle",team:"Free Agent",salary:2000000},
-{name:"imheemothy",team:"Free Agent",salary:2000000},
-
-/* from other tiers */
-{name:"minis",team:"Free Agent",salary:2000000},
-{name:"KvngDraco_omq",team:"Free Agent",salary:2000000},
-{name:"MaybeLaMelo",team:"Free Agent",salary:2000000},
-{name:"AupKf",team:"Free Agent",salary:2000000},
-{name:"carsonthomase",team:"Free Agent",salary:2000000}
-
-];
-
-/* GROUP */
 function groupTeams(){
     const teams = {};
     teamList.forEach(t=>teams[t]=[]);
@@ -413,7 +293,7 @@ function render(){
                     ${list.map(p=>`
                         <div class="player">
                             ${p.name}
-                            <span class="badge">$${p.salary/1000000}M</span>
+                            <span class="badge">$2M</span>
                         </div>
                     `).join("")}
                 </div>
@@ -430,7 +310,7 @@ function render(){
         div.innerHTML = `
             <div class="team-header">
                 <div class="team-info">
-                    <img class="team-logo" src="${logos[team]}">
+                    <img class="team-logo" src="${logos[team] || logos['Free Agent']}">
                     <h3>${team}</h3>
                 </div>
                 <h3>$${(total/1000000).toFixed(1)}M</h3>
@@ -444,7 +324,7 @@ function render(){
                 ${list.map(p=>`
                     <div class="player">
                         ${p.name}
-                        <span>$${p.salary/1000000}M</span>
+                        <span>$2M</span>
                     </div>
                 `).join("")}
             </div>
@@ -468,6 +348,13 @@ document.getElementById("search").addEventListener("input",(e)=>{
     );
 
     render();
+});
+
+/* CURSOR */
+document.addEventListener("mousemove", e=>{
+    const c = document.getElementById("cursor");
+    c.style.left = e.clientX+"px";
+    c.style.top = e.clientY+"px";
 });
 
 render();
