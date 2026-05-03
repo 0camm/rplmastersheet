@@ -3,275 +3,221 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RPL Salary Database</title>
+
+<title>RPL Salary Caps</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
 
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
-
-*{
-    margin:0;
-    padding:0;
-    box-sizing:border-box;
-    font-family:'Inter',sans-serif;
-}
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Inter';}
 
 body{
-    background:
-    radial-gradient(circle at top,#0f172a,#020617);
-    color:white;
+    background:#f8fafc;
+    color:#111;
 }
 
+/* HEADER */
 header{
-    padding:40px;
+    padding:30px;
     text-align:center;
-    border-bottom:1px solid rgba(255,255,255,.08);
-    backdrop-filter:blur(10px);
 }
 
 header h1{
-    font-size:50px;
+    font-size:42px;
     font-weight:900;
-    letter-spacing:2px;
 }
 
-header p{
-    opacity:.7;
-    margin-top:10px;
-}
-
-.container{
-    width:90%;
-    max-width:1400px;
-    margin:auto;
-    padding:30px 0;
-}
-
-.search-box{
-    margin-bottom:30px;
-}
-
-.search-box input{
-    width:100%;
-    padding:18px;
-    border:none;
-    border-radius:16px;
-    background:#111827;
-    color:white;
-    font-size:16px;
-}
-
-.salary-section{
-    margin-bottom:35px;
-}
-
-.section-title{
-    font-size:28px;
-    font-weight:800;
-    margin-bottom:20px;
-    padding:15px;
-    border-left:5px solid #3b82f6;
-    background:rgba(255,255,255,.03);
-    border-radius:12px;
-}
-
-.players-grid{
-    display:grid;
-    grid-template-columns:repeat(auto-fill,minmax(280px,1fr));
-    gap:20px;
-}
-
-.player-card{
-    background:linear-gradient(180deg,#111827,#1e293b);
-    border:1px solid rgba(255,255,255,.05);
-    border-radius:20px;
-    padding:20px;
-    transition:.3s;
-    position:relative;
-    overflow:hidden;
-}
-
-.player-card::before{
-    content:'';
-    position:absolute;
-    inset:0;
-    background:linear-gradient(45deg,transparent,rgba(255,255,255,.05),transparent);
-    transform:translateX(-100%);
-    transition:.5s;
-}
-
-.player-card:hover::before{
-    transform:translateX(100%);
-}
-
-.player-card:hover{
-    transform:translateY(-8px) scale(1.02);
-    box-shadow:0 20px 40px rgba(0,0,0,.4);
-}
-
-.player-name{
-    font-size:24px;
-    font-weight:800;
-}
-
-.player-team{
-    margin-top:10px;
-    opacity:.8;
-}
-
-.salary{
-    margin-top:15px;
-    font-size:22px;
-    font-weight:900;
-    color:#22c55e;
-}
-
-.badge{
-    display:inline-block;
-    margin-top:15px;
-    padding:8px 12px;
-    border-radius:50px;
-    background:#dc2626;
-    font-size:12px;
-    font-weight:700;
-}
-
-.team-logo{
-    width:50px;
-    height:50px;
-    object-fit:contain;
-    margin-top:15px;
-    transition:.3s;
-}
-
-.player-card:hover .team-logo{
-    transform:rotate(8deg) scale(1.1);
-}
-
-.stats-bar{
+/* STATS */
+.stats{
     display:flex;
     gap:20px;
-    margin:30px 0;
+    justify-content:center;
+    margin-bottom:25px;
 }
 
-.stat-card{
-    flex:1;
-    background:#111827;
-    padding:20px;
+.stat{
+    background:white;
+    padding:20px 30px;
     border-radius:16px;
+    border:1px solid #eee;
     text-align:center;
 }
 
-.stat-card h2{
-    font-size:28px;
+.stat h2{font-size:26px;}
+.stat p{color:#666;}
+
+/* TEAM CAP */
+.team-section{
+    margin:30px;
 }
 
-.stat-card p{
-    opacity:.7;
+.team-card{
+    background:white;
+    padding:20px;
+    border-radius:16px;
+    margin-bottom:15px;
+    border:1px solid #eee;
+    cursor:pointer;
+    transition:.25s;
 }
 
-.hidden{
+.team-card:hover{
+    box-shadow:0 10px 30px rgba(0,0,0,.08);
+}
+
+.team-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+}
+
+.progress{
+    height:10px;
+    background:#eee;
+    border-radius:10px;
+    overflow:hidden;
+    margin-top:10px;
+}
+
+.progress-bar{
+    height:100%;
+    background:#ef4444;
+}
+
+/* PLAYERS */
+.players{
+    margin-top:15px;
     display:none;
+}
+
+.player{
+    display:flex;
+    justify-content:space-between;
+    padding:10px;
+    border-bottom:1px solid #eee;
+}
+
+.free-agent{
+    color:#ef4444;
+    font-weight:700;
+}
+
+/* SEARCH */
+.search{
+    width:90%;
+    margin:auto;
+    display:block;
+    padding:15px;
+    border-radius:12px;
+    border:1px solid #ddd;
+    margin-bottom:20px;
 }
 </style>
 </head>
+
 <body>
 
 <header>
-    <h1>RPL SEASON 10 CAP SHEET</h1>
-    <p>League Contract Database</p>
+    <h1>RPL Salary Cap System</h1>
 </header>
 
-<div class="container">
-
-    <div class="stats-bar">
-        <div class="stat-card">
-            <h2>$58M</h2>
-            <p>Team Cap</p>
-        </div>
-
-        <div class="stat-card">
-            <h2>10</h2>
-            <p>Minimum Players</p>
-        </div>
-
-        <div class="stat-card">
-            <h2>2M</h2>
-            <p>Non-Listed Salary</p>
-        </div>
+<div class="stats">
+    <div class="stat">
+        <h2>$58M</h2>
+        <p>Team Cap</p>
     </div>
 
-    <div class="search-box">
-        <input type="text" id="search" placeholder="Search players or teams...">
+    <div class="stat">
+        <h2>10</h2>
+        <p>Minimum Players</p>
     </div>
 
-    <div id="salaryContainer"></div>
-
+    <div class="stat">
+        <h2>$2M</h2>
+        <p>Default Salary</p>
+    </div>
 </div>
 
+<input type="text" id="search" class="search" placeholder="Search team or player...">
+
+<div id="teams"></div>
+
 <script>
-const salaryData = {
-    "20M":[
-        {name:"Player One",team:"Free Agent",salary:"20M",logo:""}
-    ],
-    "18M":[
-        {name:"angentdrake",team:"Hornets",salary:"18M",logo:""}
-    ],
-    "15M":[
-        {name:"zPud",team:"Spurs",salary:"15M",logo:""},
-        {name:"Slapclosed",team:"Lakers",salary:"15M",logo:""}
-    ],
-    "12M":[
-        {name:"3ptaether",team:"Mavericks",salary:"12M",logo:""}
-    ]
-};
+const CAP = 58000000;
 
-const container = document.getElementById("salaryContainer");
+/* SAMPLE DATA (REPLACE WITH YOUR REAL DATA) */
+const data = [
+    {name:"zPud",team:"Spurs",salary:15000000},
+    {name:"Slapclosed",team:"Lakers",salary:15000000},
+    {name:"angentdrake",team:"Hornets",salary:18000000},
+    {name:"Free Guy",team:"Free Agent",salary:2000000}
+];
 
-function render(data){
+/* GROUP TEAMS */
+const teams = {};
+
+data.forEach(p=>{
+    if(!teams[p.team]) teams[p.team]=[];
+    teams[p.team].push(p);
+});
+
+/* RENDER */
+function render(){
+    const container = document.getElementById("teams");
     container.innerHTML = "";
 
-    Object.keys(data).forEach(tier=>{
-        const section = document.createElement("div");
-        section.className = "salary-section";
+    Object.keys(teams).forEach(team=>{
+        const players = teams[team];
+        const total = players.reduce((s,p)=>s+p.salary,0);
 
-        section.innerHTML = `
-            <div class="section-title">${tier} Players</div>
-            <div class="players-grid">
-                ${data[tier].map(player=>`
-                    <div class="player-card">
-                        <div class="player-name">${player.name}</div>
-                        <div class="player-team">${player.team}</div>
-                        <div class="salary">$${player.salary}</div>
-                        ${
-                            player.team === "Free Agent"
-                            ? '<div class="badge">FREE AGENT</div>'
-                            : ''
-                        }
+        const percent = Math.min((total/CAP)*100,100);
+
+        const div = document.createElement("div");
+        div.className="team-card";
+
+        div.innerHTML = `
+            <div class="team-header">
+                <h2>${team}</h2>
+                <h3>$${(total/1000000).toFixed(1)}M</h3>
+            </div>
+
+            <div class="progress">
+                <div class="progress-bar" style="width:${percent}%"></div>
+            </div>
+
+            <div class="players">
+                ${players.map(p=>`
+                    <div class="player">
+                        <span>${p.name}</span>
+                        <span>${p.team==="Free Agent" ? '<span class="free-agent">FA</span>' : ''} $${(p.salary/1000000)}M</span>
                     </div>
                 `).join("")}
             </div>
         `;
 
-        container.appendChild(section);
+        div.onclick = ()=>{
+            const list = div.querySelector(".players");
+            list.style.display = list.style.display==="block" ? "none" : "block";
+        };
+
+        container.appendChild(div);
     });
 }
 
 document.getElementById("search").addEventListener("input",(e)=>{
     const value = e.target.value.toLowerCase();
 
-    const filtered = {};
-
-    Object.keys(salaryData).forEach(tier=>{
-        filtered[tier] = salaryData[tier].filter(player =>
-            player.name.toLowerCase().includes(value) ||
-            player.team.toLowerCase().includes(value)
+    Object.keys(teams).forEach(team=>{
+        teams[team] = teams[team].filter(p =>
+            p.name.toLowerCase().includes(value) ||
+            p.team.toLowerCase().includes(value)
         );
     });
 
-    render(filtered);
+    render();
 });
 
-render(salaryData);
+render();
 </script>
 
 </body>
