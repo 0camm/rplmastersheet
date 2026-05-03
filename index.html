@@ -174,10 +174,40 @@ const teamList = [
 ];
 
 /* TEAM LOGOS (ADD YOUR OWN LINKS LATER) */
-const logos = {};
-teamList.forEach(t=>{
-    logos[t] = "https://via.placeholder.com/40?text=" + t.split(" ")[0];
-});
+const logos = {
+"Atlanta Hawks":"https://loodibee.com/wp-content/uploads/nba-atlanta-hawks-logo.png",
+"Boston Celtics":"https://loodibee.com/wp-content/uploads/nba-boston-celtics-logo.png",
+"Brooklyn Nets":"https://loodibee.com/wp-content/uploads/nba-brooklyn-nets-logo.png",
+"Charlotte Hornets":"https://loodibee.com/wp-content/uploads/nba-charlotte-hornets-logo.png",
+"Chicago Bulls":"https://loodibee.com/wp-content/uploads/nba-chicago-bulls-logo.png",
+"Cleveland Cavaliers":"https://loodibee.com/wp-content/uploads/nba-cleveland-cavaliers-logo.png",
+"Dallas Mavericks":"https://loodibee.com/wp-content/uploads/nba-dallas-mavericks-logo.png",
+"Denver Nuggets":"https://loodibee.com/wp-content/uploads/nba-denver-nuggets-logo.png",
+"Detroit Pistons":"https://loodibee.com/wp-content/uploads/nba-detroit-pistons-logo.png",
+"Golden State Warriors":"https://loodibee.com/wp-content/uploads/nba-golden-state-warriors-logo.png",
+"Houston Rockets":"https://loodibee.com/wp-content/uploads/nba-houston-rockets-logo.png",
+"Indiana Pacers":"https://loodibee.com/wp-content/uploads/nba-indiana-pacers-logo.png",
+"LA Clippers":"https://loodibee.com/wp-content/uploads/nba-la-clippers-logo.png",
+"Los Angeles Lakers":"https://loodibee.com/wp-content/uploads/nba-los-angeles-lakers-logo.png",
+"Memphis Grizzlies":"https://loodibee.com/wp-content/uploads/nba-memphis-grizzlies-logo.png",
+"Miami Heat":"https://loodibee.com/wp-content/uploads/nba-miami-heat-logo.png",
+"Milwaukee Bucks":"https://loodibee.com/wp-content/uploads/nba-milwaukee-bucks-logo.png",
+"Minnesota Timberwolves":"https://loodibee.com/wp-content/uploads/nba-minnesota-timberwolves-logo.png",
+"New Orleans Pelicans":"https://loodibee.com/wp-content/uploads/nba-new-orleans-pelicans-logo.png",
+"New York Knicks":"https://loodibee.com/wp-content/uploads/nba-new-york-knicks-logo.png",
+"Oklahoma City Thunder":"https://loodibee.com/wp-content/uploads/nba-oklahoma-city-thunder-logo.png",
+"Orlando Magic":"https://loodibee.com/wp-content/uploads/nba-orlando-magic-logo.png",
+"Philadelphia 76ers":"https://loodibee.com/wp-content/uploads/nba-philadelphia-76ers-logo.png",
+"Phoenix Suns":"https://loodibee.com/wp-content/uploads/nba-phoenix-suns-logo.png",
+"Portland Trail Blazers":"https://loodibee.com/wp-content/uploads/nba-portland-trail-blazers-logo.png",
+"Sacramento Kings":"https://loodibee.com/wp-content/uploads/nba-sacramento-kings-logo.png",
+"San Antonio Spurs":"https://loodibee.com/wp-content/uploads/nba-san-antonio-spurs-logo.png",
+"Toronto Raptors":"https://loodibee.com/wp-content/uploads/nba-toronto-raptors-logo.png",
+"Utah Jazz":"https://loodibee.com/wp-content/uploads/nba-utah-jazz-logo.png",
+"Washington Wizards":"https://loodibee.com/wp-content/uploads/nba-washington-wizards-logo.png",
+
+"Free Agent":"https://upload.wikimedia.org/wikipedia/commons/8/89/HD_transparent_picture.png"
+};
 
 /* SAMPLE DATA */
 let players = [
@@ -311,7 +341,43 @@ let players = [
 {name:"aaronpavonis",team:"Utah Jazz",salary:2000000},
 {name:"alexthegod2k",team:"Utah Jazz",salary:2000000},
 {name:"lazerboy12334",team:"Utah Jazz",salary:2000000},
-{name:"nateyurr",team:"Utah Jazz",salary:2000000}
+{name:"nateyurr",team:"Utah Jazz",salary:2000000},
+
+{name:"yurr0757",team:"Free Agent",salary:2000000},
+{name:"devvyls",team:"Free Agent",salary:2000000},
+{name:"scofieldiso",team:"Free Agent",salary:2000000},
+{name:"seriouslymood",team:"Free Agent",salary:2000000},
+{name:"melo_chatt",team:"Free Agent",salary:2000000},
+{name:"LOCOIIIIIIIIIIIII3",team:"Free Agent",salary:2000000},
+{name:"aydenworld40",team:"Free Agent",salary:2000000},
+{name:"Masonisthatguy12",team:"Free Agent",salary:2000000},
+{name:"JaxTatum0",team:"Free Agent",salary:2000000},
+{name:"202Franklin",team:"Free Agent",salary:2000000},
+{name:"10K_Trxyy",team:"Free Agent",salary:2000000},
+{name:"GodBaconSama",team:"Free Agent",salary:2000000},
+{name:"mrgchives",team:"Free Agent",salary:2000000},
+{name:"B_ones",team:"Free Agent",salary:2000000},
+{name:"fyuwu",team:"Free Agent",salary:2000000},
+{name:"ttehdyhidgdyf",team:"Free Agent",salary:2000000},
+{name:"SimplyMikey",team:"Free Agent",salary:2000000},
+{name:"tysoncatsbruh",team:"Free Agent",salary:2000000},
+{name:"MarkelleFultz",team:"Free Agent",salary:2000000},
+{name:"underr4te",team:"Free Agent",salary:2000000},
+{name:"mysafeplacee",team:"Free Agent",salary:2000000},
+{name:"exlehsksee",team:"Free Agent",salary:2000000},
+{name:"boshrpl",team:"Free Agent",salary:2000000},
+{name:"4bigguys957",team:"Free Agent",salary:2000000},
+{name:"Tylerpokeifan20",team:"Free Agent",salary:2000000},
+{name:"KageWrld",team:"Free Agent",salary:2000000},
+{name:"p_avle",team:"Free Agent",salary:2000000},
+{name:"imheemothy",team:"Free Agent",salary:2000000},
+
+/* from other tiers */
+{name:"minis",team:"Free Agent",salary:2000000},
+{name:"KvngDraco_omq",team:"Free Agent",salary:2000000},
+{name:"MaybeLaMelo",team:"Free Agent",salary:2000000},
+{name:"AupKf",team:"Free Agent",salary:2000000},
+{name:"carsonthomase",team:"Free Agent",salary:2000000}
 
 ];
 
