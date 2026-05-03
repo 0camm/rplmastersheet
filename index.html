@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RPL Salary Cap</title>
+<style>
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:Arial,sans-serif;
+}
+
+body{
+    background:#0f172a;
+    color:white;
+}
+
+header{
+    padding:25px;
+    text-align:center;
+    background:#111827;
+    border-bottom:1px solid rgba(255,255,255,.1);
+}
+
+header h1{
+    font-size:32px;
+}
+
+.container{
+    max-width:1200px;
+    margin:auto;
+    padding:30px;
+}
+
+.top-bar{
+    display:flex;
+    gap:20px;
+    margin-bottom:25px;
+    flex-wrap:wrap;
+}
+
+.card{
+    background:#1e293b;
+    padding:20px;
+    border-radius:16px;
+    flex:1;
+    min-width:250px;
+}
+
+.card h2{
+    margin-bottom:10px;
+    font-size:18px;
+}
+
+.card input{
+    width:100%;
+    padding:12px;
+    border:none;
+    border-radius:8px;
+    font-size:16px;
+}
+
+.table-container{
+    background:#1e293b;
+    border-radius:16px;
+    overflow:hidden;
+}
+
+table{
+    width:100%;
+    border-collapse:collapse;
+}
+
+th{
+    background:#334155;
+    padding:15px;
+    text-align:left;
+}
+
+td{
+    padding:15px;
+    border-bottom:1px solid rgba(255,255,255,.05);
+}
+
+.salary-input{
+    width:120px;
+    padding:8px;
+    border:none;
+    border-radius:8px;
+}
+
+button{
+    padding:10px 15px;
+    border:none;
+    border-radius:8px;
+    cursor:pointer;
+    font-weight:bold;
+}
+
+.add-btn{
+    background:#22c55e;
+    color:white;
+}
+
+.delete-btn{
+    background:#ef4444;
+    color:white;
+}
+
+.summary{
+    margin-top:25px;
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
+    gap:20px;
+}
+
+.summary-card{
+    background:#1e293b;
+    padding:20px;
+    border-radius:16px;
+}
+
+.search{
+    width:100%;
+    padding:14px;
+    margin-bottom:20px;
+    border:none;
+    border-radius:10px;
+}
+</style>
+</head>
+<body>
+
+<header>
+    <h1>RPL Salary Cap Manager</h1>
+</header>
+
+<div class="container">
+
+    <input type="text" id="search" class="search" placeholder="Search players...">
+
+    <div class="top-bar">
+        <div class="card">
+            <h2>League Salary Cap</h2>
+            <input type="number" id="salaryCap" value="120000000">
+        </div>
+
+        <div class="card">
+            <h2>Add Player</h2>
+            <input type="text" id="newPlayer" placeholder="Player Name">
+            <br><br>
+            <input type="text" id="newTeam" placeholder="Team">
+            <br><br>
+            <input type="number" id="newSalary" placeholder="Salary">
+            <br><br>
+            <button class="add-btn" onclick="addPlayer()">Add Player</button>
+        </div>
+    </div>
+
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Player</th>
+                    <th>Team</th>
+                    <th>Salary</th>
+                    <th>Delete</th>
+                </tr>
+            </thead>
+            <tbody id="playerTable"></tbody>
+        </table>
+    </div>
+
+    <div class="summary">
+        <div class="summary-card">
+            <h2>Total Payroll</h2>
+            <p id="totalPayroll">$0</p>
+        </div>
+
+        <div class="summary-card">
+            <h2>Remaining Cap</h2>
+            <p id="remainingCap">$0</p>
+        </div>
+    </div>
+
+</div>
+
+<script>
+let players = JSON.parse(localStorage.getItem("players")) || [
+    {name:"Player 1",team:"Lakers",salary:25000000},
+    {name:"Player 2",team:"Knicks",salary:18000000}
+];
+
+function saveData(){
+    localStorage.setItem("players", JSON.stringify(players));
+}
+
+function renderPlayers(list = players){
+    const table = document.getElementById("playerTable");
+    table.innerHTML = "";
+
+    let total = 0;
+
+    list.forEach((player,index)=>{
+        total += Number(player.salary);
+
+        table.innerHTML += `
+        <tr>
+            <td>${player.name}</td>
+            <td>${player.team}</td>
+            <td>
+                <input 
+                    class="salary-input"
+                    type="number"
+                    value="${player.salary}"
+                    onchange="updateSalary(${index}, this.value)">
+            </td>
+            <td>
+                <button class="delete-btn" onclick="deletePlayer(${index})">
+                    Delete
+                </button>
+            </td>
+        </tr>
+        `;
+    });
+
+    updateSummary(total);
+}
+
+function updateSalary(index,value){
+    players[index].salary = Number(value);
+    saveData();
+    renderPlayers();
+}
+
+function addPlayer(){
+    const name = document.getElementById("newPlayer").value;
+    const team = document.getElementById("newTeam").value;
+    const salary = document.getElementById("newSalary").value;
+
+    if(!name || !team || !salary) return;
+
+    players.push({
+        name,
+        team,
+        salary:Number(salary)
+    });
+
+    saveData();
+    renderPlayers();
+}
+
+function deletePlayer(index){
+    players.splice(index,1);
+    saveData();
+    renderPlayers();
+}
+
+function updateSummary(total){
+    const cap = Number(document.getElementById("salaryCap").value);
+
+    document.getElementById("totalPayroll").innerText =
+        "$" + total.toLocaleString();
+
+    document.getElementById("remainingCap").innerText =
+        "$" + (cap-total).toLocaleString();
+}
+
+document.getElementById("search").addEventListener("input",(e)=>{
+    const value = e.target.value.toLowerCase();
+
+    const filtered = players.filter(player =>
+        player.name.toLowerCase().includes(value) ||
+        player.team.toLowerCase().includes(value)
+    );
+
+    renderPlayers(filtered);
+});
+
+document.getElementById("salaryCap").addEventListener("input",()=>{
+    renderPlayers();
+});
+
+renderPlayers();
+</script>
+
+</body>
+</html>
