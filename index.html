@@ -6,77 +6,107 @@
 
 <title>RPL Salary Caps</title>
 
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap" rel="stylesheet">
 
 <style>
 *{margin:0;padding:0;box-sizing:border-box;font-family:'Inter';}
 
 body{
-    background:#f8fafc;
+    background:
+    radial-gradient(circle at top,#ffecec,transparent 40%),
+    #f6f8fc;
     color:#111;
 }
 
 /* HEADER */
 header{
-    padding:30px;
+    padding:40px;
     text-align:center;
 }
 
 header h1{
-    font-size:42px;
+    font-size:44px;
     font-weight:900;
 }
 
-/* STATS */
-.stats{
-    display:flex;
+/* SEARCH */
+.search{
+    display:block;
+    margin:0 auto 30px;
+    width:90%;
+    max-width:600px;
+    padding:15px;
+    border-radius:14px;
+    border:1px solid #ddd;
+    font-size:15px;
+}
+
+/* GRID */
+.grid{
+    width:95%;
+    max-width:1400px;
+    margin:auto;
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(300px,1fr));
     gap:20px;
-    justify-content:center;
-    margin-bottom:25px;
 }
 
-.stat{
+/* TEAM CARD */
+.team{
     background:white;
-    padding:20px 30px;
-    border-radius:16px;
-    border:1px solid #eee;
-    text-align:center;
-}
-
-.stat h2{font-size:26px;}
-.stat p{color:#666;}
-
-/* TEAM CAP */
-.team-section{
-    margin:30px;
-}
-
-.team-card{
-    background:white;
+    border-radius:20px;
     padding:20px;
-    border-radius:16px;
-    margin-bottom:15px;
     border:1px solid #eee;
+    transition:.3s;
     cursor:pointer;
-    transition:.25s;
+    position:relative;
+    overflow:hidden;
 }
 
-.team-card:hover{
-    box-shadow:0 10px 30px rgba(0,0,0,.08);
+.team:hover{
+    transform:translateY(-8px);
+    box-shadow:0 20px 50px rgba(0,0,0,.08);
 }
 
+.team::before{
+    content:'';
+    position:absolute;
+    inset:0;
+    background:linear-gradient(120deg, transparent, rgba(255,0,0,.12), transparent);
+    opacity:0;
+    transition:.4s;
+}
+
+.team:hover::before{
+    opacity:1;
+}
+
+/* HEADER */
 .team-header{
     display:flex;
     justify-content:space-between;
     align-items:center;
 }
 
+.team-info{
+    display:flex;
+    align-items:center;
+    gap:12px;
+}
+
+.team-logo{
+    width:42px;
+    height:42px;
+    object-fit:contain;
+}
+
+/* CAP BAR */
 .progress{
+    margin-top:15px;
     height:10px;
     background:#eee;
     border-radius:10px;
     overflow:hidden;
-    margin-top:10px;
 }
 
 .progress-bar{
@@ -95,22 +125,25 @@ header h1{
     justify-content:space-between;
     padding:10px;
     border-bottom:1px solid #eee;
+    font-size:14px;
 }
 
+/* FREE AGENTS */
 .free-agent{
-    color:#ef4444;
-    font-weight:700;
+    margin-top:40px;
 }
 
-/* SEARCH */
-.search{
-    width:90%;
-    margin:auto;
-    display:block;
-    padding:15px;
-    border-radius:12px;
-    border:1px solid #ddd;
-    margin-bottom:20px;
+.free-agent h2{
+    margin-bottom:10px;
+}
+
+/* BADGE */
+.badge{
+    background:#ef4444;
+    color:white;
+    padding:4px 8px;
+    border-radius:8px;
+    font-size:11px;
 }
 </style>
 </head>
@@ -118,66 +151,94 @@ header h1{
 <body>
 
 <header>
-    <h1>RPL Salary Cap System</h1>
+    <h1>RPL Salary Cap Dashboard</h1>
 </header>
 
-<div class="stats">
-    <div class="stat">
-        <h2>$58M</h2>
-        <p>Team Cap</p>
-    </div>
+<input class="search" id="search" placeholder="Search players or teams...">
 
-    <div class="stat">
-        <h2>10</h2>
-        <p>Minimum Players</p>
-    </div>
+<div class="grid" id="teams"></div>
 
-    <div class="stat">
-        <h2>$2M</h2>
-        <p>Default Salary</p>
-    </div>
-</div>
-
-<input type="text" id="search" class="search" placeholder="Search team or player...">
-
-<div id="teams"></div>
+<div class="grid free-agent" id="fa"></div>
 
 <script>
 const CAP = 58000000;
 
-/* SAMPLE DATA (REPLACE WITH YOUR REAL DATA) */
-const data = [
-    {name:"zPud",team:"Spurs",salary:15000000},
-    {name:"Slapclosed",team:"Lakers",salary:15000000},
-    {name:"angentdrake",team:"Hornets",salary:18000000},
-    {name:"Free Guy",team:"Free Agent",salary:2000000}
+/* ALL 30 TEAMS */
+const teamList = [
+"Atlanta Hawks","Boston Celtics","Brooklyn Nets","Charlotte Hornets","Chicago Bulls",
+"Cleveland Cavaliers","Dallas Mavericks","Denver Nuggets","Detroit Pistons","Golden State Warriors",
+"Houston Rockets","Indiana Pacers","LA Clippers","Los Angeles Lakers","Memphis Grizzlies",
+"Miami Heat","Milwaukee Bucks","Minnesota Timberwolves","New Orleans Pelicans","New York Knicks",
+"Oklahoma City Thunder","Orlando Magic","Philadelphia 76ers","Phoenix Suns","Portland Trail Blazers",
+"Sacramento Kings","San Antonio Spurs","Toronto Raptors","Utah Jazz","Washington Wizards"
 ];
 
-/* GROUP TEAMS */
-const teams = {};
-
-data.forEach(p=>{
-    if(!teams[p.team]) teams[p.team]=[];
-    teams[p.team].push(p);
+/* TEAM LOGOS (ADD YOUR OWN LINKS LATER) */
+const logos = {};
+teamList.forEach(t=>{
+    logos[t] = "https://via.placeholder.com/40?text=" + t.split(" ")[0];
 });
 
-/* RENDER */
+/* SAMPLE DATA */
+let players = [
+{name:"zPud",team:"San Antonio Spurs",salary:15000000},
+{name:"Slapclosed",team:"Los Angeles Lakers",salary:15000000},
+{name:"angentdrake",team:"Charlotte Hornets",salary:18000000},
+{name:"Free Guy",team:"Free Agent",salary:2000000}
+];
+
+/* GROUP */
+function groupTeams(){
+    const teams = {};
+    teamList.forEach(t=>teams[t]=[]);
+    teams["Free Agent"] = [];
+
+    players.forEach(p=>{
+        if(!teams[p.team]) teams[p.team]=[];
+        teams[p.team].push(p);
+    });
+
+    return teams;
+}
+
 function render(){
+    const teams = groupTeams();
     const container = document.getElementById("teams");
+    const faContainer = document.getElementById("fa");
+
     container.innerHTML = "";
+    faContainer.innerHTML = "";
 
     Object.keys(teams).forEach(team=>{
-        const players = teams[team];
-        const total = players.reduce((s,p)=>s+p.salary,0);
+        const list = teams[team];
 
+        if(team === "Free Agent"){
+            faContainer.innerHTML += `
+                <div>
+                    <h2>Free Agents</h2>
+                    ${list.map(p=>`
+                        <div class="player">
+                            ${p.name}
+                            <span class="badge">$${p.salary/1000000}M</span>
+                        </div>
+                    `).join("")}
+                </div>
+            `;
+            return;
+        }
+
+        const total = list.reduce((s,p)=>s+p.salary,0);
         const percent = Math.min((total/CAP)*100,100);
 
         const div = document.createElement("div");
-        div.className="team-card";
+        div.className="team";
 
         div.innerHTML = `
             <div class="team-header">
-                <h2>${team}</h2>
+                <div class="team-info">
+                    <img class="team-logo" src="${logos[team]}">
+                    <h3>${team}</h3>
+                </div>
                 <h3>$${(total/1000000).toFixed(1)}M</h3>
             </div>
 
@@ -186,18 +247,18 @@ function render(){
             </div>
 
             <div class="players">
-                ${players.map(p=>`
+                ${list.map(p=>`
                     <div class="player">
-                        <span>${p.name}</span>
-                        <span>${p.team==="Free Agent" ? '<span class="free-agent">FA</span>' : ''} $${(p.salary/1000000)}M</span>
+                        ${p.name}
+                        <span>$${p.salary/1000000}M</span>
                     </div>
                 `).join("")}
             </div>
         `;
 
         div.onclick = ()=>{
-            const list = div.querySelector(".players");
-            list.style.display = list.style.display==="block" ? "none" : "block";
+            const playersDiv = div.querySelector(".players");
+            playersDiv.style.display = playersDiv.style.display==="block"?"none":"block";
         };
 
         container.appendChild(div);
@@ -205,14 +266,12 @@ function render(){
 }
 
 document.getElementById("search").addEventListener("input",(e)=>{
-    const value = e.target.value.toLowerCase();
+    const val = e.target.value.toLowerCase();
 
-    Object.keys(teams).forEach(team=>{
-        teams[team] = teams[team].filter(p =>
-            p.name.toLowerCase().includes(value) ||
-            p.team.toLowerCase().includes(value)
-        );
-    });
+    players = players.filter(p =>
+        p.name.toLowerCase().includes(val) ||
+        p.team.toLowerCase().includes(val)
+    );
 
     render();
 });
