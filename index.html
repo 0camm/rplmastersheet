@@ -29,7 +29,6 @@
     min-height: 100vh;
   }
 
-  /* ── NAV ── */
   nav {
     position: sticky;
     top: 0;
@@ -43,30 +42,6 @@
     backdrop-filter: blur(20px);
   }
 
-  .nav-logo {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    text-decoration: none;
-  }
-
-  .nav-logo img { width: 28px; height: 28px; object-fit: contain; }
-
-  .nav-logo span {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 20px;
-    letter-spacing: .06em;
-    color: #fff;
-  }
-
-  .nav-logo span em { color: var(--red); font-style: normal; }
-
-  .nav-right {
-    display: flex;
-    align-items: center;
-    gap: 20px;
-  }
-
   .nav-cap {
     font-size: 11px;
     font-weight: 600;
@@ -77,7 +52,6 @@
 
   .nav-cap strong { color: #fff; margin-left: 6px; }
 
-  /* ── PAGE HEADER ── */
   .page-header {
     padding: 52px 40px 36px;
     border-bottom: 1px solid var(--border);
@@ -86,8 +60,6 @@
     justify-content: space-between;
     gap: 24px;
   }
-
-  .page-header-left {}
 
   .page-eyebrow {
     font-size: 11px;
@@ -123,7 +95,6 @@
     color: var(--muted);
   }
 
-  /* ── SEARCH ── */
   .search-wrap {
     position: relative;
     width: 300px;
@@ -155,7 +126,6 @@
   .search-input::placeholder { color: var(--muted); }
   .search-input:focus { border-color: rgba(232,0,29,.4); }
 
-  /* ── TABS ── */
   .tabs {
     display: flex;
     gap: 2px;
@@ -180,19 +150,14 @@
   .tab:hover { color: #fff; background: rgba(255,255,255,.05); }
   .tab.active { color: #fff; background: var(--surface2); }
 
-  /* ── MAIN ── */
-  main {
-    padding: 32px 40px 80px;
-  }
+  main { padding: 32px 40px 80px; }
 
-  /* ── TEAMS GRID ── */
   .teams-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
     gap: 16px;
   }
 
-  /* ── TEAM CARD ── */
   .team-card {
     background: var(--surface);
     border: 1px solid var(--border);
@@ -202,11 +167,7 @@
     cursor: pointer;
   }
 
-  .team-card:hover {
-    border-color: rgba(255,255,255,.12);
-    transform: translateY(-2px);
-  }
-
+  .team-card:hover { border-color: rgba(255,255,255,.12); transform: translateY(-2px); }
   .team-card.open { border-color: rgba(232,0,29,.25); }
 
   .team-card-header {
@@ -225,11 +186,7 @@
     justify-content: center;
   }
 
-  .team-logo-wrap img {
-    width: 38px;
-    height: 38px;
-    object-fit: contain;
-  }
+  .team-logo-wrap img { width: 38px; height: 38px; object-fit: contain; }
 
   .team-name-block { flex: 1; min-width: 0; }
 
@@ -242,16 +199,9 @@
     text-overflow: ellipsis;
   }
 
-  .team-player-count {
-    font-size: 11px;
-    color: var(--muted);
-    margin-top: 2px;
-  }
+  .team-player-count { font-size: 11px; color: var(--muted); margin-top: 2px; }
 
-  .team-salary-block {
-    text-align: right;
-    flex-shrink: 0;
-  }
+  .team-salary-block { text-align: right; flex-shrink: 0; }
 
   .team-salary-num {
     font-family: 'Bebas Neue', sans-serif;
@@ -260,18 +210,10 @@
     color: #fff;
   }
 
-  .team-cap-pct {
-    font-size: 11px;
-    color: var(--muted);
-    margin-top: 2px;
-  }
-
+  .team-cap-pct { font-size: 11px; color: var(--muted); margin-top: 2px; }
   .team-cap-pct.over { color: var(--red); }
 
-  /* ── PROGRESS ── */
-  .cap-bar-wrap {
-    padding: 0 20px 16px;
-  }
+  .cap-bar-wrap { padding: 0 20px 16px; }
 
   .cap-bar-track {
     height: 3px;
@@ -291,7 +233,6 @@
   .cap-bar-fill.warn { background: #f59e0b; }
   .cap-bar-fill.over { background: var(--red); }
 
-  /* ── EXPAND TOGGLE ── */
   .team-toggle {
     padding: 0 20px 14px;
     display: flex;
@@ -308,18 +249,10 @@
   .team-card:hover .team-toggle { color: #888; }
   .team-card.open .team-toggle { color: var(--red); }
 
-  .toggle-arrow {
-    transition: transform .25s;
-  }
-
+  .toggle-arrow { transition: transform .25s; }
   .team-card.open .toggle-arrow { transform: rotate(180deg); }
 
-  /* ── PLAYERS LIST ── */
-  .players-list {
-    display: none;
-    border-top: 1px solid var(--border);
-  }
-
+  .players-list { display: none; border-top: 1px solid var(--border); }
   .players-list.open { display: block; }
 
   .player-row {
@@ -334,22 +267,16 @@
   .player-row:last-child { border-bottom: none; }
   .player-row:hover { background: rgba(255,255,255,.03); }
 
-  .player-name {
-    font-size: 13px;
-    color: #ccc;
-    font-weight: 500;
-  }
+  .player-name { font-size: 13px; color: #ccc; font-weight: 500; }
 
   .player-salary {
-    font-size: 12px;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 15px;
     font-weight: 600;
     color: var(--muted);
-    font-family: 'Bebas Neue', sans-serif;
     letter-spacing: .05em;
-    font-size: 15px;
   }
 
-  /* ── FREE AGENTS ── */
   .fa-section { margin-top: 48px; }
 
   .fa-header {
@@ -397,11 +324,7 @@
 
   .fa-card:hover { background: var(--surface2); border-color: rgba(255,255,255,.1); }
 
-  .fa-name {
-    font-size: 13px;
-    color: #bbb;
-    font-weight: 500;
-  }
+  .fa-name { font-size: 13px; color: #bbb; font-weight: 500; }
 
   .fa-badge {
     font-family: 'Bebas Neue', sans-serif;
@@ -410,36 +333,24 @@
     color: var(--red);
   }
 
-  /* ── EMPTY STATE ── */
-  .empty {
-    text-align: center;
-    padding: 80px 20px;
-    color: var(--muted);
-  }
-
+  .empty { text-align: center; padding: 80px 20px; color: var(--muted); }
   .empty-icon { font-size: 40px; margin-bottom: 12px; opacity: .4; }
   .empty-text { font-size: 14px; }
 
-  /* ── HIDDEN ── */
   .hidden { display: none !important; }
 </style>
 </head>
 <body>
 
-<!-- NAV -->
 <nav>
-  <div class="nav-right">
-    <div class="nav-cap">Salary Cap <strong>$58M</strong></div>
-  </div>
+  <div class="nav-cap">Salary Cap <strong>$58M</strong></div>
 </nav>
 
-<!-- PAGE HEADER -->
 <div class="page-header">
   <div class="page-header-left">
     <div class="page-eyebrow">Season 10</div>
     <div class="page-title">Salary Cap<br>Dashboard</div>
-    <div class="page-meta">30 franchises · Click any team to expand roster: Coaches do not count toward cap, minimum players is 10, no imbalanced trading, 20 millions per team: 1, 18 millions per team: 1, all non-listed players are 2m
-</div>
+    <div class="page-meta">30 franchises · Click any team to expand roster · Coaches do not count toward cap · Minimum 10 players · No imbalanced trading · 20M per team: 1 · 18M per team: 1 · All non-listed players are 2M</div>
   </div>
   <div class="search-wrap">
     <svg class="search-icon" width="14" height="14" viewBox="0 0 14 14" fill="none">
@@ -450,13 +361,11 @@
   </div>
 </div>
 
-<!-- TABS -->
 <div class="tabs">
   <button class="tab active" data-tab="teams">All Teams</button>
   <button class="tab" data-tab="fa">Free Agents</button>
 </div>
 
-<!-- MAIN -->
 <main>
   <div id="view-teams">
     <div class="teams-grid" id="teams-grid"></div>
@@ -519,32 +428,26 @@ const logos = {
 };
 
 const allPlayers = [
-  // 20M
   {name:"Cal4ug", team:"Free Agent", salary:20000000},
   {name:"angentdrake", team:"Free Agent", salary:20000000},
-  // 18M
   {name:"Cahmmie", team:"Free Agent", salary:18000000},
   {name:"zPud", team:"Free Agent", salary:18000000},
   {name:"indepzndent", team:"Free Agent", salary:18000000},
-  // 15M
   {name:"urhurtingmyego", team:"Free Agent", salary:15000000},
   {name:"datboicartier", team:"Free Agent", salary:15000000},
   {name:"TomPooleyFan", team:"Free Agent", salary:15000000},
   {name:"Slapclosed", team:"Free Agent", salary:15000000},
-  // 12M
   {name:"chicagomade", team:"Free Agent", salary:12000000},
   {name:"Tw5gz", team:"Free Agent", salary:12000000},
   {name:"SIROOF5", team:"Free Agent", salary:12000000},
   {name:"KeepRepeatin", team:"Free Agent", salary:12000000},
   {name:"blessedjei", team:"Free Agent", salary:12000000},
-  // 10M
   {name:"3ptaether", team:"Free Agent", salary:10000000},
   {name:"k_ai6", team:"Free Agent", salary:10000000},
   {name:"minis", team:"Free Agent", salary:10000000},
   {name:"LeBewwy", team:"Free Agent", salary:10000000},
   {name:"UN90247807", team:"Free Agent", salary:10000000},
   {name:"z01nc", team:"Free Agent", salary:10000000},
-  // 8M
   {name:"SirPartum", team:"Free Agent", salary:8000000},
   {name:"omxrzen", team:"Free Agent", salary:8000000},
   {name:"KvngDraco_omq", team:"Free Agent", salary:8000000},
@@ -554,7 +457,6 @@ const allPlayers = [
   {name:"SeveralReminders", team:"Free Agent", salary:8000000},
   {name:"24kslxckz", team:"Free Agent", salary:8000000},
   {name:"TrickzXV", team:"Free Agent", salary:8000000},
-  // 5M
   {name:"vAcevx", team:"Free Agent", salary:5000000},
   {name:"0_CAMERON", team:"Free Agent", salary:5000000},
   {name:"1TickingBomb", team:"Free Agent", salary:5000000},
@@ -572,7 +474,6 @@ const allPlayers = [
   {name:"pelonagarra28", team:"Free Agent", salary:5000000},
   {name:"spazfromyukatan", team:"Free Agent", salary:5000000},
   {name:"berrymuch", team:"Free Agent", salary:5000000},
-  // 2M
   {name:"yurr0757", team:"Free Agent", salary:2000000},
   {name:"devvls", team:"Free Agent", salary:2000000},
   {name:"McJackal", team:"Free Agent", salary:2000000},
@@ -632,15 +533,12 @@ const allPlayers = [
   {name:"idiedso", team:"Free Agent", salary:2000000},
   {name:"wolfspirit3000", team:"Free Agent", salary:2000000},
   {name:"K20MyHo", team:"Free Agent", salary:2000000},
-  {name:"chipsahoy_224", team:"Free Agent", salary:2000000},
-  {name:"HoldMah3s", team:"Free Agent", salary:2000000},
   {name:"CameronJohnsonF2", team:"Free Agent", salary:2000000},
 ];
 
 let currentTab = 'teams';
 let searchQuery = '';
 
-// Group players by team
 function groupByTeam(players) {
   const map = {};
   teamList.forEach(t => map[t] = []);
@@ -735,19 +633,22 @@ function renderTeams() {
 function renderFA() {
   const q = searchQuery.toLowerCase();
   const grid = document.getElementById('fa-grid');
-  const count = document.getElementById('fa-count');
+  const countEl = document.getElementById('fa-count');
+
+  // FIX: derive free agents directly from allPlayers
+  const freeAgents = allPlayers.filter(p => p.team === 'Free Agent');
 
   const filtered = q
-    ? freeAgents.filter(n => n.toLowerCase().includes(q))
+    ? freeAgents.filter(p => p.name.toLowerCase().includes(q))
     : freeAgents;
 
-  count.textContent = `${filtered.length} player${filtered.length !== 1 ? 's' : ''}`;
+  countEl.textContent = `${filtered.length} player${filtered.length !== 1 ? 's' : ''}`;
 
   grid.innerHTML = filtered.length
-    ? filtered.map(name => `
+    ? filtered.map(p => `
         <div class="fa-card">
-          <span class="fa-name">${name}</span>
-          <span class="fa-badge">$2M</span>
+          <span class="fa-name">${p.name}</span>
+          <span class="fa-badge">${fmt(p.salary)}</span>
         </div>
       `).join('')
     : `<div class="empty" style="grid-column:1/-1">
@@ -775,7 +676,6 @@ function render() {
   }
 }
 
-// Tabs
 document.querySelectorAll('.tab').forEach(tab => {
   tab.addEventListener('click', () => {
     document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
@@ -785,13 +685,11 @@ document.querySelectorAll('.tab').forEach(tab => {
   });
 });
 
-// Search — fix: don't mutate original array
 document.getElementById('search').addEventListener('input', e => {
   searchQuery = e.target.value;
   render();
 });
 
-// Initial render
 render();
 </script>
 </body>
