@@ -9,7 +9,7 @@ const players = [
   // {name:"FreeAgent1", team:"Free Agent", salary:5000000},
 ];
 
-const SITE_URL = 'https://YOUR-VERCEL-APP.vercel.app'; // ← change this
+const SITE_URL = 'https://rplmastersheet.vercel.app/'; // ← change this
 const ADMIN_PASSWORD = 'RPLHRPASS$&';
 
 async function seed() {
