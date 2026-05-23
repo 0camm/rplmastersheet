@@ -542,13 +542,12 @@
     font-weight: 700;
     padding: 5px 10px;
     cursor: pointer;
-    opacity: 0;
-    transition: opacity .15s, background .15s;
+    opacity: 1;
+    transition: background .15s;
     white-space: nowrap;
   }
-  .admin-row:hover .admin-save-btn,
-  .admin-salary-input:focus ~ .admin-save-btn { opacity: 1; }
   .admin-save-btn:hover { background: #c0001a; }
+  .admin-save-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
   .hidden { display: none !important; }
 
