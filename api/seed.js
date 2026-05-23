@@ -15,6 +15,13 @@ export default async function handler(req, res) {
 
   if (!Array.isArray(players)) return res.status(400).json({ error: 'players must be an array' });
 
+  // Wipe all existing players first to avoid duplicates
+  await redis.del('players');
+
+  if (players.length === 0) {
+    return res.json({ ok: true, message: 'Roster cleared' });
+  }
+
   const entries = {};
   players.forEach((p, i) => {
     const id = `seed_${i}_${p.name.replace(/\s+/g, '_')}`;
