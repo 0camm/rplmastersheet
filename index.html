@@ -744,17 +744,21 @@ function checkRegistration() {
   if (params.get('registered')) {
     const name = params.get('name');
     const team = params.get('team');
+    localStorage.setItem('rpl_user', JSON.stringify({ name, team }));
+    window.history.replaceState({}, '', '/');
+  }
+
+  const stored = localStorage.getItem('rpl_user');
+  if (stored) {
+    const { name, team } = JSON.parse(stored);
     const banner = document.getElementById('reg-banner');
-    banner.textContent = `✓ Welcome, ${name}! You've been registered to ${team}.`;
+    banner.textContent = `✓ Logged in as ${name} · ${team}`;
     banner.classList.remove('hidden');
-    // Show logged-in chip
     document.getElementById('user-area').innerHTML = `
       <div class="user-chip">
         <div class="dot"></div>
         ${name} · ${team}
       </div>`;
-    // Clean URL
-    window.history.replaceState({}, '', '/');
   }
 }
 
