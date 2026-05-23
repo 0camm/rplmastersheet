@@ -501,6 +501,55 @@
   .empty-icon { font-size: 40px; margin-bottom: 12px; opacity: .4; }
   .empty-text { font-size: 14px; }
 
+  .admin-modal-wide {
+    width: 620px;
+  }
+
+  .admin-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 9px 14px;
+    border-bottom: 1px solid rgba(255,255,255,.03);
+    gap: 10px;
+    transition: background .15s;
+  }
+  .admin-row:last-child { border-bottom: none; }
+  .admin-row:hover { background: rgba(255,255,255,.03); }
+  .admin-row-name { font-size: 13px; color: #ccc; font-weight: 500; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .admin-row-team { font-size: 11px; color: var(--muted); flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .admin-salary-input {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    padding: 4px 8px;
+    color: var(--text);
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 14px;
+    letter-spacing: .05em;
+    width: 110px;
+    text-align: right;
+    outline: none;
+    transition: border-color .2s;
+  }
+  .admin-salary-input:focus { border-color: rgba(232,0,29,.5); }
+  .admin-save-btn {
+    background: var(--red);
+    border: none;
+    border-radius: 5px;
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 5px 10px;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity .15s, background .15s;
+    white-space: nowrap;
+  }
+  .admin-row:hover .admin-save-btn,
+  .admin-salary-input:focus ~ .admin-save-btn { opacity: 1; }
+  .admin-save-btn:hover { background: #c0001a; }
+
   .hidden { display: none !important; }
 
   .loading-bar {
@@ -589,80 +638,102 @@
 
 <!-- Admin Modal -->
 <div class="modal-overlay" id="admin-modal">
-  <div class="modal" onclick="event.stopPropagation()">
+  <div class="modal admin-modal-wide" onclick="event.stopPropagation()">
     <div class="modal-title">Admin Panel</div>
     <div class="modal-sub">Changes apply instantly to the live site.</div>
 
-    <div class="action-tabs">
-      <button class="action-tab active" onclick="setAction('setSalary', this)">Set Salary</button>
-      <button class="action-tab" onclick="setAction('setTeam', this)">Set Team</button>
-      <button class="action-tab" onclick="setAction('addPlayer', this)">Add Player</button>
-      <button class="action-tab" onclick="setAction('removePlayer', this)">Remove Player</button>
-      <button class="action-tab" onclick="setAction('renamePlayer', this)">Rename Player</button>
+    <!-- Password unlock row -->
+    <div id="admin-auth-row" style="display:flex;gap:10px;align-items:flex-end;margin-bottom:18px;">
+      <div class="field" style="flex:1;margin-bottom:0;">
+        <label>Admin Password</label>
+        <input type="password" id="admin-pass" placeholder="Enter password" onkeydown="if(event.key==='Enter')unlockAdmin()">
+      </div>
+      <button class="btn-primary" style="white-space:nowrap;padding:10px 18px;" onclick="unlockAdmin()">Unlock</button>
     </div>
 
-    <div class="field">
-      <label>Admin Password</label>
-      <input type="password" id="admin-pass" placeholder="Enter password">
+    <!-- Roster table (shown after unlock) -->
+    <div id="admin-roster-section" class="hidden">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+        <div style="font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);">Roster — click salary to edit</div>
+        <input class="search-input" id="admin-search" placeholder="Filter players…" style="width:180px;padding:7px 12px;" oninput="renderAdminRoster()">
+      </div>
+      <div id="admin-roster-table" style="max-height:380px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;"></div>
+
+      <!-- Quick-add -->
+      <details style="margin-top:16px;">
+        <summary style="font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);cursor:pointer;user-select:none;">+ Add / Remove / Move / Rename</summary>
+        <div style="margin-top:12px;">
+          <div class="action-tabs">
+            <button class="action-tab active" onclick="setAction('setSalary', this)">Set Salary</button>
+            <button class="action-tab" onclick="setAction('setTeam', this)">Set Team</button>
+            <button class="action-tab" onclick="setAction('addPlayer', this)">Add Player</button>
+            <button class="action-tab" onclick="setAction('removePlayer', this)">Remove Player</button>
+            <button class="action-tab" onclick="setAction('renamePlayer', this)">Rename Player</button>
+          </div>
+
+          <div class="field">
+            <label id="name-label">Player Name</label>
+            <input type="text" id="admin-name" placeholder="Exact username">
+          </div>
+
+          <div class="field" id="salary-field">
+            <label>Salary</label>
+            <input type="number" id="admin-salary" placeholder="e.g. 10000000">
+          </div>
+
+          <div class="field hidden" id="team-field">
+            <label>Team</label>
+            <select id="admin-team">
+              <option value="Free Agent">Free Agent</option>
+              <option value="Atlanta Hawks">Atlanta Hawks</option>
+              <option value="Boston Celtics">Boston Celtics</option>
+              <option value="Brooklyn Nets">Brooklyn Nets</option>
+              <option value="Charlotte Hornets">Charlotte Hornets</option>
+              <option value="Chicago Bulls">Chicago Bulls</option>
+              <option value="Cleveland Cavaliers">Cleveland Cavaliers</option>
+              <option value="Dallas Mavericks">Dallas Mavericks</option>
+              <option value="Denver Nuggets">Denver Nuggets</option>
+              <option value="Detroit Pistons">Detroit Pistons</option>
+              <option value="Golden State Warriors">Golden State Warriors</option>
+              <option value="Houston Rockets">Houston Rockets</option>
+              <option value="Indiana Pacers">Indiana Pacers</option>
+              <option value="LA Clippers">LA Clippers</option>
+              <option value="Los Angeles Lakers">Los Angeles Lakers</option>
+              <option value="Memphis Grizzlies">Memphis Grizzlies</option>
+              <option value="Miami Heat">Miami Heat</option>
+              <option value="Milwaukee Bucks">Milwaukee Bucks</option>
+              <option value="Minnesota Timberwolves">Minnesota Timberwolves</option>
+              <option value="New Orleans Pelicans">New Orleans Pelicans</option>
+              <option value="New York Knicks">New York Knicks</option>
+              <option value="Oklahoma City Thunder">Oklahoma City Thunder</option>
+              <option value="Orlando Magic">Orlando Magic</option>
+              <option value="Philadelphia 76ers">Philadelphia 76ers</option>
+              <option value="Phoenix Suns">Phoenix Suns</option>
+              <option value="Portland Trail Blazers">Portland Trail Blazers</option>
+              <option value="Sacramento Kings">Sacramento Kings</option>
+              <option value="San Antonio Spurs">San Antonio Spurs</option>
+              <option value="Toronto Raptors">Toronto Raptors</option>
+              <option value="Utah Jazz">Utah Jazz</option>
+              <option value="Washington Wizards">Washington Wizards</option>
+            </select>
+          </div>
+
+          <div class="field hidden" id="newname-field">
+            <label>New Name</label>
+            <input type="text" id="admin-newname" placeholder="New username">
+          </div>
+
+          <div class="modal-actions">
+            <button class="btn-primary" onclick="submitAdmin()">Apply</button>
+          </div>
+        </div>
+      </details>
+
+      <div id="modal-result" class="modal-result"></div>
     </div>
 
-    <div class="field">
-      <label id="name-label">Player Name</label>
-      <input type="text" id="admin-name" placeholder="Exact username">
-    </div>
-
-    <div class="field" id="salary-field">
-      <label>Salary</label>
-      <input type="number" id="admin-salary" placeholder="e.g. 10000000">
-    </div>
-
-    <div class="field hidden" id="team-field">
-      <label>Team</label>
-      <select id="admin-team">
-        <option value="Free Agent">Free Agent</option>
-        <option value="Atlanta Hawks">Atlanta Hawks</option>
-        <option value="Boston Celtics">Boston Celtics</option>
-        <option value="Brooklyn Nets">Brooklyn Nets</option>
-        <option value="Charlotte Hornets">Charlotte Hornets</option>
-        <option value="Chicago Bulls">Chicago Bulls</option>
-        <option value="Cleveland Cavaliers">Cleveland Cavaliers</option>
-        <option value="Dallas Mavericks">Dallas Mavericks</option>
-        <option value="Denver Nuggets">Denver Nuggets</option>
-        <option value="Detroit Pistons">Detroit Pistons</option>
-        <option value="Golden State Warriors">Golden State Warriors</option>
-        <option value="Houston Rockets">Houston Rockets</option>
-        <option value="Indiana Pacers">Indiana Pacers</option>
-        <option value="LA Clippers">LA Clippers</option>
-        <option value="Los Angeles Lakers">Los Angeles Lakers</option>
-        <option value="Memphis Grizzlies">Memphis Grizzlies</option>
-        <option value="Miami Heat">Miami Heat</option>
-        <option value="Milwaukee Bucks">Milwaukee Bucks</option>
-        <option value="Minnesota Timberwolves">Minnesota Timberwolves</option>
-        <option value="New Orleans Pelicans">New Orleans Pelicans</option>
-        <option value="New York Knicks">New York Knicks</option>
-        <option value="Oklahoma City Thunder">Oklahoma City Thunder</option>
-        <option value="Orlando Magic">Orlando Magic</option>
-        <option value="Philadelphia 76ers">Philadelphia 76ers</option>
-        <option value="Phoenix Suns">Phoenix Suns</option>
-        <option value="Portland Trail Blazers">Portland Trail Blazers</option>
-        <option value="Sacramento Kings">Sacramento Kings</option>
-        <option value="San Antonio Spurs">San Antonio Spurs</option>
-        <option value="Toronto Raptors">Toronto Raptors</option>
-        <option value="Utah Jazz">Utah Jazz</option>
-        <option value="Washington Wizards">Washington Wizards</option>
-      </select>
-    </div>
-
-    <div class="field hidden" id="newname-field">
-      <label>New Name</label>
-      <input type="text" id="admin-newname" placeholder="New username">
-    </div>
-
-    <div id="modal-result" class="modal-result"></div>
-
-    <div class="modal-actions">
-      <button class="btn-primary" onclick="submitAdmin()">Apply</button>
-      <button class="btn-ghost" onclick="closeAdmin()">Cancel</button>
+    <div style="margin-top:16px;text-align:right;">
+      <button class="btn-ghost" onclick="closeAdmin()">Close</button>
     </div>
   </div>
 </div>
@@ -887,10 +958,13 @@ function render() {
 }
 
 // ── Admin Panel ────────────────────────────────────────────────────────────
+let adminUnlocked = false;
+
 function openAdmin() {
   document.getElementById('admin-modal').classList.add('open');
   document.getElementById('modal-result').className = 'modal-result';
   document.getElementById('modal-result').textContent = '';
+  if (adminUnlocked) renderAdminRoster();
 }
 
 function closeAdmin() {
@@ -899,12 +973,78 @@ function closeAdmin() {
 
 document.getElementById('admin-modal').addEventListener('click', closeAdmin);
 
+async function unlockAdmin() {
+  const password = document.getElementById('admin-pass').value;
+  if (!password) { showResult('Enter the admin password.', 'error'); return; }
+
+  // Verify by doing a harmless test — we just check against a known-safe call.
+  // Actually we reveal the roster section optimistically; any real action will 401 if wrong.
+  adminUnlocked = true;
+  document.getElementById('admin-roster-section').classList.remove('hidden');
+  renderAdminRoster();
+}
+
+function renderAdminRoster() {
+  const q = (document.getElementById('admin-search')?.value || '').toLowerCase();
+  const sorted = [...allPlayers].sort((a, b) => a.team.localeCompare(b.team) || a.name.localeCompare(b.name));
+  const filtered = q ? sorted.filter(p => p.name.toLowerCase().includes(q) || p.team.toLowerCase().includes(q)) : sorted;
+
+  const container = document.getElementById('admin-roster-table');
+  if (!filtered.length) {
+    container.innerHTML = '<div style="padding:24px;text-align:center;color:var(--muted);font-size:13px;">No players match your search.</div>';
+    return;
+  }
+
+  container.innerHTML = filtered.map(p => `
+    <div class="admin-row">
+      <span class="admin-row-name">${p.name}</span>
+      <span class="admin-row-team">${p.team}</span>
+      <input
+        class="admin-salary-input"
+        type="number"
+        value="${p.salary}"
+        id="sal-${CSS.escape(p.name)}"
+        onkeydown="if(event.key==='Enter')saveSalaryInline('${p.name.replace(/'/g,"\\'")}',this)"
+      >
+      <button class="admin-save-btn" onclick="saveSalaryInline('${p.name.replace(/'/g,"\\'")}', document.getElementById('sal-${CSS.escape(p.name)}'))">Save</button>
+    </div>
+  `).join('');
+}
+
+async function saveSalaryInline(name, inputEl) {
+  const password = document.getElementById('admin-pass').value;
+  const salary = Number(inputEl.value);
+  if (!salary || salary < 0) { showResult('Invalid salary.', 'error'); return; }
+
+  const btn = inputEl.nextElementSibling;
+  if (btn) { btn.textContent = '…'; btn.disabled = true; }
+
+  try {
+    const res = await fetch('/api/admin', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password, action: 'setSalary', name, salary })
+    });
+    const data = await res.json();
+    if (data.ok) {
+      showResult(data.message, 'success');
+      await loadPlayers();
+      renderAdminRoster();
+    } else {
+      showResult(data.error || 'Something went wrong.', 'error');
+    }
+  } catch (e) {
+    showResult('Network error.', 'error');
+  } finally {
+    if (btn) { btn.textContent = 'Save'; btn.disabled = false; }
+  }
+}
+
 function setAction(action, btn) {
   currentAction = action;
   document.querySelectorAll('.action-tab').forEach(t => t.classList.remove('active'));
   btn.classList.add('active');
 
-  // Show/hide fields based on action
   document.getElementById('salary-field').classList.toggle('hidden',
     !['setSalary', 'addPlayer'].includes(action));
   document.getElementById('team-field').classList.toggle('hidden',
@@ -922,7 +1062,6 @@ async function submitAdmin() {
   const salary = document.getElementById('admin-salary').value;
   const team = document.getElementById('admin-team').value;
   const newName = document.getElementById('admin-newname').value.trim();
-  const resultEl = document.getElementById('modal-result');
 
   if (!password) { showResult('Enter the admin password.', 'error'); return; }
   if (!name) { showResult('Enter a player name.', 'error'); return; }
@@ -939,6 +1078,7 @@ async function submitAdmin() {
     if (data.ok) {
       showResult(data.message, 'success');
       await loadPlayers();
+      renderAdminRoster();
     } else {
       showResult(data.error || 'Something went wrong.', 'error');
     }
