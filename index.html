@@ -1002,15 +1002,16 @@ function renderAdminRoster() {
         class="admin-salary-input"
         type="number"
         value="${p.salary}"
-        id="sal-${CSS.escape(p.name)}"
-        onkeydown="if(event.key==='Enter')saveSalaryInline('${p.name.replace(/'/g,"\\'")}',this)"
+        data-player="${encodeURIComponent(p.name)}"
+        onkeydown="if(event.key==='Enter')saveSalaryInline(this.dataset.player, this)"
       >
-      <button class="admin-save-btn" onclick="saveSalaryInline('${p.name.replace(/'/g,"\\'")}', document.getElementById('sal-${CSS.escape(p.name)}'))">Save</button>
+      <button class="admin-save-btn" onclick="saveSalaryInline(this.previousElementSibling.dataset.player, this.previousElementSibling)">Save</button>
     </div>
   `).join('');
 }
 
-async function saveSalaryInline(name, inputEl) {
+async function saveSalaryInline(encodedName, inputEl) {
+  const name = decodeURIComponent(encodedName);
   const password = document.getElementById('admin-pass').value;
   const salary = Number(inputEl.value);
   if (!salary || salary < 0) { showResult('Invalid salary.', 'error'); return; }
