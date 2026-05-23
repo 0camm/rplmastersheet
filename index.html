@@ -49,8 +49,58 @@
     text-transform: uppercase;
     color: var(--muted);
   }
-
   .nav-cap strong { color: #fff; margin-left: 6px; }
+
+  .nav-right { display: flex; align-items: center; gap: 12px; }
+
+  .discord-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #5865F2;
+    color: #fff;
+    border: none;
+    border-radius: 7px;
+    padding: 8px 16px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+    transition: background .2s;
+  }
+  .discord-btn:hover { background: #4752c4; }
+
+  .user-chip {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    padding: 6px 12px;
+    font-size: 12px;
+    color: var(--text);
+  }
+  .user-chip .dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: #00dc64;
+  }
+
+  .admin-btn {
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    padding: 7px 14px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--muted);
+    cursor: pointer;
+    transition: color .2s, border-color .2s;
+  }
+  .admin-btn:hover { color: #fff; border-color: rgba(255,255,255,.2); }
 
   .page-header {
     padding: 52px 40px 36px;
@@ -72,11 +122,9 @@
     align-items: center;
     gap: 8px;
   }
-
   .page-eyebrow::before {
     content: '';
-    width: 18px;
-    height: 2px;
+    width: 18px; height: 2px;
     background: var(--red);
     border-radius: 2px;
   }
@@ -122,7 +170,6 @@
     outline: none;
     transition: border-color .2s;
   }
-
   .search-input::placeholder { color: var(--muted); }
   .search-input:focus { border-color: rgba(232,0,29,.4); }
 
@@ -146,7 +193,6 @@
     transition: color .2s, background .2s;
     letter-spacing: .02em;
   }
-
   .tab:hover { color: #fff; background: rgba(255,255,255,.05); }
   .tab.active { color: #fff; background: var(--surface2); }
 
@@ -166,7 +212,6 @@
     transition: border-color .2s, transform .2s;
     cursor: pointer;
   }
-
   .team-card:hover { border-color: rgba(255,255,255,.12); transform: translateY(-2px); }
   .team-card.open { border-color: rgba(232,0,29,.25); }
 
@@ -178,18 +223,15 @@
   }
 
   .team-logo-wrap {
-    width: 40px;
-    height: 40px;
+    width: 40px; height: 40px;
     flex-shrink: 0;
     display: flex;
     align-items: center;
     justify-content: center;
   }
-
   .team-logo-wrap img { width: 38px; height: 38px; object-fit: contain; }
 
   .team-name-block { flex: 1; min-width: 0; }
-
   .team-name {
     font-weight: 600;
     font-size: 14px;
@@ -198,37 +240,31 @@
     overflow: hidden;
     text-overflow: ellipsis;
   }
-
   .team-player-count { font-size: 11px; color: var(--muted); margin-top: 2px; }
 
   .team-salary-block { text-align: right; flex-shrink: 0; }
-
   .team-salary-num {
     font-family: 'Bebas Neue', sans-serif;
     font-size: 22px;
     letter-spacing: .04em;
     color: #fff;
   }
-
   .team-cap-pct { font-size: 11px; color: var(--muted); margin-top: 2px; }
   .team-cap-pct.over { color: var(--red); }
 
   .cap-bar-wrap { padding: 0 20px 16px; }
-
   .cap-bar-track {
     height: 3px;
     background: rgba(255,255,255,.06);
     border-radius: 3px;
     overflow: hidden;
   }
-
   .cap-bar-fill {
     height: 100%;
     border-radius: 3px;
     background: var(--red);
     transition: width .4s ease;
   }
-
   .cap-bar-fill.safe { background: #00dc64; }
   .cap-bar-fill.warn { background: #f59e0b; }
   .cap-bar-fill.over { background: var(--red); }
@@ -245,7 +281,6 @@
     color: var(--muted);
     transition: color .2s;
   }
-
   .team-card:hover .team-toggle { color: #888; }
   .team-card.open .team-toggle { color: var(--red); }
 
@@ -263,12 +298,9 @@
     border-bottom: 1px solid rgba(255,255,255,.03);
     transition: background .15s;
   }
-
   .player-row:last-child { border-bottom: none; }
   .player-row:hover { background: rgba(255,255,255,.03); }
-
   .player-name { font-size: 13px; color: #ccc; font-weight: 500; }
-
   .player-salary {
     font-family: 'Bebas Neue', sans-serif;
     font-size: 15px;
@@ -277,22 +309,20 @@
     letter-spacing: .05em;
   }
 
+  /* FA */
   .fa-section { margin-top: 48px; }
-
   .fa-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
     margin-bottom: 16px;
   }
-
   .fa-title {
     font-family: 'Bebas Neue', sans-serif;
     font-size: 28px;
     letter-spacing: .04em;
     color: #fff;
   }
-
   .fa-count {
     font-size: 11px;
     font-weight: 600;
@@ -304,13 +334,11 @@
     padding: 4px 12px;
     border-radius: 20px;
   }
-
   .fa-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
     gap: 8px;
   }
-
   .fa-card {
     background: var(--surface);
     border: 1px solid var(--border);
@@ -321,11 +349,8 @@
     justify-content: space-between;
     transition: border-color .2s, background .2s;
   }
-
   .fa-card:hover { background: var(--surface2); border-color: rgba(255,255,255,.1); }
-
   .fa-name { font-size: 13px; color: #bbb; font-weight: 500; }
-
   .fa-badge {
     font-family: 'Bebas Neue', sans-serif;
     font-size: 14px;
@@ -333,18 +358,194 @@
     color: var(--red);
   }
 
+  /* Admin Modal */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.7);
+    backdrop-filter: blur(6px);
+    z-index: 200;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .2s;
+  }
+  .modal-overlay.open { opacity: 1; pointer-events: all; }
+
+  .modal {
+    background: var(--surface);
+    border: 1px solid rgba(255,255,255,.1);
+    border-radius: 14px;
+    padding: 32px;
+    width: 480px;
+    max-width: 95vw;
+    transform: translateY(10px);
+    transition: transform .2s;
+  }
+  .modal-overlay.open .modal { transform: translateY(0); }
+
+  .modal-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 26px;
+    letter-spacing: .04em;
+    color: #fff;
+    margin-bottom: 6px;
+  }
+  .modal-sub { font-size: 12px; color: var(--muted); margin-bottom: 24px; }
+
+  .field { margin-bottom: 14px; }
+  .field label {
+    display: block;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+  .field input, .field select {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    padding: 10px 14px;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    outline: none;
+    transition: border-color .2s;
+  }
+  .field input:focus, .field select:focus { border-color: rgba(232,0,29,.4); }
+  .field select option { background: #111; }
+
+  .modal-actions { display: flex; gap: 10px; margin-top: 20px; }
+
+  .btn-primary {
+    flex: 1;
+    background: var(--red);
+    color: #fff;
+    border: none;
+    border-radius: 7px;
+    padding: 11px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background .2s;
+  }
+  .btn-primary:hover { background: #c0001a; }
+
+  .btn-ghost {
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    padding: 11px 20px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--muted);
+    cursor: pointer;
+    transition: color .2s;
+  }
+  .btn-ghost:hover { color: #fff; }
+
+  .toast {
+    position: fixed;
+    bottom: 28px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 20px;
+    font-size: 13px;
+    color: var(--text);
+    z-index: 300;
+    opacity: 0;
+    transition: opacity .25s, transform .25s;
+    white-space: nowrap;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  .toast.error { border-color: rgba(232,0,29,.4); color: var(--red); }
+  .toast.success { border-color: rgba(0,220,100,.3); color: #00dc64; }
+
+  .modal-result {
+    margin-top: 14px;
+    padding: 10px 14px;
+    border-radius: 7px;
+    font-size: 13px;
+    display: none;
+  }
+  .modal-result.success { background: rgba(0,220,100,.08); color: #00dc64; border: 1px solid rgba(0,220,100,.2); display: block; }
+  .modal-result.error { background: rgba(232,0,29,.08); color: var(--red); border: 1px solid rgba(232,0,29,.2); display: block; }
+
+  .action-tabs { display: flex; gap: 6px; margin-bottom: 20px; flex-wrap: wrap; }
+  .action-tab {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all .2s;
+  }
+  .action-tab:hover { color: #fff; }
+  .action-tab.active { background: var(--red-dim); border-color: rgba(232,0,29,.3); color: #fff; }
+
   .empty { text-align: center; padding: 80px 20px; color: var(--muted); }
   .empty-icon { font-size: 40px; margin-bottom: 12px; opacity: .4; }
   .empty-text { font-size: 14px; }
 
   .hidden { display: none !important; }
+
+  .loading-bar {
+    height: 2px;
+    background: var(--red);
+    width: 0%;
+    position: fixed;
+    top: 0; left: 0;
+    z-index: 999;
+    transition: width .3s ease;
+  }
+
+  /* Registration banner */
+  .reg-banner {
+    background: rgba(0,220,100,.08);
+    border-bottom: 1px solid rgba(0,220,100,.15);
+    padding: 12px 40px;
+    font-size: 13px;
+    color: #00dc64;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
 </style>
 </head>
 <body>
 
+<div class="loading-bar" id="loading-bar"></div>
+
 <nav>
   <div class="nav-cap">Salary Cap <strong>$58M</strong></div>
+  <div class="nav-right">
+    <div id="user-area">
+      <a class="discord-btn" href="/api/auth/discord" id="login-btn">
+        <svg width="16" height="12" viewBox="0 0 16 12" fill="none">
+          <path d="M13.552 1.02A13.25 13.25 0 0 0 10.26 0c-.155.277-.336.65-.46.946a12.3 12.3 0 0 0-3.6 0A10.13 10.13 0 0 0 5.738 0 13.298 13.298 0 0 0 2.443 1.023C.352 4.147-.215 7.194.068 10.199a13.36 13.36 0 0 0 4.072 2.057 10.1 10.1 0 0 0 .872-1.424 8.658 8.658 0 0 1-1.373-.66c.115-.084.228-.172.337-.262a9.516 9.516 0 0 0 8.048 0c.11.09.223.178.337.263a8.68 8.68 0 0 1-1.376.661c.254.505.548.983.872 1.424a13.32 13.32 0 0 0 4.075-2.058c.334-3.488-.568-6.506-2.38-9.18ZM5.34 8.35c-.777 0-1.414-.714-1.414-1.59 0-.876.622-1.591 1.414-1.591.793 0 1.43.715 1.415 1.59C6.756 7.636 6.134 8.35 5.341 8.35Zm5.32 0c-.778 0-1.414-.714-1.414-1.59 0-.876.621-1.591 1.413-1.591.793 0 1.43.715 1.414 1.59 0 .877-.62 1.591-1.413 1.591Z" fill="white"/>
+        </svg>
+        Login with Discord
+      </a>
+    </div>
+    <button class="admin-btn" onclick="openAdmin()">⚙ Admin</button>
+  </div>
 </nav>
+
+<div id="reg-banner" class="reg-banner hidden"></div>
 
 <div class="page-header">
   <div class="page-header-left">
@@ -368,9 +569,13 @@
 
 <main>
   <div id="view-teams">
-    <div class="teams-grid" id="teams-grid"></div>
+    <div class="teams-grid" id="teams-grid">
+      <div class="empty" style="grid-column:1/-1">
+        <div class="empty-icon">⏳</div>
+        <div class="empty-text">Loading roster data…</div>
+      </div>
+    </div>
   </div>
-
   <div id="view-fa" class="hidden">
     <div class="fa-section">
       <div class="fa-header">
@@ -381,6 +586,88 @@
     </div>
   </div>
 </main>
+
+<!-- Admin Modal -->
+<div class="modal-overlay" id="admin-modal">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-title">Admin Panel</div>
+    <div class="modal-sub">Changes apply instantly to the live site.</div>
+
+    <div class="action-tabs">
+      <button class="action-tab active" onclick="setAction('setSalary', this)">Set Salary</button>
+      <button class="action-tab" onclick="setAction('setTeam', this)">Set Team</button>
+      <button class="action-tab" onclick="setAction('addPlayer', this)">Add Player</button>
+      <button class="action-tab" onclick="setAction('removePlayer', this)">Remove Player</button>
+      <button class="action-tab" onclick="setAction('renamePlayer', this)">Rename Player</button>
+    </div>
+
+    <div class="field">
+      <label>Admin Password</label>
+      <input type="password" id="admin-pass" placeholder="Enter password">
+    </div>
+
+    <div class="field">
+      <label id="name-label">Player Name</label>
+      <input type="text" id="admin-name" placeholder="Exact username">
+    </div>
+
+    <div class="field" id="salary-field">
+      <label>Salary</label>
+      <input type="number" id="admin-salary" placeholder="e.g. 10000000">
+    </div>
+
+    <div class="field hidden" id="team-field">
+      <label>Team</label>
+      <select id="admin-team">
+        <option value="Free Agent">Free Agent</option>
+        <option value="Atlanta Hawks">Atlanta Hawks</option>
+        <option value="Boston Celtics">Boston Celtics</option>
+        <option value="Brooklyn Nets">Brooklyn Nets</option>
+        <option value="Charlotte Hornets">Charlotte Hornets</option>
+        <option value="Chicago Bulls">Chicago Bulls</option>
+        <option value="Cleveland Cavaliers">Cleveland Cavaliers</option>
+        <option value="Dallas Mavericks">Dallas Mavericks</option>
+        <option value="Denver Nuggets">Denver Nuggets</option>
+        <option value="Detroit Pistons">Detroit Pistons</option>
+        <option value="Golden State Warriors">Golden State Warriors</option>
+        <option value="Houston Rockets">Houston Rockets</option>
+        <option value="Indiana Pacers">Indiana Pacers</option>
+        <option value="LA Clippers">LA Clippers</option>
+        <option value="Los Angeles Lakers">Los Angeles Lakers</option>
+        <option value="Memphis Grizzlies">Memphis Grizzlies</option>
+        <option value="Miami Heat">Miami Heat</option>
+        <option value="Milwaukee Bucks">Milwaukee Bucks</option>
+        <option value="Minnesota Timberwolves">Minnesota Timberwolves</option>
+        <option value="New Orleans Pelicans">New Orleans Pelicans</option>
+        <option value="New York Knicks">New York Knicks</option>
+        <option value="Oklahoma City Thunder">Oklahoma City Thunder</option>
+        <option value="Orlando Magic">Orlando Magic</option>
+        <option value="Philadelphia 76ers">Philadelphia 76ers</option>
+        <option value="Phoenix Suns">Phoenix Suns</option>
+        <option value="Portland Trail Blazers">Portland Trail Blazers</option>
+        <option value="Sacramento Kings">Sacramento Kings</option>
+        <option value="San Antonio Spurs">San Antonio Spurs</option>
+        <option value="Toronto Raptors">Toronto Raptors</option>
+        <option value="Utah Jazz">Utah Jazz</option>
+        <option value="Washington Wizards">Washington Wizards</option>
+      </select>
+    </div>
+
+    <div class="field hidden" id="newname-field">
+      <label>New Name</label>
+      <input type="text" id="admin-newname" placeholder="New username">
+    </div>
+
+    <div id="modal-result" class="modal-result"></div>
+
+    <div class="modal-actions">
+      <button class="btn-primary" onclick="submitAdmin()">Apply</button>
+      <button class="btn-ghost" onclick="closeAdmin()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
 
 <script>
 const CAP = 58000000;
@@ -427,127 +714,51 @@ const logos = {
   "Washington Wizards":"https://loodibee.com/wp-content/uploads/nba-washington-wizards-logo.png"
 };
 
-const allPlayers = [
-  {name:"Cal4ug", team:"Free Agent", salary:20000000},
-  {name:"angentdrake", team:"Free Agent", salary:20000000},
-  {name:"Cahmmie", team:"Free Agent", salary:18000000},
-  {name:"zPud", team:"Free Agent", salary:18000000},
-  {name:"indepzndent", team:"Free Agent", salary:18000000},
-  {name:"urhurtingmyego", team:"Free Agent", salary:15000000},
-  {name:"datboicartier", team:"Free Agent", salary:15000000},
-  {name:"TomPooleyFan", team:"Free Agent", salary:15000000},
-  {name:"Slapclosed", team:"Free Agent", salary:15000000},
-  {name:"blessedjei", team:"Free Agent", salary:15000000},
-  {name:"chicagomade", team:"Free Agent", salary:12000000},
-  {name:"Tw5gz", team:"Free Agent", salary:12000000},
-  {name:"SIROOF5", team:"Free Agent", salary:12000000},
-  {name:"KeepRepeatin", team:"Free Agent", salary:12000000},
-  {name:"FlashyMorant", team:"Free Agent", salary:10000000},
-  {name:"Norrthside", team:"Free Agent", salary:10000000},
-  {name:"3ptaether", team:"Free Agent", salary:10000000},
-  {name:"k_ai6", team:"Free Agent", salary:10000000},
-  {name:"minis", team:"Free Agent", salary:10000000},
-  {name:"LeBewwy", team:"Free Agent", salary:10000000},
-  {name:"UN90247807", team:"Free Agent", salary:10000000},
-  {name:"o6il", team:"Free Agent", salary:10000000},
-  {name:"z01nc", team:"Free Agent", salary:10000000},
-  {name:"SirPartum", team:"Free Agent", salary:8000000},
-  {name:"omxrzen", team:"Free Agent", salary:8000000},
-  {name:"scmnia", team:"Free Agent", salary:8000000},
-  {name:"KvngDraco_omq", team:"Free Agent", salary:8000000},
-  {name:"NumberNineOnMyBody", team:"Free Agent", salary:8000000},
-  {name:"kasotheboss101", team:"Free Agent", salary:8000000},
-  {name:"Cyim", team:"Free Agent", salary:8000000},
-  {name:"SeveralReminders", team:"Free Agent", salary:8000000},
-  {name:"24kslxckz", team:"Free Agent", salary:8000000},
-  {name:"TrickzXV", team:"Free Agent", salary:8000000},
-  {name:"vAcevx", team:"Free Agent", salary:5000000},
-  {name:"0_CAMERON", team:"Free Agent", salary:5000000},
-  {name:"1TickingBomb", team:"Free Agent", salary:5000000},
-  {name:"BenJokic", team:"Free Agent", salary:5000000},
-  {name:"ComplyAPlayMaker", team:"Free Agent", salary:5000000},
-  {name:"lockedtrigg", team:"Free Agent", salary:5000000},
-  {name:"WITHOUTLOVE", team:"Free Agent", salary:5000000},
-  {name:"whatare_udoing24", team:"Free Agent", salary:5000000},
-  {name:"chipsahoy_224", team:"Free Agent", salary:5000000},
-  {name:"JaxTatumo", team:"Free Agent", salary:5000000},
-  {name:"EazyEfan_9", team:"Free Agent", salary:5000000},
-  {name:"MaybeLaMelo", team:"Free Agent", salary:5000000},
-  {name:"DVLOZ", team:"Free Agent", salary:5000000},
-  {name:"gw0bal", team:"Free Agent", salary:5000000},
-  {name:"popthem10s", team:"Free Agent", salary:5000000},
-  {name:"pelonagarra28", team:"Free Agent", salary:5000000},
-  {name:"spazfromyukatan", team:"Free Agent", salary:5000000},
-  {name:"berrymuch", team:"Free Agent", salary:5000000},
-  {name:"Curryxiz", team:"Free Agent", salary:5000000},
-  {name:"FazeARTOXY", team:"Free Agent", salary:5000000},
-  {name:"1rocketrider2", team:"Free Agent", salary:2000000},
-  {name:"lostfacing", team:"Free Agent", salary:2000000},
-  {name:"yurr0757", team:"Free Agent", salary:2000000},
-  {name:"devvls", team:"Free Agent", salary:2000000},
-  {name:"McJackal", team:"Free Agent", salary:2000000},
-  {name:"scofieldiso", team:"Free Agent", salary:2000000},
-  {name:"seriouslymood", team:"Free Agent", salary:2000000},
-  {name:"melo_chattt", team:"Free Agent", salary:2000000},
-  {name:"LOCOIIIIIIIIIIIII3", team:"Free Agent", salary:2000000},
-  {name:"eastlannd", team:"Free Agent", salary:2000000},
-  {name:"LostGuapo", team:"Free Agent", salary:2000000},
-  {name:"conzlx", team:"Free Agent", salary:2000000},
-  {name:"PatrickMahomes15QB", team:"Free Agent", salary:2000000},
-  {name:"ForwardGrowth8", team:"Free Agent", salary:2000000},
-  {name:"202Franklin", team:"Free Agent", salary:2000000},
-  {name:"10K_Trxyy", team:"Free Agent", salary:2000000},
-  {name:"GodBaconSama", team:"Free Agent", salary:2000000},
-  {name:"mrqchives", team:"Free Agent", salary:2000000},
-  {name:"B_ones", team:"Free Agent", salary:2000000},
-  {name:"coldactavis", team:"Free Agent", salary:2000000},
-  {name:"fyuwu", team:"Free Agent", salary:2000000},
-  {name:"ttehdyhdigdyf", team:"Free Agent", salary:2000000},
-  {name:"SimplyMikey", team:"Free Agent", salary:2000000},
-  {name:"tysoneatsbruh", team:"Free Agent", salary:2000000},
-  {name:"underr4te", team:"Free Agent", salary:2000000},
-  {name:"mysafeplacee", team:"Free Agent", salary:2000000},
-  {name:"alexthegod2k9", team:"Free Agent", salary:2000000},
-  {name:"exlehskee", team:"Free Agent", salary:2000000},
-  {name:"boshrpl", team:"Free Agent", salary:2000000},
-  {name:"4bigguys957", team:"Free Agent", salary:2000000},
-  {name:"Tylerpokefan20", team:"Free Agent", salary:2000000},
-  {name:"KageWrld", team:"Free Agent", salary:2000000},
-  {name:"sh4rking", team:"Free Agent", salary:2000000},
-  {name:"ArmyPG3", team:"Free Agent", salary:2000000},
-  {name:"Vctixi", team:"Free Agent", salary:2000000},
-  {name:"MarkelleFultz", team:"Free Agent", salary:2000000},
-  {name:"Orlentation", team:"Free Agent", salary:2000000},
-  {name:"aydenworld40", team:"Free Agent", salary:2000000},
-  {name:"supremekai4470", team:"Free Agent", salary:2000000},
-  {name:"Phily1018", team:"Free Agent", salary:2000000},
-  {name:"klidya", team:"Free Agent", salary:2000000},
-  {name:"jschopa", team:"Free Agent", salary:2000000},
-  {name:"LordWInter", team:"Free Agent", salary:2000000},
-  {name:"p_avle", team:"Free Agent", salary:2000000},
-  {name:"Grayfullgod", team:"Free Agent", salary:2000000},
-  {name:"Sxull47", team:"Free Agent", salary:2000000},
-  {name:"Gamingwit_kdog", team:"Free Agent", salary:2000000},
-  {name:"CWGAMING64", team:"Free Agent", salary:2000000},
-  {name:"Athleris", team:"Free Agent", salary:2000000},
-  {name:"Nxttro", team:"Free Agent", salary:2000000},
-  {name:"HoldMah3s", team:"Free Agent", salary:2000000},
-  {name:"carsonwrld22", team:"Free Agent", salary:2000000},
-  {name:"ityaboykp", team:"Free Agent", salary:2000000},
-  {name:"ch_ef7s", team:"Free Agent", salary:2000000},
-  {name:"piercebot712", team:"Free Agent", salary:2000000},
-  {name:"XxxZiiionxxxX", team:"Free Agent", salary:2000000},
-  {name:"Masonisthatguy12", team:"Free Agent", salary:2000000},
-  {name:"idiedso", team:"Free Agent", salary:2000000},
-  {name:"wolfspirit3000", team:"Free Agent", salary:2000000},
-  {name:"K20MyHo", team:"Free Agent", salary:2000000},
-  {name:"CameronJohnsonF2", team:"Free Agent", salary:2000000},
-  {name:"aupkzr", team:"Free Agent", salary:5000000},
-];
-
+let allPlayers = [];
 let currentTab = 'teams';
 let searchQuery = '';
+let currentAction = 'setSalary';
 
+// ── Load players from API ──────────────────────────────────────────────────
+async function loadPlayers() {
+  setLoading(true);
+  try {
+    const res = await fetch('/api/players');
+    allPlayers = await res.json();
+  } catch (e) {
+    showToast('Failed to load roster data', 'error');
+  }
+  setLoading(false);
+  render();
+}
+
+function setLoading(on) {
+  const bar = document.getElementById('loading-bar');
+  bar.style.width = on ? '70%' : '100%';
+  if (!on) setTimeout(() => bar.style.width = '0%', 300);
+}
+
+// ── Registration banner ────────────────────────────────────────────────────
+function checkRegistration() {
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('registered')) {
+    const name = params.get('name');
+    const team = params.get('team');
+    const banner = document.getElementById('reg-banner');
+    banner.textContent = `✓ Welcome, ${name}! You've been registered to ${team}.`;
+    banner.classList.remove('hidden');
+    // Show logged-in chip
+    document.getElementById('user-area').innerHTML = `
+      <div class="user-chip">
+        <div class="dot"></div>
+        ${name} · ${team}
+      </div>`;
+    // Clean URL
+    window.history.replaceState({}, '', '/');
+  }
+}
+
+// ── Render ─────────────────────────────────────────────────────────────────
 function groupByTeam(players) {
   const map = {};
   teamList.forEach(t => map[t] = []);
@@ -572,7 +783,6 @@ function renderTeams() {
   const q = searchQuery.toLowerCase();
   const grid = document.getElementById('teams-grid');
   const grouped = groupByTeam(allPlayers);
-
   let html = '';
   let anyVisible = false;
 
@@ -625,8 +835,7 @@ function renderTeams() {
             </div>
           `).join('')}
         </div>
-      </div>
-    `;
+      </div>`;
   });
 
   if (!anyVisible) {
@@ -635,31 +844,20 @@ function renderTeams() {
       <div class="empty-text">No teams or players match "<strong>${q}</strong>"</div>
     </div>`;
   }
-
   grid.innerHTML = html;
 }
 
 function renderFA() {
   const q = searchQuery.toLowerCase();
-  const grid = document.getElementById('fa-grid');
-  const countEl = document.getElementById('fa-count');
-
-  // FIX: derive free agents directly from allPlayers
   const freeAgents = allPlayers.filter(p => p.team === 'Free Agent');
-
-  const filtered = q
-    ? freeAgents.filter(p => p.name.toLowerCase().includes(q))
-    : freeAgents;
-
-  countEl.textContent = `${filtered.length} player${filtered.length !== 1 ? 's' : ''}`;
-
-  grid.innerHTML = filtered.length
+  const filtered = q ? freeAgents.filter(p => p.name.toLowerCase().includes(q)) : freeAgents;
+  document.getElementById('fa-count').textContent = `${filtered.length} player${filtered.length !== 1 ? 's' : ''}`;
+  document.getElementById('fa-grid').innerHTML = filtered.length
     ? filtered.map(p => `
         <div class="fa-card">
           <span class="fa-name">${p.name}</span>
           <span class="fa-badge">${fmt(p.salary)}</span>
-        </div>
-      `).join('')
+        </div>`).join('')
     : `<div class="empty" style="grid-column:1/-1">
         <div class="empty-icon">🏀</div>
         <div class="empty-text">No free agents match "<strong>${q}</strong>"</div>
@@ -685,6 +883,82 @@ function render() {
   }
 }
 
+// ── Admin Panel ────────────────────────────────────────────────────────────
+function openAdmin() {
+  document.getElementById('admin-modal').classList.add('open');
+  document.getElementById('modal-result').className = 'modal-result';
+  document.getElementById('modal-result').textContent = '';
+}
+
+function closeAdmin() {
+  document.getElementById('admin-modal').classList.remove('open');
+}
+
+document.getElementById('admin-modal').addEventListener('click', closeAdmin);
+
+function setAction(action, btn) {
+  currentAction = action;
+  document.querySelectorAll('.action-tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+
+  // Show/hide fields based on action
+  document.getElementById('salary-field').classList.toggle('hidden',
+    !['setSalary', 'addPlayer'].includes(action));
+  document.getElementById('team-field').classList.toggle('hidden',
+    !['setTeam', 'addPlayer'].includes(action));
+  document.getElementById('newname-field').classList.toggle('hidden',
+    action !== 'renamePlayer');
+
+  const nameLabel = document.getElementById('name-label');
+  nameLabel.textContent = action === 'addPlayer' ? 'Player Name (to add)' : 'Player Name';
+}
+
+async function submitAdmin() {
+  const password = document.getElementById('admin-pass').value;
+  const name = document.getElementById('admin-name').value.trim();
+  const salary = document.getElementById('admin-salary').value;
+  const team = document.getElementById('admin-team').value;
+  const newName = document.getElementById('admin-newname').value.trim();
+  const resultEl = document.getElementById('modal-result');
+
+  if (!password) { showResult('Enter the admin password.', 'error'); return; }
+  if (!name) { showResult('Enter a player name.', 'error'); return; }
+
+  const body = { password, action: currentAction, name, salary, team, newName };
+
+  try {
+    const res = await fetch('/api/admin', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+    const data = await res.json();
+    if (data.ok) {
+      showResult(data.message, 'success');
+      await loadPlayers();
+    } else {
+      showResult(data.error || 'Something went wrong.', 'error');
+    }
+  } catch (e) {
+    showResult('Network error.', 'error');
+  }
+}
+
+function showResult(msg, type) {
+  const el = document.getElementById('modal-result');
+  el.textContent = msg;
+  el.className = `modal-result ${type}`;
+}
+
+// ── Toast ──────────────────────────────────────────────────────────────────
+function showToast(msg, type = '') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = `toast ${type} show`;
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// ── Event listeners ────────────────────────────────────────────────────────
 document.querySelectorAll('.tab').forEach(tab => {
   tab.addEventListener('click', () => {
     document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
@@ -699,7 +973,9 @@ document.getElementById('search').addEventListener('input', e => {
   render();
 });
 
-render();
+// ── Init ───────────────────────────────────────────────────────────────────
+checkRegistration();
+loadPlayers();
 </script>
 </body>
 </html>
