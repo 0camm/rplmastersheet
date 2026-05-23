@@ -90,7 +90,8 @@ export default async function handler(req, res) {
     }
   }
 
-  const username = user.global_name || user.username;
+  // Always use the actual Discord username (not display name / global_name)
+  const username = user.username;
   const existing = await redis.hget('players', user.id);
   const salary = existing ? existing.salary : 2000000;
 
