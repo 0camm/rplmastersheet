@@ -27,175 +27,139 @@
     font-family: 'DM Sans', sans-serif;
     font-size: 14px;
     min-height: 100vh;
+    overflow-x: hidden;
   }
 
+  /* ── LOADING BAR ── */
+  .loading-bar {
+    height: 2px;
+    background: var(--red);
+    width: 0%;
+    position: fixed;
+    top: 0; left: 0;
+    z-index: 999;
+    transition: width .3s ease;
+  }
+
+  /* ── NAV ── */
   nav {
-    position: sticky;
-    top: 0;
-    z-index: 100;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0 40px;
-    height: 58px;
+    position: sticky; top: 0; z-index: 100;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 40px; height: 58px;
     background: rgba(6,6,8,.9);
     backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+    gap: 12px;
   }
 
   .nav-cap {
-    font-size: 11px;
-    font-weight: 600;
-    letter-spacing: .08em;
-    text-transform: uppercase;
-    color: var(--muted);
+    font-size: 11px; font-weight: 600;
+    letter-spacing: .08em; text-transform: uppercase;
+    color: var(--muted); white-space: nowrap;
   }
   .nav-cap strong { color: #fff; margin-left: 6px; }
 
-  .nav-right { display: flex; align-items: center; gap: 12px; }
+  .nav-right { display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
 
   .discord-btn {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    background: #5865F2;
-    color: #fff;
-    border: none;
-    border-radius: 7px;
-    padding: 8px 16px;
-    font-family: 'DM Sans', sans-serif;
-    font-size: 12px;
-    font-weight: 600;
-    cursor: pointer;
-    text-decoration: none;
-    transition: background .2s;
+    display: flex; align-items: center; gap: 8px;
+    background: #5865F2; color: #fff;
+    border: none; border-radius: 7px; padding: 8px 16px;
+    font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 600;
+    cursor: pointer; text-decoration: none;
+    transition: background .2s; white-space: nowrap;
   }
   .discord-btn:hover { background: #4752c4; }
 
   .user-chip {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 7px;
-    padding: 6px 12px;
-    font-size: 12px;
-    color: var(--text);
+    display: flex; align-items: center; gap: 8px;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 7px; padding: 6px 12px;
+    font-size: 12px; color: var(--text); white-space: nowrap;
+    max-width: 200px; overflow: hidden; text-overflow: ellipsis;
   }
-  .user-chip .dot {
-    width: 7px; height: 7px;
-    border-radius: 50%;
-    background: #00dc64;
-  }
+  .user-chip .dot { width: 7px; height: 7px; border-radius: 50%; background: #00dc64; flex-shrink: 0; }
 
   .admin-btn {
-    background: none;
-    border: 1px solid var(--border);
-    border-radius: 7px;
-    padding: 7px 14px;
-    font-family: 'DM Sans', sans-serif;
-    font-size: 12px;
-    font-weight: 600;
-    color: var(--muted);
-    cursor: pointer;
-    transition: color .2s, border-color .2s;
+    background: none; border: 1px solid var(--border);
+    border-radius: 7px; padding: 7px 14px;
+    font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 600;
+    color: var(--muted); cursor: pointer;
+    transition: color .2s, border-color .2s; white-space: nowrap;
   }
   .admin-btn:hover { color: #fff; border-color: rgba(255,255,255,.2); }
 
+  /* ── REG BANNER ── */
+  .reg-banner {
+    background: rgba(0,220,100,.08);
+    border-bottom: 1px solid rgba(0,220,100,.15);
+    padding: 12px 40px;
+    font-size: 13px; color: #00dc64;
+    display: flex; align-items: center; gap: 8px;
+  }
+
+  /* ── PAGE HEADER ── */
   .page-header {
     padding: 52px 40px 36px;
     border-bottom: 1px solid var(--border);
-    display: flex;
-    align-items: flex-end;
-    justify-content: space-between;
-    gap: 24px;
+    display: flex; align-items: flex-end;
+    justify-content: space-between; gap: 24px;
   }
 
   .page-eyebrow {
-    font-size: 11px;
-    font-weight: 600;
-    letter-spacing: .12em;
-    text-transform: uppercase;
-    color: var(--red);
+    font-size: 11px; font-weight: 600; letter-spacing: .12em;
+    text-transform: uppercase; color: var(--red);
     margin-bottom: 10px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
+    display: flex; align-items: center; gap: 8px;
   }
-  .page-eyebrow::before {
-    content: '';
-    width: 18px; height: 2px;
-    background: var(--red);
-    border-radius: 2px;
-  }
+  .page-eyebrow::before { content:''; width:18px; height:2px; background:var(--red); border-radius:2px; }
 
   .page-title {
     font-family: 'Bebas Neue', sans-serif;
-    font-size: clamp(40px, 5vw, 60px);
-    letter-spacing: .03em;
-    line-height: 1;
-    color: #fff;
+    font-size: clamp(40px,5vw,60px);
+    letter-spacing: .03em; line-height: 1; color: #fff;
   }
 
-  .page-meta {
-    margin-top: 10px;
-    font-size: 13px;
-    color: var(--muted);
-  }
+  .page-meta { margin-top: 10px; font-size: 13px; color: var(--muted); }
 
-  .search-wrap {
-    position: relative;
-    width: 300px;
-    flex-shrink: 0;
-  }
+  .search-wrap { position: relative; width: 300px; flex-shrink: 0; }
 
   .search-icon {
-    position: absolute;
-    left: 14px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: var(--muted);
-    pointer-events: none;
+    position: absolute; left: 14px; top: 50%;
+    transform: translateY(-50%); color: var(--muted); pointer-events: none;
   }
 
   .search-input {
-    width: 100%;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 10px 14px 10px 40px;
-    color: var(--text);
-    font-family: 'DM Sans', sans-serif;
-    font-size: 13px;
-    outline: none;
-    transition: border-color .2s;
+    width: 100%; background: var(--surface); border: 1px solid var(--border);
+    border-radius: 8px; padding: 10px 14px 10px 40px;
+    color: var(--text); font-family: 'DM Sans', sans-serif;
+    font-size: 13px; outline: none; transition: border-color .2s;
   }
   .search-input::placeholder { color: var(--muted); }
   .search-input:focus { border-color: rgba(232,0,29,.4); }
 
+  /* ── TABS ── */
   .tabs {
-    display: flex;
-    gap: 2px;
+    display: flex; gap: 2px;
     padding: 20px 40px;
     border-bottom: 1px solid var(--border);
+    overflow-x: auto; -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
   }
+  .tabs::-webkit-scrollbar { display: none; }
 
   .tab {
-    background: none;
-    border: none;
-    padding: 7px 16px;
-    border-radius: 6px;
-    font-family: 'DM Sans', sans-serif;
-    font-size: 13px;
-    font-weight: 500;
-    color: var(--muted);
-    cursor: pointer;
+    background: none; border: none;
+    padding: 7px 16px; border-radius: 6px;
+    font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500;
+    color: var(--muted); cursor: pointer;
     transition: color .2s, background .2s;
-    letter-spacing: .02em;
+    letter-spacing: .02em; white-space: nowrap; flex-shrink: 0;
   }
   .tab:hover { color: #fff; background: rgba(255,255,255,.05); }
   .tab.active { color: #fff; background: var(--surface2); }
 
+  /* ── MAIN ── */
   main { padding: 32px 40px 80px; }
 
   .teams-grid {
@@ -204,82 +168,47 @@
     gap: 16px;
   }
 
+  /* ── TEAM CARD ── */
   .team-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    overflow: hidden;
-    transition: border-color .2s, transform .2s;
-    cursor: pointer;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; overflow: hidden;
+    transition: border-color .2s, transform .2s; cursor: pointer;
   }
   .team-card:hover { border-color: rgba(255,255,255,.12); transform: translateY(-2px); }
   .team-card.open { border-color: rgba(232,0,29,.25); }
 
-  .team-card-header {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    padding: 18px 20px;
-  }
+  .team-card-header { display: flex; align-items: center; gap: 14px; padding: 18px 20px; }
 
   .team-logo-wrap {
-    width: 40px; height: 40px;
-    flex-shrink: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    width: 40px; height: 40px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
   }
   .team-logo-wrap img { width: 38px; height: 38px; object-fit: contain; }
 
   .team-name-block { flex: 1; min-width: 0; }
   .team-name {
-    font-weight: 600;
-    font-size: 14px;
-    color: #fff;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    font-weight: 600; font-size: 14px; color: #fff;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   }
   .team-player-count { font-size: 11px; color: var(--muted); margin-top: 2px; }
 
   .team-salary-block { text-align: right; flex-shrink: 0; }
-  .team-salary-num {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 22px;
-    letter-spacing: .04em;
-    color: #fff;
-  }
+  .team-salary-num { font-family: 'Bebas Neue', sans-serif; font-size: 22px; letter-spacing: .04em; color: #fff; }
   .team-cap-pct { font-size: 11px; color: var(--muted); margin-top: 2px; }
   .team-cap-pct.over { color: var(--red); }
 
   .cap-bar-wrap { padding: 0 20px 16px; }
-  .cap-bar-track {
-    height: 3px;
-    background: rgba(255,255,255,.06);
-    border-radius: 3px;
-    overflow: hidden;
-  }
-  .cap-bar-fill {
-    height: 100%;
-    border-radius: 3px;
-    background: var(--red);
-    transition: width .4s ease;
-  }
+  .cap-bar-track { height: 3px; background: rgba(255,255,255,.06); border-radius: 3px; overflow: hidden; }
+  .cap-bar-fill { height: 100%; border-radius: 3px; background: var(--red); transition: width .4s ease; }
   .cap-bar-fill.safe { background: #00dc64; }
   .cap-bar-fill.warn { background: #f59e0b; }
-  .cap-bar-fill.over { background: var(--red); }
+  .cap-bar-fill.over  { background: var(--red); }
 
   .team-toggle {
     padding: 0 20px 14px;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 11px;
-    font-weight: 600;
-    letter-spacing: .06em;
-    text-transform: uppercase;
-    color: var(--muted);
-    transition: color .2s;
+    display: flex; align-items: center; gap: 6px;
+    font-size: 11px; font-weight: 600; letter-spacing: .06em;
+    text-transform: uppercase; color: var(--muted); transition: color .2s;
   }
   .team-card:hover .team-toggle { color: #888; }
   .team-card.open .team-toggle { color: var(--red); }
@@ -291,131 +220,79 @@
   .players-list.open { display: block; }
 
   .player-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
+    display: flex; align-items: center; justify-content: space-between;
     padding: 10px 20px;
     border-bottom: 1px solid rgba(255,255,255,.03);
-    transition: background .15s;
+    transition: background .15s; min-height: 44px;
   }
   .player-row:last-child { border-bottom: none; }
   .player-row:hover { background: rgba(255,255,255,.03); }
   .player-name { font-size: 13px; color: #ccc; font-weight: 500; }
-  .player-salary {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 15px;
-    font-weight: 600;
-    color: var(--muted);
-    letter-spacing: .05em;
-  }
+  .player-salary { font-family: 'Bebas Neue', sans-serif; font-size: 15px; font-weight: 600; color: var(--muted); letter-spacing: .05em; }
 
-  /* FA */
+  /* ── FA SECTION ── */
   .fa-section { margin-top: 48px; }
-  .fa-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 16px;
-  }
-  .fa-title {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 28px;
-    letter-spacing: .04em;
-    color: #fff;
-  }
+  .fa-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+  .fa-title { font-family: 'Bebas Neue', sans-serif; font-size: 28px; letter-spacing: .04em; color: #fff; }
   .fa-count {
-    font-size: 11px;
-    font-weight: 600;
-    letter-spacing: .08em;
-    text-transform: uppercase;
-    color: var(--muted);
-    background: var(--surface);
-    border: 1px solid var(--border);
-    padding: 4px 12px;
-    border-radius: 20px;
+    font-size: 11px; font-weight: 600; letter-spacing: .08em;
+    text-transform: uppercase; color: var(--muted);
+    background: var(--surface); border: 1px solid var(--border);
+    padding: 4px 12px; border-radius: 20px;
   }
-  .fa-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: 8px;
-  }
+  .fa-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px; }
   .fa-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 12px 16px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    transition: border-color .2s, background .2s;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 8px; padding: 12px 16px;
+    display: flex; align-items: center; justify-content: space-between;
+    transition: border-color .2s, background .2s; min-height: 48px;
   }
   .fa-card:hover { background: var(--surface2); border-color: rgba(255,255,255,.1); }
   .fa-name { font-size: 13px; color: #bbb; font-weight: 500; }
-  .fa-badge {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 14px;
-    letter-spacing: .05em;
-    color: var(--red);
-  }
+  .fa-badge { font-family: 'Bebas Neue', sans-serif; font-size: 14px; letter-spacing: .05em; color: var(--red); }
 
-  /* Admin Modal */
+  /* ── EMPTY ── */
+  .empty { text-align: center; padding: 80px 20px; color: var(--muted); }
+  .empty-icon { font-size: 40px; margin-bottom: 12px; opacity: .4; }
+  .empty-text { font-size: 14px; }
+
+  /* ── ADMIN MODAL ── */
   .modal-overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,.7);
-    backdrop-filter: blur(6px);
-    z-index: 200;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity .2s;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,.7); backdrop-filter: blur(6px);
+    z-index: 200; display: flex; align-items: center; justify-content: center;
+    opacity: 0; pointer-events: none; transition: opacity .2s;
+    padding: 20px;
   }
   .modal-overlay.open { opacity: 1; pointer-events: all; }
 
   .modal {
-    background: var(--surface);
-    border: 1px solid rgba(255,255,255,.1);
-    border-radius: 14px;
-    padding: 32px;
-    width: 480px;
-    max-width: 95vw;
-    transform: translateY(10px);
-    transition: transform .2s;
+    background: var(--surface); border: 1px solid rgba(255,255,255,.1);
+    border-radius: 14px; padding: 32px;
+    width: 480px; max-width: 100%;
+    transform: translateY(10px); transition: transform .2s;
+    max-height: 90vh; overflow-y: auto; -webkit-overflow-scrolling: touch;
   }
   .modal-overlay.open .modal { transform: translateY(0); }
 
-  .modal-title {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 26px;
-    letter-spacing: .04em;
-    color: #fff;
-    margin-bottom: 6px;
-  }
+  .admin-modal-wide { width: 620px; }
+
+  .modal-title { font-family: 'Bebas Neue', sans-serif; font-size: 26px; letter-spacing: .04em; color: #fff; margin-bottom: 6px; }
   .modal-sub { font-size: 12px; color: var(--muted); margin-bottom: 24px; }
 
   .field { margin-bottom: 14px; }
   .field label {
-    display: block;
-    font-size: 11px;
-    font-weight: 600;
-    letter-spacing: .08em;
-    text-transform: uppercase;
-    color: var(--muted);
-    margin-bottom: 6px;
+    display: block; font-size: 11px; font-weight: 600;
+    letter-spacing: .08em; text-transform: uppercase;
+    color: var(--muted); margin-bottom: 6px;
   }
   .field input, .field select {
-    width: 100%;
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: 7px;
-    padding: 10px 14px;
-    color: var(--text);
-    font-family: 'DM Sans', sans-serif;
-    font-size: 13px;
-    outline: none;
-    transition: border-color .2s;
+    width: 100%; background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 7px; padding: 10px 14px;
+    color: var(--text); font-family: 'DM Sans', sans-serif;
+    font-size: 13px; outline: none; transition: border-color .2s;
+    /* Prevent iOS zoom */
+    font-size: max(13px, 16px);
   }
   .field input:focus, .field select:focus { border-color: rgba(232,0,29,.4); }
   .field select option { background: #111; }
@@ -423,154 +300,233 @@
   .modal-actions { display: flex; gap: 10px; margin-top: 20px; }
 
   .btn-primary {
-    flex: 1;
-    background: var(--red);
-    color: #fff;
-    border: none;
-    border-radius: 7px;
-    padding: 11px;
-    font-family: 'DM Sans', sans-serif;
-    font-size: 13px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: background .2s;
+    flex: 1; background: var(--red); color: #fff;
+    border: none; border-radius: 7px; padding: 11px;
+    font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 600;
+    cursor: pointer; transition: background .2s; min-height: 44px;
   }
   .btn-primary:hover { background: #c0001a; }
 
   .btn-ghost {
-    background: none;
-    border: 1px solid var(--border);
-    border-radius: 7px;
-    padding: 11px 20px;
-    font-family: 'DM Sans', sans-serif;
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--muted);
-    cursor: pointer;
-    transition: color .2s;
+    background: none; border: 1px solid var(--border); border-radius: 7px;
+    padding: 11px 20px; font-family: 'DM Sans', sans-serif;
+    font-size: 13px; font-weight: 600; color: var(--muted);
+    cursor: pointer; transition: color .2s; min-height: 44px;
   }
   .btn-ghost:hover { color: #fff; }
 
-  .toast {
-    position: fixed;
-    bottom: 28px;
-    left: 50%;
-    transform: translateX(-50%) translateY(20px);
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 12px 20px;
-    font-size: 13px;
-    color: var(--text);
-    z-index: 300;
-    opacity: 0;
-    transition: opacity .25s, transform .25s;
-    white-space: nowrap;
-  }
-  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
-  .toast.error { border-color: rgba(232,0,29,.4); color: var(--red); }
-  .toast.success { border-color: rgba(0,220,100,.3); color: #00dc64; }
-
   .modal-result {
-    margin-top: 14px;
-    padding: 10px 14px;
-    border-radius: 7px;
-    font-size: 13px;
-    display: none;
+    margin-top: 14px; padding: 10px 14px; border-radius: 7px;
+    font-size: 13px; display: none;
   }
   .modal-result.success { background: rgba(0,220,100,.08); color: #00dc64; border: 1px solid rgba(0,220,100,.2); display: block; }
-  .modal-result.error { background: rgba(232,0,29,.08); color: var(--red); border: 1px solid rgba(232,0,29,.2); display: block; }
+  .modal-result.error   { background: rgba(232,0,29,.08); color: var(--red); border: 1px solid rgba(232,0,29,.2); display: block; }
 
   .action-tabs { display: flex; gap: 6px; margin-bottom: 20px; flex-wrap: wrap; }
   .action-tab {
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    padding: 6px 12px;
-    font-family: 'DM Sans', sans-serif;
-    font-size: 12px;
-    font-weight: 500;
-    color: var(--muted);
-    cursor: pointer;
-    transition: all .2s;
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 6px; padding: 6px 12px;
+    font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 500;
+    color: var(--muted); cursor: pointer; transition: all .2s;
+    min-height: 36px;
   }
   .action-tab:hover { color: #fff; }
   .action-tab.active { background: var(--red-dim); border-color: rgba(232,0,29,.3); color: #fff; }
 
-  .empty { text-align: center; padding: 80px 20px; color: var(--muted); }
-  .empty-icon { font-size: 40px; margin-bottom: 12px; opacity: .4; }
-  .empty-text { font-size: 14px; }
-
-  .admin-modal-wide {
-    width: 620px;
-  }
-
   .admin-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 9px 14px;
-    border-bottom: 1px solid rgba(255,255,255,.03);
-    gap: 10px;
-    transition: background .15s;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 9px 14px; border-bottom: 1px solid rgba(255,255,255,.03);
+    gap: 10px; transition: background .15s;
   }
   .admin-row:last-child { border-bottom: none; }
   .admin-row:hover { background: rgba(255,255,255,.03); }
   .admin-row-name { font-size: 13px; color: #ccc; font-weight: 500; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .admin-row-team { font-size: 11px; color: var(--muted); flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .admin-salary-input {
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: 5px;
-    padding: 4px 8px;
-    color: var(--text);
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 14px;
-    letter-spacing: .05em;
-    width: 110px;
-    text-align: right;
-    outline: none;
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 5px; padding: 4px 8px;
+    color: var(--text); font-family: 'Bebas Neue', sans-serif;
+    font-size: 14px; letter-spacing: .05em;
+    width: 110px; text-align: right; outline: none;
     transition: border-color .2s;
+    /* Prevent iOS zoom */
+    font-size: max(14px, 16px);
   }
   .admin-salary-input:focus { border-color: rgba(232,0,29,.5); }
   .admin-save-btn {
-    background: var(--red);
-    border: none;
-    border-radius: 5px;
-    color: #fff;
-    font-size: 11px;
-    font-weight: 700;
-    padding: 5px 10px;
-    cursor: pointer;
-    opacity: 1;
-    transition: background .15s;
-    white-space: nowrap;
+    background: var(--red); border: none; border-radius: 5px;
+    color: #fff; font-size: 11px; font-weight: 700;
+    padding: 5px 10px; cursor: pointer;
+    transition: background .15s; white-space: nowrap; min-height: 32px;
   }
   .admin-save-btn:hover { background: #c0001a; }
-  .admin-save-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .admin-save-btn:disabled { opacity: .4; cursor: not-allowed; }
+
+  /* ── TOAST ── */
+  .toast {
+    position: fixed; bottom: 28px; left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 8px; padding: 12px 20px;
+    font-size: 13px; color: var(--text);
+    z-index: 300; opacity: 0;
+    transition: opacity .25s, transform .25s;
+    white-space: nowrap; max-width: calc(100vw - 32px);
+    text-align: center;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  .toast.error   { border-color: rgba(232,0,29,.4); color: var(--red); }
+  .toast.success { border-color: rgba(0,220,100,.3); color: #00dc64; }
 
   .hidden { display: none !important; }
 
-  .loading-bar {
-    height: 2px;
-    background: var(--red);
-    width: 0%;
-    position: fixed;
-    top: 0; left: 0;
-    z-index: 999;
-    transition: width .3s ease;
+  /* ═══════════════════════════════════════
+     RESPONSIVE — TABLET  (≤ 900px)
+  ═══════════════════════════════════════ */
+  @media (max-width: 900px) {
+    nav { padding: 0 20px; height: 52px; }
+
+    .reg-banner { padding: 10px 20px; font-size: 12px; }
+
+    .page-header {
+      padding: 36px 20px 28px;
+      flex-direction: column;
+      align-items: flex-start; gap: 16px;
+    }
+
+    .search-wrap { width: 100%; }
+
+    .tabs { padding: 16px 20px; }
+
+    main { padding: 24px 20px 60px; }
+
+    .teams-grid {
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 12px;
+    }
+
+    .fa-grid { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); }
+
+    .admin-modal-wide { width: 100%; }
   }
 
-  /* Registration banner */
-  .reg-banner {
-    background: rgba(0,220,100,.08);
-    border-bottom: 1px solid rgba(0,220,100,.15);
-    padding: 12px 40px;
-    font-size: 13px;
-    color: #00dc64;
-    display: flex;
-    align-items: center;
-    gap: 8px;
+  /* ═══════════════════════════════════════
+     RESPONSIVE — MOBILE  (≤ 600px)
+  ═══════════════════════════════════════ */
+  @media (max-width: 600px) {
+    body { font-size: 13px; }
+
+    /* NAV — collapse discord label to icon-only */
+    nav { padding: 0 14px; height: 48px; gap: 8px; }
+
+    .nav-cap { font-size: 10px; }
+    .nav-cap strong { margin-left: 4px; }
+
+    /* Hide "Login with Discord" text, keep icon */
+    .discord-btn span { display: none; }
+    .discord-btn { padding: 8px 10px; gap: 0; }
+
+    .admin-btn { padding: 6px 10px; font-size: 11px; }
+
+    /* User chip — truncate on small screens */
+    .user-chip { max-width: 140px; font-size: 11px; padding: 5px 9px; }
+
+    /* REG BANNER */
+    .reg-banner { padding: 10px 14px; font-size: 12px; }
+
+    /* PAGE HEADER */
+    .page-header { padding: 24px 14px 20px; gap: 14px; }
+    .page-meta { font-size: 12px; line-height: 1.5; }
+
+    /* TABS */
+    .tabs { padding: 12px 14px; }
+    .tab { padding: 6px 12px; font-size: 12px; }
+
+    /* MAIN */
+    main { padding: 16px 14px 80px; }
+
+    /* TEAMS GRID — single column */
+    .teams-grid { grid-template-columns: 1fr; gap: 10px; }
+
+    .team-card-header { padding: 14px 16px; gap: 10px; }
+    .team-logo-wrap { width: 34px; height: 34px; }
+    .team-logo-wrap img { width: 30px; height: 30px; }
+    .team-name { font-size: 13px; }
+    .team-salary-num { font-size: 18px; }
+    .team-cap-pct { font-size: 10px; }
+    .cap-bar-wrap { padding: 0 16px 14px; }
+    .team-toggle { padding: 0 16px 12px; font-size: 10px; }
+
+    .player-row { padding: 9px 16px; }
+    .player-name { font-size: 12px; }
+    .player-salary { font-size: 13px; }
+
+    /* FA SECTION */
+    .fa-section { margin-top: 32px; }
+    .fa-title { font-size: 22px; }
+    .fa-grid { grid-template-columns: 1fr 1fr; gap: 6px; }
+    .fa-card { padding: 10px 12px; }
+    .fa-name { font-size: 12px; }
+
+    /* ADMIN MODAL */
+    .modal { padding: 20px 16px; border-radius: 12px; }
+    .modal-title { font-size: 22px; }
+    .modal-sub { font-size: 11px; margin-bottom: 16px; }
+
+    /* Admin auth row — stack vertically on mobile */
+    #admin-auth-row { flex-direction: column !important; align-items: stretch !important; gap: 8px !important; }
+    #admin-auth-row .btn-primary { padding: 10px; }
+
+    /* Admin roster — hide team column, tighten layout */
+    .admin-row { gap: 6px; padding: 8px 10px; }
+    .admin-row-team { display: none; }
+    .admin-salary-input { width: 90px; }
+
+    /* Action tabs — wrap smaller */
+    .action-tab { padding: 5px 10px; font-size: 11px; }
+
+    /* Modal actions — stack */
+    .modal-actions { flex-direction: column; gap: 8px; }
+    .btn-primary, .btn-ghost { width: 100%; min-height: 48px; }
+
+    /* Admin search row */
+    #admin-roster-section > div:first-child { flex-direction: column !important; align-items: stretch !important; gap: 8px; }
+    #admin-search { width: 100% !important; }
+  }
+
+  /* ═══════════════════════════════════════
+     TINY  (≤ 380px)
+  ═══════════════════════════════════════ */
+  @media (max-width: 380px) {
+    .fa-grid { grid-template-columns: 1fr; }
+    .team-salary-num { font-size: 16px; }
+    .team-name { font-size: 12px; }
+    .nav-cap { display: none; } /* free up space on tiny screens */
+  }
+
+  /* ═══════════════════════════════════════
+     TOUCH IMPROVEMENTS
+  ═══════════════════════════════════════ */
+  @media (hover: none) and (pointer: coarse) {
+    .team-card:hover { border-color: var(--border); transform: none; }
+    .team-card.open:hover { border-color: rgba(232,0,29,.25); }
+    .team-card:active { border-color: rgba(255,255,255,.12); }
+    .team-card.open:active { border-color: rgba(232,0,29,.35); }
+
+    .player-row:hover { background: transparent; }
+    .player-row:active { background: rgba(255,255,255,.04); }
+
+    .fa-card:hover { background: var(--surface); border-color: var(--border); }
+    .fa-card:active { background: var(--surface2); }
+
+    .tab:hover { color: var(--muted); background: none; }
+    .tab:active { color: #fff; background: var(--surface2); }
+
+    .action-tab:hover { color: var(--muted); }
+    .action-tab:active { color: #fff; }
+
+    .admin-btn:hover { color: var(--muted); border-color: var(--border); }
+    .admin-btn:active { color: #fff; border-color: rgba(255,255,255,.2); }
   }
 </style>
 </head>
@@ -586,7 +542,7 @@
         <svg width="16" height="12" viewBox="0 0 16 12" fill="none">
           <path d="M13.552 1.02A13.25 13.25 0 0 0 10.26 0c-.155.277-.336.65-.46.946a12.3 12.3 0 0 0-3.6 0A10.13 10.13 0 0 0 5.738 0 13.298 13.298 0 0 0 2.443 1.023C.352 4.147-.215 7.194.068 10.199a13.36 13.36 0 0 0 4.072 2.057 10.1 10.1 0 0 0 .872-1.424 8.658 8.658 0 0 1-1.373-.66c.115-.084.228-.172.337-.262a9.516 9.516 0 0 0 8.048 0c.11.09.223.178.337.263a8.68 8.68 0 0 1-1.376.661c.254.505.548.983.872 1.424a13.32 13.32 0 0 0 4.075-2.058c.334-3.488-.568-6.506-2.38-9.18ZM5.34 8.35c-.777 0-1.414-.714-1.414-1.59 0-.876.622-1.591 1.414-1.591.793 0 1.43.715 1.415 1.59C6.756 7.636 6.134 8.35 5.341 8.35Zm5.32 0c-.778 0-1.414-.714-1.414-1.59 0-.876.621-1.591 1.413-1.591.793 0 1.43.715 1.414 1.59 0 .877-.62 1.591-1.413 1.591Z" fill="white"/>
         </svg>
-        Login with Discord
+        <span>Login with Discord</span>
       </a>
     </div>
     <button class="admin-btn" onclick="openAdmin()">⚙ Admin</button>
@@ -641,7 +597,6 @@
     <div class="modal-title">Admin Panel</div>
     <div class="modal-sub">Changes apply instantly to the live site.</div>
 
-    <!-- Password unlock row -->
     <div id="admin-auth-row" style="display:flex;gap:10px;align-items:flex-end;margin-bottom:18px;">
       <div class="field" style="flex:1;margin-bottom:0;">
         <label>Admin Password</label>
@@ -650,17 +605,15 @@
       <button class="btn-primary" style="white-space:nowrap;padding:10px 18px;" onclick="unlockAdmin()">Unlock</button>
     </div>
 
-    <!-- Roster table (shown after unlock) -->
     <div id="admin-roster-section" class="hidden">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-        <div style="font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);">Roster — click salary to edit</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;gap:10px;">
+        <div style="font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);flex-shrink:0;">Roster — click salary to edit</div>
         <input class="search-input" id="admin-search" placeholder="Filter players…" style="width:180px;padding:7px 12px;" oninput="renderAdminRoster()">
       </div>
-      <div id="admin-roster-table" style="max-height:380px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;"></div>
+      <div id="admin-roster-table" style="max-height:340px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;-webkit-overflow-scrolling:touch;"></div>
 
-      <!-- Quick-add -->
       <details style="margin-top:16px;">
-        <summary style="font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);cursor:pointer;user-select:none;">+ Add / Remove / Move / Rename</summary>
+        <summary style="font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);cursor:pointer;user-select:none;padding:4px 0;">+ Add / Remove / Move / Rename</summary>
         <div style="margin-top:12px;">
           <div class="action-tabs">
             <button class="action-tab active" onclick="setAction('setSalary', this)">Set Salary</button>
@@ -783,12 +736,12 @@ const logos = {
   "Utah Jazz":"https://a.espncdn.com/i/teamlogos/nba/500/utah.png",
   "Washington Wizards":"https://a.espncdn.com/i/teamlogos/nba/500/wsh.png"
 };
+
 let allPlayers = [];
 let currentTab = 'teams';
 let searchQuery = '';
 let currentAction = 'setSalary';
 
-// ── Load players from API ──────────────────────────────────────────────────
 async function loadPlayers() {
   setLoading(true);
   try {
@@ -807,7 +760,6 @@ function setLoading(on) {
   if (!on) setTimeout(() => bar.style.width = '0%', 300);
 }
 
-// ── Registration banner ────────────────────────────────────────────────────
 function checkRegistration() {
   const params = new URLSearchParams(window.location.search);
   if (params.get('registered')) {
@@ -831,13 +783,10 @@ function checkRegistration() {
   }
 }
 
-// ── Render ─────────────────────────────────────────────────────────────────
 function groupByTeam(players) {
   const map = {};
   teamList.forEach(t => map[t] = []);
-  players.forEach(p => {
-    if (map[p.team]) map[p.team].push(p);
-  });
+  players.forEach(p => { if (map[p.team]) map[p.team].push(p); });
   return map;
 }
 
@@ -956,7 +905,6 @@ function render() {
   }
 }
 
-// ── Admin Panel ────────────────────────────────────────────────────────────
 let adminUnlocked = false;
 
 function openAdmin() {
@@ -975,9 +923,6 @@ document.getElementById('admin-modal').addEventListener('click', closeAdmin);
 async function unlockAdmin() {
   const password = document.getElementById('admin-pass').value;
   if (!password) { showResult('Enter the admin password.', 'error'); return; }
-
-  // Verify by doing a harmless test — we just check against a known-safe call.
-  // Actually we reveal the roster section optimistically; any real action will 401 if wrong.
   adminUnlocked = true;
   document.getElementById('admin-roster-section').classList.remove('hidden');
   renderAdminRoster();
@@ -1045,15 +990,11 @@ function setAction(action, btn) {
   document.querySelectorAll('.action-tab').forEach(t => t.classList.remove('active'));
   btn.classList.add('active');
 
-  document.getElementById('salary-field').classList.toggle('hidden',
-    !['setSalary', 'addPlayer'].includes(action));
-  document.getElementById('team-field').classList.toggle('hidden',
-    !['setTeam', 'addPlayer'].includes(action));
-  document.getElementById('newname-field').classList.toggle('hidden',
-    action !== 'renamePlayer');
+  document.getElementById('salary-field').classList.toggle('hidden', !['setSalary', 'addPlayer'].includes(action));
+  document.getElementById('team-field').classList.toggle('hidden', !['setTeam', 'addPlayer'].includes(action));
+  document.getElementById('newname-field').classList.toggle('hidden', action !== 'renamePlayer');
 
-  const nameLabel = document.getElementById('name-label');
-  nameLabel.textContent = action === 'addPlayer' ? 'Player Name (to add)' : 'Player Name';
+  document.getElementById('name-label').textContent = action === 'addPlayer' ? 'Player Name (to add)' : 'Player Name';
 }
 
 async function submitAdmin() {
@@ -1066,13 +1007,11 @@ async function submitAdmin() {
   if (!password) { showResult('Enter the admin password.', 'error'); return; }
   if (!name) { showResult('Enter a player name.', 'error'); return; }
 
-  const body = { password, action: currentAction, name, salary, team, newName };
-
   try {
     const res = await fetch('/api/admin', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body)
+      body: JSON.stringify({ password, action: currentAction, name, salary, team, newName })
     });
     const data = await res.json();
     if (data.ok) {
@@ -1093,7 +1032,6 @@ function showResult(msg, type) {
   el.className = `modal-result ${type}`;
 }
 
-// ── Toast ──────────────────────────────────────────────────────────────────
 function showToast(msg, type = '') {
   const t = document.getElementById('toast');
   t.textContent = msg;
@@ -1101,7 +1039,6 @@ function showToast(msg, type = '') {
   setTimeout(() => t.classList.remove('show'), 3000);
 }
 
-// ── Event listeners ────────────────────────────────────────────────────────
 document.querySelectorAll('.tab').forEach(tab => {
   tab.addEventListener('click', () => {
     document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
@@ -1116,7 +1053,6 @@ document.getElementById('search').addEventListener('input', e => {
   render();
 });
 
-// ── Init ───────────────────────────────────────────────────────────────────
 checkRegistration();
 loadPlayers();
 </script>
