@@ -4,529 +4,541 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>RPL Salary Caps</title>
-<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root {
-    --red: #e8001d;
-    --red-dim: rgba(232,0,29,.1);
-    --bg: #060608;
-    --surface: #0d0d10;
-    --surface2: #111115;
-    --border: rgba(255,255,255,.06);
-    --muted: #555;
-    --text: #e8e8ee;
-    --cap: 58000000;
+    --red:       #e8001d;
+    --red-dim:   rgba(232,0,29,.12);
+    --bg:        #07070c;
+    --surface:   #0f0f16;
+    --surface2:  #161620;
+    --surface3:  #1c1c28;
+    --border:    rgba(255,255,255,.08);
+    --border2:   rgba(255,255,255,.04);
+    --muted:     #56566a;
+    --muted2:    #3a3a4e;
+    --text:      #e0e0f0;
+    --green:     #22c55e;
+    --green-dim: rgba(34,197,94,.12);
+    --amber:     #f59e0b;
+    --amber-dim: rgba(245,158,11,.12);
+    --blue:      #60a5fa;
+    --win:       #4ade80;
+    --lose:      #f87171;
   }
 
   *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
-  html { scroll-behavior: smooth; }
+  html { scroll-behavior:smooth; }
 
   body {
     background: var(--bg);
     color: var(--text);
-    font-family: 'DM Sans', sans-serif;
+    font-family: 'Inter', sans-serif;
     font-size: 14px;
     min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
     overflow-x: hidden;
   }
 
   /* ── LOADING BAR ── */
   .loading-bar {
-    height: 2px;
-    background: var(--red);
-    width: 0%;
-    position: fixed;
-    top: 0; left: 0;
-    z-index: 999;
+    height: 2px; background: var(--red);
+    width: 0%; position: fixed;
+    top: 0; left: 0; z-index: 999;
     transition: width .3s ease;
   }
 
   /* ── NAV ── */
   nav {
     position: sticky; top: 0; z-index: 100;
+    height: 52px;
     display: flex; align-items: center; justify-content: space-between;
-    padding: 0 40px; height: 58px;
-    background: rgba(6,6,8,.9);
+    padding: 0 20px; gap: 12px;
+    background: rgba(7,7,12,.85);
     backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
     border-bottom: 1px solid var(--border);
-    gap: 12px;
   }
 
-  .nav-cap {
-    font-size: 11px; font-weight: 600;
-    letter-spacing: .08em; text-transform: uppercase;
-    color: var(--muted); white-space: nowrap;
-  }
-  .nav-cap strong { color: #fff; margin-left: 6px; }
+  .nav-left { display:flex; align-items:center; gap:12px; }
 
-  .nav-right { display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
+  .nav-logo {
+    width:28px; height:28px; border-radius:6px;
+    background: var(--red);
+    display:flex; align-items:center; justify-content:center;
+    font-family:'Bebas Neue',sans-serif; font-size:15px; color:#fff;
+    letter-spacing:.02em; flex-shrink:0;
+  }
+
+  .nav-title {
+    font-family:'Bebas Neue',sans-serif;
+    font-size:17px; letter-spacing:.08em; color:#fff;
+  }
+  .nav-title em { color:var(--red); font-style:normal; }
+
+  .nav-cap-pill {
+    font-size:10px; font-weight:600; letter-spacing:.08em;
+    color:var(--muted); text-transform:uppercase;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius:20px; padding:3px 9px;
+    display:none;
+  }
+  .nav-cap-pill strong { color:var(--text); font-weight:700; margin-left:4px; }
+  @media (min-width:480px) { .nav-cap-pill { display:block; } }
+
+  .nav-right { display:flex; align-items:center; gap:10px; flex-shrink:0; }
 
   .discord-btn {
-    display: flex; align-items: center; gap: 8px;
-    background: #5865F2; color: #fff;
-    border: none; border-radius: 7px; padding: 8px 16px;
-    font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 600;
-    cursor: pointer; text-decoration: none;
-    transition: background .2s; white-space: nowrap;
+    display:flex; align-items:center; gap:7px;
+    background: #5865F2; color:#fff;
+    border:none; border-radius:6px; padding:6px 12px;
+    font-family:'Inter',sans-serif; font-size:11px; font-weight:600;
+    cursor:pointer; text-decoration:none;
+    transition:background .2s; white-space:nowrap;
+    letter-spacing:.04em;
   }
-  .discord-btn:hover { background: #4752c4; }
+  .discord-btn:hover { background:#4752c4; }
 
   .user-chip {
-    display: flex; align-items: center; gap: 8px;
-    background: var(--surface); border: 1px solid var(--border);
-    border-radius: 7px; padding: 6px 12px;
-    font-size: 12px; color: var(--text); white-space: nowrap;
-    max-width: 200px; overflow: hidden; text-overflow: ellipsis;
+    display:flex; align-items:center; gap:7px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius:6px; padding:5px 10px;
+    font-size:11px; color:var(--text); white-space:nowrap;
+    max-width:180px; overflow:hidden; text-overflow:ellipsis;
   }
-  .user-chip .dot { width: 7px; height: 7px; border-radius: 50%; background: #00dc64; flex-shrink: 0; }
+  .user-chip .dot { width:6px; height:6px; border-radius:50%; background:var(--green); flex-shrink:0; }
 
   .admin-btn {
-    background: none; border: 1px solid var(--border);
-    border-radius: 7px; padding: 7px 14px;
-    font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 600;
-    color: var(--muted); cursor: pointer;
-    transition: color .2s, border-color .2s; white-space: nowrap;
+    background:none; border:1px solid var(--border); border-radius:6px;
+    padding:5px 12px;
+    font-family:'Inter',sans-serif; font-size:11px; font-weight:600;
+    letter-spacing:.06em; text-transform:uppercase;
+    color:var(--muted); cursor:pointer;
+    transition:border-color .2s, color .2s; white-space:nowrap;
   }
-  .admin-btn:hover { color: #fff; border-color: rgba(255,255,255,.2); }
+  .admin-btn:hover { border-color:rgba(232,0,29,.4); color:var(--text); }
 
   /* ── REG BANNER ── */
   .reg-banner {
-    background: rgba(0,220,100,.08);
-    border-bottom: 1px solid rgba(0,220,100,.15);
-    padding: 12px 40px;
-    font-size: 13px; color: #00dc64;
+    background: var(--green-dim);
+    border-bottom: 1px solid rgba(34,197,94,.15);
+    padding: 10px 20px;
+    font-size: 12px; color: var(--green);
     display: flex; align-items: center; gap: 8px;
+    font-weight: 500;
   }
 
-  /* ── PAGE HEADER ── */
-  .page-header {
-    padding: 52px 40px 36px;
-    border-bottom: 1px solid var(--border);
-    display: flex; align-items: flex-end;
-    justify-content: space-between; gap: 24px;
+  /* ── PAGE ── */
+  .page { max-width:1340px; margin:0 auto; padding:0 16px 80px; }
+
+  /* ── HERO ── */
+  .hero {
+    padding: 24px 0 20px;
+    display:flex; align-items:flex-start; justify-content:space-between;
+    gap:16px;
+    border-bottom: 1px solid var(--border2);
+    margin-bottom:0;
+    flex-wrap:wrap;
   }
 
-  .page-eyebrow {
-    font-size: 11px; font-weight: 600; letter-spacing: .12em;
-    text-transform: uppercase; color: var(--red);
-    margin-bottom: 10px;
-    display: flex; align-items: center; gap: 8px;
+  .hero-title {
+    font-family:'Bebas Neue',sans-serif;
+    font-size:28px; letter-spacing:.04em; color:#fff; line-height:1;
   }
-  .page-eyebrow::before { content:''; width:18px; height:2px; background:var(--red); border-radius:2px; }
+  .hero-title em { color:var(--red); font-style:normal; }
+  .hero-sub { font-size:11px; color:var(--muted); margin-top:5px; letter-spacing:.02em; line-height:1.6; }
 
-  .page-title {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: clamp(40px,5vw,60px);
-    letter-spacing: .03em; line-height: 1; color: #fff;
-  }
-
-  .page-meta { margin-top: 10px; font-size: 13px; color: var(--muted); }
-
-  .search-wrap { position: relative; width: 300px; flex-shrink: 0; }
-
+  /* ── SEARCH ── */
+  .search-wrap { position:relative; width:240px; flex-shrink:0; }
   .search-icon {
-    position: absolute; left: 14px; top: 50%;
-    transform: translateY(-50%); color: var(--muted); pointer-events: none;
+    position:absolute; left:11px; top:50%;
+    transform:translateY(-50%); pointer-events:none;
+    color:var(--muted);
   }
-
   .search-input {
-    width: 100%; background: var(--surface); border: 1px solid var(--border);
-    border-radius: 8px; padding: 10px 14px 10px 40px;
-    color: var(--text); font-family: 'DM Sans', sans-serif;
-    font-size: 13px; outline: none; transition: border-color .2s;
+    width:100%; background:var(--surface); border:1px solid var(--border);
+    border-radius:8px; padding:9px 12px 9px 34px;
+    color:var(--text); font-family:'Inter',sans-serif;
+    font-size:12px; outline:none; transition:border-color .2s;
   }
-  .search-input::placeholder { color: var(--muted); }
-  .search-input:focus { border-color: rgba(232,0,29,.4); }
+  .search-input::placeholder { color:var(--muted); }
+  .search-input:focus { border-color:rgba(232,0,29,.35); }
 
   /* ── TABS ── */
   .tabs {
-    display: flex; gap: 2px;
-    padding: 20px 40px;
+    display:flex; gap:2px;
+    padding: 16px 0 0;
     border-bottom: 1px solid var(--border);
-    overflow-x: auto; -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
+    margin-bottom:20px;
+    overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none;
   }
-  .tabs::-webkit-scrollbar { display: none; }
+  .tabs::-webkit-scrollbar { display:none; }
 
   .tab {
-    background: none; border: none;
-    padding: 7px 16px; border-radius: 6px;
-    font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500;
-    color: var(--muted); cursor: pointer;
-    transition: color .2s, background .2s;
-    letter-spacing: .02em; white-space: nowrap; flex-shrink: 0;
+    background:none; border:none;
+    border-bottom:2px solid transparent;
+    padding:9px 16px; margin-bottom:-1px;
+    font-family:'Inter',sans-serif;
+    font-size:12px; font-weight:600;
+    letter-spacing:.06em; text-transform:uppercase;
+    color:var(--muted); cursor:pointer;
+    transition:color .2s, border-color .2s;
+    white-space:nowrap; flex-shrink:0;
   }
-  .tab:hover { color: #fff; background: rgba(255,255,255,.05); }
-  .tab.active { color: #fff; background: var(--surface2); }
+  .tab:hover { color:var(--text); }
+  .tab.active { color:#fff; border-bottom-color:var(--red); }
 
-  /* ── MAIN ── */
-  main { padding: 32px 40px 80px; }
-
+  /* ── TEAMS GRID ── */
   .teams-grid {
-    display: grid;
+    display:grid;
     grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
-    gap: 16px;
+    gap:12px;
   }
 
   /* ── TEAM CARD ── */
   .team-card {
-    background: var(--surface); border: 1px solid var(--border);
-    border-radius: 12px; overflow: hidden;
-    transition: border-color .2s, transform .2s; cursor: pointer;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius:12px; overflow:hidden;
+    transition:border-color .2s;
+    cursor:pointer;
   }
-  .team-card:hover { border-color: rgba(255,255,255,.12); transform: translateY(-2px); }
-  .team-card.open { border-color: rgba(232,0,29,.25); }
+  .team-card:hover { border-color:rgba(255,255,255,.14); }
+  .team-card.open  { border-color:rgba(232,0,29,.3); }
 
-  .team-card-header { display: flex; align-items: center; gap: 14px; padding: 18px 20px; }
+  .team-card-header {
+    display:flex; align-items:center; gap:12px;
+    padding:14px 16px;
+  }
 
   .team-logo-wrap {
-    width: 40px; height: 40px; flex-shrink: 0;
-    display: flex; align-items: center; justify-content: center;
+    width:38px; height:38px; flex-shrink:0;
+    display:flex; align-items:center; justify-content:center;
   }
-  .team-logo-wrap img { width: 38px; height: 38px; object-fit: contain; }
+  .team-logo-wrap img { width:36px; height:36px; object-fit:contain; }
 
-  .team-name-block { flex: 1; min-width: 0; }
+  .team-name-block { flex:1; min-width:0; }
   .team-name {
-    font-weight: 600; font-size: 14px; color: #fff;
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    font-size:13px; font-weight:600; color:#fff;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
   }
-  .team-player-count { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .team-player-count { font-size:10px; color:var(--muted); margin-top:2px; }
 
-  .team-salary-block { text-align: right; flex-shrink: 0; }
-  .team-salary-num { font-family: 'Bebas Neue', sans-serif; font-size: 22px; letter-spacing: .04em; color: #fff; }
-  .team-cap-pct { font-size: 11px; color: var(--muted); margin-top: 2px; }
-  .team-cap-pct.over { color: var(--red); }
+  .team-salary-block { text-align:right; flex-shrink:0; }
+  .team-salary-num {
+    font-family:'Bebas Neue',sans-serif;
+    font-size:20px; letter-spacing:.04em; color:#fff;
+  }
+  .team-cap-pct { font-size:10px; color:var(--muted); margin-top:1px; }
+  .team-cap-pct.over { color:var(--lose); }
+  .team-cap-pct.warn { color:var(--amber); }
 
-  .cap-bar-wrap { padding: 0 20px 16px; }
-  .cap-bar-track { height: 3px; background: rgba(255,255,255,.06); border-radius: 3px; overflow: hidden; }
-  .cap-bar-fill { height: 100%; border-radius: 3px; background: var(--red); transition: width .4s ease; }
-  .cap-bar-fill.safe { background: #00dc64; }
-  .cap-bar-fill.warn { background: #f59e0b; }
-  .cap-bar-fill.over  { background: var(--red); }
+  .cap-bar-wrap { padding:0 16px 12px; }
+  .cap-bar-track {
+    height:2px; background:var(--border2);
+    border-radius:2px; overflow:hidden;
+  }
+  .cap-bar-fill {
+    height:100%; border-radius:2px;
+    transition:width .4s ease;
+  }
+  .cap-bar-fill.safe { background:var(--green); }
+  .cap-bar-fill.warn { background:var(--amber); }
+  .cap-bar-fill.over { background:var(--red); }
 
   .team-toggle {
-    padding: 0 20px 14px;
-    display: flex; align-items: center; gap: 6px;
-    font-size: 11px; font-weight: 600; letter-spacing: .06em;
-    text-transform: uppercase; color: var(--muted); transition: color .2s;
+    padding:0 16px 12px;
+    display:flex; align-items:center; gap:6px;
+    font-size:10px; font-weight:700; letter-spacing:.1em;
+    text-transform:uppercase; color:var(--muted);
+    transition:color .2s;
   }
-  .team-card:hover .team-toggle { color: #888; }
-  .team-card.open .team-toggle { color: var(--red); }
+  .team-card:hover .team-toggle { color:#888; }
+  .team-card.open .team-toggle  { color:var(--red); }
+  .toggle-arrow { transition:transform .22s; }
+  .team-card.open .toggle-arrow { transform:rotate(180deg); }
 
-  .toggle-arrow { transition: transform .25s; }
-  .team-card.open .toggle-arrow { transform: rotate(180deg); }
-
-  .players-list { display: none; border-top: 1px solid var(--border); }
-  .players-list.open { display: block; }
+  .players-list { display:none; border-top:1px solid var(--border); }
+  .players-list.open { display:block; }
 
   .player-row {
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 10px 20px;
-    border-bottom: 1px solid rgba(255,255,255,.03);
-    transition: background .15s; min-height: 44px;
+    display:flex; align-items:center; justify-content:space-between;
+    padding:9px 16px;
+    border-bottom:1px solid var(--border2);
+    transition:background .14s; min-height:40px;
   }
-  .player-row:last-child { border-bottom: none; }
-  .player-row:hover { background: rgba(255,255,255,.03); }
-  .player-name { font-size: 13px; color: #ccc; font-weight: 500; }
-  .player-salary { font-family: 'Bebas Neue', sans-serif; font-size: 15px; font-weight: 600; color: var(--muted); letter-spacing: .05em; }
+  .player-row:last-child { border-bottom:none; }
+  .player-row:hover { background:rgba(255,255,255,.022); }
+  .player-name { font-size:12px; color:var(--text); font-weight:500; }
+  .player-salary {
+    font-family:'Bebas Neue',sans-serif;
+    font-size:14px; letter-spacing:.05em; color:var(--muted);
+  }
 
-  /* ── FA SECTION ── */
-  .fa-section { margin-top: 48px; }
-  .fa-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
-  .fa-title { font-family: 'Bebas Neue', sans-serif; font-size: 28px; letter-spacing: .04em; color: #fff; }
+  /* ── FREE AGENTS ── */
+  .fa-section { margin-top:8px; }
+  .fa-header {
+    display:flex; align-items:center; justify-content:space-between;
+    margin-bottom:14px;
+  }
+  .fa-title {
+    font-family:'Bebas Neue',sans-serif;
+    font-size:22px; letter-spacing:.04em; color:#fff;
+  }
   .fa-count {
-    font-size: 11px; font-weight: 600; letter-spacing: .08em;
-    text-transform: uppercase; color: var(--muted);
-    background: var(--surface); border: 1px solid var(--border);
-    padding: 4px 12px; border-radius: 20px;
+    font-size:10px; font-weight:700; letter-spacing:.1em;
+    text-transform:uppercase; color:var(--muted);
+    background:var(--surface2); border:1px solid var(--border);
+    padding:3px 10px; border-radius:20px;
   }
-  .fa-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px; }
+  .fa-grid {
+    display:grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap:8px;
+  }
   .fa-card {
-    background: var(--surface); border: 1px solid var(--border);
-    border-radius: 8px; padding: 12px 16px;
-    display: flex; align-items: center; justify-content: space-between;
-    transition: border-color .2s, background .2s; min-height: 48px;
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:8px; padding:11px 14px;
+    display:flex; align-items:center; justify-content:space-between;
+    transition:border-color .2s, background .2s; min-height:44px;
   }
-  .fa-card:hover { background: var(--surface2); border-color: rgba(255,255,255,.1); }
-  .fa-name { font-size: 13px; color: #bbb; font-weight: 500; }
-  .fa-badge { font-family: 'Bebas Neue', sans-serif; font-size: 14px; letter-spacing: .05em; color: var(--red); }
+  .fa-card:hover { background:var(--surface2); border-color:rgba(255,255,255,.12); }
+  .fa-name { font-size:12px; color:var(--text); font-weight:500; }
+  .fa-badge {
+    font-family:'Bebas Neue',sans-serif;
+    font-size:14px; letter-spacing:.04em; color:var(--red);
+  }
 
   /* ── EMPTY ── */
-  .empty { text-align: center; padding: 80px 20px; color: var(--muted); }
-  .empty-icon { font-size: 40px; margin-bottom: 12px; opacity: .4; }
-  .empty-text { font-size: 14px; }
+  .empty { text-align:center; padding:80px 20px; color:var(--muted); grid-column:1/-1; }
+  .empty-icon {
+    width:44px; height:44px; margin:0 auto 14px;
+    background:var(--surface2); border:1px solid var(--border);
+    border-radius:12px;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .empty h3 {
+    font-family:'Bebas Neue',sans-serif;
+    font-size:22px; letter-spacing:.06em; color:var(--muted2);
+    margin-bottom:5px;
+  }
+  .empty p { font-size:12px; color:var(--muted); }
 
   /* ── ADMIN MODAL ── */
   .modal-overlay {
-    position: fixed; inset: 0;
-    background: rgba(0,0,0,.7); backdrop-filter: blur(6px);
-    z-index: 200; display: flex; align-items: center; justify-content: center;
-    opacity: 0; pointer-events: none; transition: opacity .2s;
-    padding: 20px;
+    position:fixed; inset:0; z-index:200;
+    background:rgba(0,0,0,.75);
+    backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px);
+    display:flex; align-items:center; justify-content:center;
+    opacity:0; pointer-events:none; transition:opacity .2s;
+    padding:20px;
   }
-  .modal-overlay.open { opacity: 1; pointer-events: all; }
+  .modal-overlay.open { opacity:1; pointer-events:all; }
 
   .modal {
-    background: var(--surface); border: 1px solid rgba(255,255,255,.1);
-    border-radius: 14px; padding: 32px;
-    width: 480px; max-width: 100%;
-    transform: translateY(10px); transition: transform .2s;
-    max-height: 90vh; overflow-y: auto; -webkit-overflow-scrolling: touch;
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:16px; padding:28px;
+    width:480px; max-width:100%;
+    transform:translateY(10px); transition:transform .2s;
+    max-height:90vh; overflow-y:auto;
+    -webkit-overflow-scrolling:touch;
   }
-  .modal-overlay.open .modal { transform: translateY(0); }
+  .modal-overlay.open .modal { transform:translateY(0); }
+  .admin-modal-wide { width:620px; }
 
-  .admin-modal-wide { width: 620px; }
+  .modal-title {
+    font-family:'Bebas Neue',sans-serif;
+    font-size:24px; letter-spacing:.06em; color:#fff; margin-bottom:4px;
+  }
+  .modal-sub { font-size:12px; color:var(--muted); margin-bottom:20px; }
 
-  .modal-title { font-family: 'Bebas Neue', sans-serif; font-size: 26px; letter-spacing: .04em; color: #fff; margin-bottom: 6px; }
-  .modal-sub { font-size: 12px; color: var(--muted); margin-bottom: 24px; }
+  .modal-section-label {
+    font-size:10px; font-weight:700; letter-spacing:.12em;
+    text-transform:uppercase; color:var(--muted);
+    margin-bottom:8px;
+    display:flex; align-items:center; gap:8px;
+  }
+  .modal-section-label::after { content:''; flex:1; height:1px; background:var(--border); }
 
-  .field { margin-bottom: 14px; }
+  .field { margin-bottom:12px; }
   .field label {
-    display: block; font-size: 11px; font-weight: 600;
-    letter-spacing: .08em; text-transform: uppercase;
-    color: var(--muted); margin-bottom: 6px;
+    display:block; font-size:10px; font-weight:700;
+    letter-spacing:.1em; text-transform:uppercase;
+    color:var(--muted); margin-bottom:6px;
   }
   .field input, .field select {
-    width: 100%; background: var(--surface2); border: 1px solid var(--border);
-    border-radius: 7px; padding: 10px 14px;
-    color: var(--text); font-family: 'DM Sans', sans-serif;
-    font-size: 13px; outline: none; transition: border-color .2s;
-    /* Prevent iOS zoom */
+    width:100%; background:var(--bg); border:1px solid var(--border);
+    border-radius:8px; padding:10px 13px;
+    color:var(--text); font-family:'Inter',sans-serif;
+    outline:none; transition:border-color .2s;
     font-size: max(13px, 16px);
   }
-  .field input:focus, .field select:focus { border-color: rgba(232,0,29,.4); }
-  .field select option { background: #111; }
+  .field input:focus, .field select:focus { border-color:rgba(232,0,29,.4); }
+  .field select option { background:#111; }
 
-  .modal-actions { display: flex; gap: 10px; margin-top: 20px; }
-
-  .btn-primary {
-    flex: 1; background: var(--red); color: #fff;
-    border: none; border-radius: 7px; padding: 11px;
-    font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 600;
-    cursor: pointer; transition: background .2s; min-height: 44px;
+  .action-tabs { display:flex; gap:5px; margin-bottom:16px; flex-wrap:wrap; }
+  .action-tab {
+    background:var(--surface2); border:1px solid var(--border);
+    border-radius:5px; padding:5px 11px;
+    font-family:'Inter',sans-serif; font-size:11px; font-weight:600;
+    letter-spacing:.04em; text-transform:uppercase;
+    color:var(--muted); cursor:pointer; transition:all .2s;
+    min-height:32px;
   }
-  .btn-primary:hover { background: #c0001a; }
+  .action-tab:hover { color:var(--text); }
+  .action-tab.active { background:var(--red-dim); border-color:rgba(232,0,29,.3); color:#fff; }
 
-  .btn-ghost {
-    background: none; border: 1px solid var(--border); border-radius: 7px;
-    padding: 11px 20px; font-family: 'DM Sans', sans-serif;
-    font-size: 13px; font-weight: 600; color: var(--muted);
-    cursor: pointer; transition: color .2s; min-height: 44px;
+  .modal-divider { border:none; border-top:1px solid var(--border); margin:18px 0; }
+
+  .modal-actions { display:flex; gap:10px; margin-top:16px; }
+
+  .btn-danger {
+    flex:1; background:var(--red); border:none; border-radius:8px;
+    padding:10px 18px; color:#fff;
+    font-family:'Inter',sans-serif; font-size:12px; font-weight:700;
+    letter-spacing:.06em; text-transform:uppercase;
+    cursor:pointer; transition:opacity .2s; min-height:40px;
   }
-  .btn-ghost:hover { color: #fff; }
+  .btn-danger:hover { opacity:.85; }
+
+  .btn-cancel {
+    background:none; border:1px solid var(--border); border-radius:8px;
+    padding:10px 18px; color:var(--muted);
+    font-family:'Inter',sans-serif; font-size:12px; font-weight:600;
+    letter-spacing:.04em; text-transform:uppercase;
+    cursor:pointer; transition:border-color .2s, color .2s; min-height:40px;
+  }
+  .btn-cancel:hover { border-color:rgba(255,255,255,.2); color:var(--text); }
+
+  .btn-secondary {
+    background:var(--surface2); border:1px solid var(--border); border-radius:8px;
+    padding:0 14px; color:var(--text);
+    font-family:'Inter',sans-serif; font-size:11px; font-weight:600;
+    letter-spacing:.04em; text-transform:uppercase;
+    cursor:pointer; transition:border-color .2s, color .2s;
+    white-space:nowrap; min-height:40px;
+  }
+  .btn-secondary:hover { border-color:rgba(232,0,29,.4); color:#fff; }
 
   .modal-result {
-    margin-top: 14px; padding: 10px 14px; border-radius: 7px;
-    font-size: 13px; display: none;
+    margin-top:12px; padding:10px 14px; border-radius:8px;
+    font-size:12px; font-weight:500; display:none;
   }
-  .modal-result.success { background: rgba(0,220,100,.08); color: #00dc64; border: 1px solid rgba(0,220,100,.2); display: block; }
-  .modal-result.error   { background: rgba(232,0,29,.08); color: var(--red); border: 1px solid rgba(232,0,29,.2); display: block; }
+  .modal-result.success { background:var(--green-dim); color:var(--green); border:1px solid rgba(34,197,94,.2); display:block; }
+  .modal-result.error   { background:var(--red-dim); color:var(--red); border:1px solid rgba(232,0,29,.2); display:block; }
 
-  .action-tabs { display: flex; gap: 6px; margin-bottom: 20px; flex-wrap: wrap; }
-  .action-tab {
-    background: var(--surface2); border: 1px solid var(--border);
-    border-radius: 6px; padding: 6px 12px;
-    font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 500;
-    color: var(--muted); cursor: pointer; transition: all .2s;
-    min-height: 36px;
+  /* Admin roster rows */
+  .admin-roster-wrap {
+    border:1px solid var(--border); border-radius:8px;
+    max-height:320px; overflow-y:auto;
+    -webkit-overflow-scrolling:touch;
+    margin-bottom:14px;
   }
-  .action-tab:hover { color: #fff; }
-  .action-tab.active { background: var(--red-dim); border-color: rgba(232,0,29,.3); color: #fff; }
 
   .admin-row {
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 9px 14px; border-bottom: 1px solid rgba(255,255,255,.03);
-    gap: 10px; transition: background .15s;
+    display:flex; align-items:center; justify-content:space-between;
+    padding:8px 14px; gap:8px;
+    border-bottom:1px solid var(--border2);
+    transition:background .14s;
   }
-  .admin-row:last-child { border-bottom: none; }
-  .admin-row:hover { background: rgba(255,255,255,.03); }
-  .admin-row-name { font-size: 13px; color: #ccc; font-weight: 500; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .admin-row-team { font-size: 11px; color: var(--muted); flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .admin-row:last-child { border-bottom:none; }
+  .admin-row:hover { background:rgba(255,255,255,.022); }
+  .admin-row-name {
+    font-size:12px; color:var(--text); font-weight:500;
+    flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+  }
+  .admin-row-team {
+    font-size:11px; color:var(--muted);
+    flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+  }
   .admin-salary-input {
-    background: var(--surface2); border: 1px solid var(--border);
-    border-radius: 5px; padding: 4px 8px;
-    color: var(--text); font-family: 'Bebas Neue', sans-serif;
-    font-size: 14px; letter-spacing: .05em;
-    width: 110px; text-align: right; outline: none;
-    transition: border-color .2s;
-    /* Prevent iOS zoom */
-    font-size: max(14px, 16px);
+    background:var(--bg); border:1px solid var(--border);
+    border-radius:6px; padding:5px 8px;
+    color:var(--text); font-family:'Bebas Neue',sans-serif;
+    font-size:max(14px,16px); letter-spacing:.04em;
+    width:100px; text-align:right; outline:none;
+    transition:border-color .2s;
   }
-  .admin-salary-input:focus { border-color: rgba(232,0,29,.5); }
+  .admin-salary-input:focus { border-color:rgba(232,0,29,.4); }
+
   .admin-save-btn {
-    background: var(--red); border: none; border-radius: 5px;
-    color: #fff; font-size: 11px; font-weight: 700;
-    padding: 5px 10px; cursor: pointer;
-    transition: background .15s; white-space: nowrap; min-height: 32px;
+    background:var(--red); border:none; border-radius:5px;
+    color:#fff; font-size:10px; font-weight:700;
+    letter-spacing:.06em; text-transform:uppercase;
+    padding:5px 9px; cursor:pointer;
+    transition:opacity .15s; white-space:nowrap; min-height:30px;
   }
-  .admin-save-btn:hover { background: #c0001a; }
-  .admin-save-btn:disabled { opacity: .4; cursor: not-allowed; }
+  .admin-save-btn:hover { opacity:.8; }
+  .admin-save-btn:disabled { opacity:.4; cursor:not-allowed; }
 
   /* ── TOAST ── */
+  #toasts {
+    position:fixed; bottom:20px; right:16px;
+    display:flex; flex-direction:column-reverse; gap:8px;
+    z-index:9999; pointer-events:none;
+    max-width: min(300px, calc(100vw - 32px));
+  }
   .toast {
-    position: fixed; bottom: 28px; left: 50%;
-    transform: translateX(-50%) translateY(20px);
-    background: var(--surface2); border: 1px solid var(--border);
-    border-radius: 8px; padding: 12px 20px;
-    font-size: 13px; color: var(--text);
-    z-index: 300; opacity: 0;
-    transition: opacity .25s, transform .25s;
-    white-space: nowrap; max-width: calc(100vw - 32px);
-    text-align: center;
+    background:var(--surface2); border:1px solid var(--border);
+    border-left:3px solid var(--red);
+    border-radius:8px; padding:10px 14px;
+    font-size:13px; color:#fff;
+    box-shadow:0 8px 32px rgba(0,0,0,.5);
+    pointer-events:all;
+    animation:toastIn .22s ease;
   }
-  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
-  .toast.error   { border-color: rgba(232,0,29,.4); color: var(--red); }
-  .toast.success { border-color: rgba(0,220,100,.3); color: #00dc64; }
+  .toast.green { border-left-color:var(--green); }
+  .toast.amber { border-left-color:var(--amber); }
+  .toast.out   { animation:toastOut .22s ease forwards; }
+  @keyframes toastIn  { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+  @keyframes toastOut { from{opacity:1} to{opacity:0;transform:translateY(-5px)} }
 
-  .hidden { display: none !important; }
+  .hidden { display:none !important; }
 
-  /* ═══════════════════════════════════════
-     RESPONSIVE — TABLET  (≤ 900px)
-  ═══════════════════════════════════════ */
-  @media (max-width: 900px) {
-    nav { padding: 0 20px; height: 52px; }
-
-    .reg-banner { padding: 10px 20px; font-size: 12px; }
-
-    .page-header {
-      padding: 36px 20px 28px;
-      flex-direction: column;
-      align-items: flex-start; gap: 16px;
-    }
-
-    .search-wrap { width: 100%; }
-
-    .tabs { padding: 16px 20px; }
-
-    main { padding: 24px 20px 60px; }
-
-    .teams-grid {
-      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-      gap: 12px;
-    }
-
-    .fa-grid { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); }
-
-    .admin-modal-wide { width: 100%; }
+  /* ── RESPONSIVE ── */
+  @media (max-width:900px) {
+    .teams-grid { grid-template-columns: repeat(auto-fill, minmax(300px,1fr)); gap:10px; }
+    .search-wrap { width:100%; }
+    .hero { flex-direction:column; gap:12px; }
+    .admin-modal-wide { width:100%; }
   }
 
-  /* ═══════════════════════════════════════
-     RESPONSIVE — MOBILE  (≤ 600px)
-  ═══════════════════════════════════════ */
-  @media (max-width: 600px) {
-    body { font-size: 13px; }
-
-    /* NAV — collapse discord label to icon-only */
-    nav { padding: 0 14px; height: 48px; gap: 8px; }
-
-    .nav-cap { font-size: 10px; }
-    .nav-cap strong { margin-left: 4px; }
-
-    /* Hide "Login with Discord" text, keep icon */
-    .discord-btn span { display: none; }
-    .discord-btn { padding: 8px 10px; gap: 0; }
-
-    .admin-btn { padding: 6px 10px; font-size: 11px; }
-
-    /* User chip — truncate on small screens */
-    .user-chip { max-width: 140px; font-size: 11px; padding: 5px 9px; }
-
-    /* REG BANNER */
-    .reg-banner { padding: 10px 14px; font-size: 12px; }
-
-    /* PAGE HEADER */
-    .page-header { padding: 24px 14px 20px; gap: 14px; }
-    .page-meta { font-size: 12px; line-height: 1.5; }
-
-    /* TABS */
-    .tabs { padding: 12px 14px; }
-    .tab { padding: 6px 12px; font-size: 12px; }
-
-    /* MAIN */
-    main { padding: 16px 14px 80px; }
-
-    /* TEAMS GRID — single column */
-    .teams-grid { grid-template-columns: 1fr; gap: 10px; }
-
-    .team-card-header { padding: 14px 16px; gap: 10px; }
-    .team-logo-wrap { width: 34px; height: 34px; }
-    .team-logo-wrap img { width: 30px; height: 30px; }
-    .team-name { font-size: 13px; }
-    .team-salary-num { font-size: 18px; }
-    .team-cap-pct { font-size: 10px; }
-    .cap-bar-wrap { padding: 0 16px 14px; }
-    .team-toggle { padding: 0 16px 12px; font-size: 10px; }
-
-    .player-row { padding: 9px 16px; }
-    .player-name { font-size: 12px; }
-    .player-salary { font-size: 13px; }
-
-    /* FA SECTION */
-    .fa-section { margin-top: 32px; }
-    .fa-title { font-size: 22px; }
-    .fa-grid { grid-template-columns: 1fr 1fr; gap: 6px; }
-    .fa-card { padding: 10px 12px; }
-    .fa-name { font-size: 12px; }
-
-    /* ADMIN MODAL */
-    .modal { padding: 20px 16px; border-radius: 12px; }
-    .modal-title { font-size: 22px; }
-    .modal-sub { font-size: 11px; margin-bottom: 16px; }
-
-    /* Admin auth row — stack vertically on mobile */
-    #admin-auth-row { flex-direction: column !important; align-items: stretch !important; gap: 8px !important; }
-    #admin-auth-row .btn-primary { padding: 10px; }
-
-    /* Admin roster — hide team column, tighten layout */
-    .admin-row { gap: 6px; padding: 8px 10px; }
-    .admin-row-team { display: none; }
-    .admin-salary-input { width: 90px; }
-
-    /* Action tabs — wrap smaller */
-    .action-tab { padding: 5px 10px; font-size: 11px; }
-
-    /* Modal actions — stack */
-    .modal-actions { flex-direction: column; gap: 8px; }
-    .btn-primary, .btn-ghost { width: 100%; min-height: 48px; }
-
-    /* Admin search row */
-    #admin-roster-section > div:first-child { flex-direction: column !important; align-items: stretch !important; gap: 8px; }
-    #admin-search { width: 100% !important; }
+  @media (max-width:640px) {
+    .hero { padding:18px 0 16px; }
+    .hero-title { font-size:24px; }
+    .teams-grid { grid-template-columns:1fr; gap:8px; }
+    .fa-grid { grid-template-columns:1fr 1fr; gap:6px; }
+    .discord-btn span { display:none; }
+    .discord-btn { padding:6px 9px; gap:0; }
+    .admin-row-team { display:none; }
+    .admin-salary-input { width:84px; }
+    .modal { padding:20px 16px; }
+    .modal-actions { flex-direction:column-reverse; }
+    .btn-danger, .btn-cancel { width:100%; min-height:46px; }
+    #admin-auth-row { flex-direction:column !important; gap:8px !important; }
   }
 
-  /* ═══════════════════════════════════════
-     TINY  (≤ 380px)
-  ═══════════════════════════════════════ */
-  @media (max-width: 380px) {
-    .fa-grid { grid-template-columns: 1fr; }
-    .team-salary-num { font-size: 16px; }
-    .team-name { font-size: 12px; }
-    .nav-cap { display: none; } /* free up space on tiny screens */
+  @media (max-width:380px) {
+    .fa-grid { grid-template-columns:1fr; }
+    .hero-title { font-size:21px; }
+    .nav-cap-pill { display:none; }
   }
 
-  /* ═══════════════════════════════════════
-     TOUCH IMPROVEMENTS
-  ═══════════════════════════════════════ */
-  @media (hover: none) and (pointer: coarse) {
-    .team-card:hover { border-color: var(--border); transform: none; }
-    .team-card.open:hover { border-color: rgba(232,0,29,.25); }
-    .team-card:active { border-color: rgba(255,255,255,.12); }
-    .team-card.open:active { border-color: rgba(232,0,29,.35); }
-
-    .player-row:hover { background: transparent; }
-    .player-row:active { background: rgba(255,255,255,.04); }
-
-    .fa-card:hover { background: var(--surface); border-color: var(--border); }
-    .fa-card:active { background: var(--surface2); }
-
-    .tab:hover { color: var(--muted); background: none; }
-    .tab:active { color: #fff; background: var(--surface2); }
-
-    .action-tab:hover { color: var(--muted); }
-    .action-tab:active { color: #fff; }
-
-    .admin-btn:hover { color: var(--muted); border-color: var(--border); }
-    .admin-btn:active { color: #fff; border-color: rgba(255,255,255,.2); }
+  @media (hover:none) and (pointer:coarse) {
+    .team-card:hover  { border-color:var(--border); }
+    .team-card.open:hover { border-color:rgba(232,0,29,.3); }
+    .team-card:active { border-color:rgba(255,255,255,.14); }
+    .player-row:hover { background:transparent; }
+    .player-row:active { background:rgba(255,255,255,.04); }
+    .fa-card:hover  { background:var(--surface); border-color:var(--border); }
+    .fa-card:active { background:var(--surface2); }
+    .tab:hover  { color:var(--muted); }
+    .tab:active { color:#fff; border-bottom-color:var(--red); }
+    .admin-btn:hover  { border-color:var(--border); color:var(--muted); }
+    .admin-btn:active { border-color:rgba(232,0,29,.4); color:var(--text); }
   }
 </style>
 </head>
@@ -534,8 +546,10 @@
 
 <div class="loading-bar" id="loading-bar"></div>
 
+<!-- NAV -->
 <nav>
-  <div class="nav-cap">Salary Cap <strong>$58M</strong></div>
+    <span class="nav-cap-pill">Cap <strong>$58M</strong></span>
+  </div>
   <div class="nav-right">
     <div id="user-area">
       <a class="discord-btn" href="/api/auth/discord" id="login-btn">
@@ -545,41 +559,53 @@
         <span>Login with Discord</span>
       </a>
     </div>
-    <button class="admin-btn" onclick="openAdmin()">⚙ Admin</button>
+    <button class="admin-btn" onclick="openAdmin()">Admin</button>
   </div>
 </nav>
 
 <div id="reg-banner" class="reg-banner hidden"></div>
 
-<div class="page-header">
-  <div class="page-header-left">
-    <div class="page-eyebrow">Season 11</div>
-    <div class="page-title">Salary Cap<br>Dashboard</div>
-    <div class="page-meta">30 franchises · Click any team to expand roster · Coaches do not count toward cap · Minimum 10 players · No imbalanced trading · 20M per team: 1 · 18M per team: 1 · All non-listed players are 2M</div>
-  </div>
-  <div class="search-wrap">
-    <svg class="search-icon" width="14" height="14" viewBox="0 0 14 14" fill="none">
-      <circle cx="6" cy="6" r="4.5" stroke="#555" stroke-width="1.3"/>
-      <path d="M9.5 9.5L12.5 12.5" stroke="#555" stroke-width="1.3" stroke-linecap="round"/>
-    </svg>
-    <input class="search-input" id="search" placeholder="Search player or team…" autocomplete="off">
-  </div>
-</div>
+<div class="page">
 
-<div class="tabs">
-  <button class="tab active" data-tab="teams">All Teams</button>
-  <button class="tab" data-tab="fa">Free Agents</button>
-</div>
+  <!-- HERO -->
+  <div class="hero">
+    <div>
+      <div class="hero-title"><em>RPL</em> Salary Cap Dashboard</div>
+      <div class="hero-sub">Season 11 · 30 franchises · Click any team to expand roster<br>Min 10 players · 20M max: 1 per team · 18M max: 1 per team · All unlisted players are 2M</div>
+    </div>
+    <div class="search-wrap">
+      <svg class="search-icon" width="14" height="14" viewBox="0 0 14 14" fill="none">
+        <circle cx="6" cy="6" r="4.5" stroke="currentColor" stroke-width="1.3"/>
+        <path d="M9.5 9.5L12.5 12.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+      </svg>
+      <input class="search-input" id="search" placeholder="Search player or team…" autocomplete="off">
+    </div>
+  </div>
 
-<main>
+  <!-- TABS -->
+  <div class="tabs">
+    <button class="tab active" data-tab="teams">All Teams</button>
+    <button class="tab" data-tab="fa">Free Agents</button>
+  </div>
+
+  <!-- TEAMS VIEW -->
   <div id="view-teams">
     <div class="teams-grid" id="teams-grid">
       <div class="empty" style="grid-column:1/-1">
-        <div class="empty-icon">⏳</div>
-        <div class="empty-text">Loading roster data…</div>
+        <div class="empty-icon">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+            <circle cx="10" cy="10" r="8" stroke="#56566a" stroke-width="1.4"/>
+            <path d="M10 6v4" stroke="#56566a" stroke-width="1.4" stroke-linecap="round"/>
+            <circle cx="10" cy="13.5" r=".8" fill="#56566a"/>
+          </svg>
+        </div>
+        <h3>Loading…</h3>
+        <p>Fetching roster data</p>
       </div>
     </div>
   </div>
+
+  <!-- FA VIEW -->
   <div id="view-fa" class="hidden">
     <div class="fa-section">
       <div class="fa-header">
@@ -589,50 +615,51 @@
       <div class="fa-grid" id="fa-grid"></div>
     </div>
   </div>
-</main>
 
-<!-- Admin Modal -->
+</div>
+
+<!-- ADMIN MODAL -->
 <div class="modal-overlay" id="admin-modal">
   <div class="modal admin-modal-wide" onclick="event.stopPropagation()">
     <div class="modal-title">Admin Panel</div>
     <div class="modal-sub">Changes apply instantly to the live site.</div>
 
-    <div id="admin-auth-row" style="display:flex;gap:10px;align-items:flex-end;margin-bottom:18px;">
+    <div id="admin-auth-row" style="display:flex;gap:8px;align-items:flex-end;margin-bottom:16px;">
       <div class="field" style="flex:1;margin-bottom:0;">
-        <label>Admin Password</label>
-        <input type="password" id="admin-pass" placeholder="Enter password" onkeydown="if(event.key==='Enter')unlockAdmin()">
+        <label>Password</label>
+        <input type="password" id="admin-pass" placeholder="Enter admin password" onkeydown="if(event.key==='Enter')unlockAdmin()">
       </div>
-      <button class="btn-primary" style="white-space:nowrap;padding:10px 18px;" onclick="unlockAdmin()">Unlock</button>
+      <button class="btn-secondary" style="flex-shrink:0;" onclick="unlockAdmin()">Unlock</button>
     </div>
 
     <div id="admin-roster-section" class="hidden">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;gap:10px;">
-        <div style="font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);flex-shrink:0;">Roster — click salary to edit</div>
-        <input class="search-input" id="admin-search" placeholder="Filter players…" style="width:180px;padding:7px 12px;" oninput="renderAdminRoster()">
+      <div class="modal-section-label">Roster — click salary to edit</div>
+      <div style="display:flex;gap:8px;margin-bottom:10px;">
+        <input class="search-input" id="admin-search" placeholder="Filter players…" style="flex:1;padding:8px 12px;" oninput="renderAdminRoster()">
       </div>
-      <div id="admin-roster-table" style="max-height:340px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;-webkit-overflow-scrolling:touch;"></div>
+      <div class="admin-roster-wrap">
+        <div id="admin-roster-table"></div>
+      </div>
 
-      <details style="margin-top:16px;">
-        <summary style="font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);cursor:pointer;user-select:none;padding:4px 0;">+ Add / Remove / Move / Rename</summary>
-        <div style="margin-top:12px;">
+      <details style="margin-top:14px;">
+        <summary style="font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);cursor:pointer;user-select:none;padding:4px 0;">+ Add / Remove / Move / Rename</summary>
+        <div style="margin-top:14px;">
           <div class="action-tabs">
-            <button class="action-tab active" onclick="setAction('setSalary', this)">Set Salary</button>
-            <button class="action-tab" onclick="setAction('setTeam', this)">Set Team</button>
-            <button class="action-tab" onclick="setAction('addPlayer', this)">Add Player</button>
-            <button class="action-tab" onclick="setAction('removePlayer', this)">Remove Player</button>
-            <button class="action-tab" onclick="setAction('renamePlayer', this)">Rename Player</button>
+            <button class="action-tab active" onclick="setAction('setSalary',this)">Set Salary</button>
+            <button class="action-tab" onclick="setAction('setTeam',this)">Set Team</button>
+            <button class="action-tab" onclick="setAction('addPlayer',this)">Add Player</button>
+            <button class="action-tab" onclick="setAction('removePlayer',this)">Remove</button>
+            <button class="action-tab" onclick="setAction('renamePlayer',this)">Rename</button>
           </div>
 
           <div class="field">
             <label id="name-label">Player Name</label>
             <input type="text" id="admin-name" placeholder="Exact username">
           </div>
-
           <div class="field" id="salary-field">
             <label>Salary</label>
             <input type="number" id="admin-salary" placeholder="e.g. 10000000">
           </div>
-
           <div class="field hidden" id="team-field">
             <label>Team</label>
             <select id="admin-team">
@@ -669,14 +696,14 @@
               <option value="Washington Wizards">Washington Wizards</option>
             </select>
           </div>
-
           <div class="field hidden" id="newname-field">
             <label>New Name</label>
             <input type="text" id="admin-newname" placeholder="New username">
           </div>
 
           <div class="modal-actions">
-            <button class="btn-primary" onclick="submitAdmin()">Apply</button>
+            <button class="btn-cancel" onclick="closeAdmin()">Cancel</button>
+            <button class="btn-danger" onclick="submitAdmin()">Apply</button>
           </div>
         </div>
       </details>
@@ -685,12 +712,12 @@
     </div>
 
     <div style="margin-top:16px;text-align:right;">
-      <button class="btn-ghost" onclick="closeAdmin()">Close</button>
+      <button class="btn-cancel" onclick="closeAdmin()">Close</button>
     </div>
   </div>
 </div>
 
-<div class="toast" id="toast"></div>
+<div id="toasts"></div>
 
 <script>
 const CAP = 58000000;
@@ -741,14 +768,15 @@ let allPlayers = [];
 let currentTab = 'teams';
 let searchQuery = '';
 let currentAction = 'setSalary';
+let adminUnlocked = false;
 
 async function loadPlayers() {
   setLoading(true);
   try {
     const res = await fetch('/api/players');
     allPlayers = await res.json();
-  } catch (e) {
-    showToast('Failed to load roster data', 'error');
+  } catch(e) {
+    toast('Failed to load roster data', 'red');
   }
   setLoading(false);
   render();
@@ -763,12 +791,10 @@ function setLoading(on) {
 function checkRegistration() {
   const params = new URLSearchParams(window.location.search);
   if (params.get('registered')) {
-    const name = params.get('name');
-    const team = params.get('team');
+    const name = params.get('name'), team = params.get('team');
     localStorage.setItem('rpl_user', JSON.stringify({ name, team }));
     window.history.replaceState({}, '', '/');
   }
-
   const stored = localStorage.getItem('rpl_user');
   if (stored) {
     const { name, team } = JSON.parse(stored);
@@ -776,10 +802,7 @@ function checkRegistration() {
     banner.textContent = `✓ Logged in as ${name} · ${team}`;
     banner.classList.remove('hidden');
     document.getElementById('user-area').innerHTML = `
-      <div class="user-chip">
-        <div class="dot"></div>
-        ${name} · ${team}
-      </div>`;
+      <div class="user-chip"><div class="dot"></div>${name} · ${team}</div>`;
   }
 }
 
@@ -797,7 +820,7 @@ function fmt(n) {
 
 function capColor(pct) {
   if (pct >= 100) return 'over';
-  if (pct >= 80) return 'warn';
+  if (pct >= 80)  return 'warn';
   return 'safe';
 }
 
@@ -805,65 +828,59 @@ function renderTeams() {
   const q = searchQuery.toLowerCase();
   const grid = document.getElementById('teams-grid');
   const grouped = groupByTeam(allPlayers);
-  let html = '';
-  let anyVisible = false;
+  let html = '', anyVisible = false;
 
   teamList.forEach(team => {
     const players = grouped[team] || [];
     const matchesTeam = team.toLowerCase().includes(q);
-    const matchedPlayers = q
-      ? players.filter(p => p.name.toLowerCase().includes(q) || matchesTeam)
-      : players;
-
+    const matchedPlayers = q ? players.filter(p => p.name.toLowerCase().includes(q) || matchesTeam) : players;
     if (q && !matchesTeam && matchedPlayers.length === 0) return;
     anyVisible = true;
 
-    const total = players.reduce((s, p) => s + p.salary, 0);
+    const total = players.reduce((s,p) => s + p.salary, 0);
     const pct = Math.min((total / CAP) * 100, 110);
     const cls = capColor(pct);
     const isOpen = q && matchedPlayers.length > 0;
 
-    html += `
-      <div class="team-card${isOpen ? ' open' : ''}" onclick="toggleCard(this)">
-        <div class="team-card-header">
-          <div class="team-logo-wrap">
-            <img src="${logos[team] || ''}" alt="${team}" loading="lazy">
-          </div>
-          <div class="team-name-block">
-            <div class="team-name">${team}</div>
-            <div class="team-player-count">${players.length} player${players.length !== 1 ? 's' : ''}</div>
-          </div>
-          <div class="team-salary-block">
-            <div class="team-salary-num">${fmt(total)}</div>
-            <div class="team-cap-pct ${cls}">${pct.toFixed(0)}% of cap</div>
-          </div>
+    html += `<div class="team-card${isOpen?' open':''}" onclick="toggleCard(this)">
+      <div class="team-card-header">
+        <div class="team-logo-wrap">
+          <img src="${logos[team]||''}" alt="${team}" loading="lazy">
         </div>
-        <div class="cap-bar-wrap">
-          <div class="cap-bar-track">
-            <div class="cap-bar-fill ${cls}" style="width:${Math.min(pct,100)}%"></div>
-          </div>
+        <div class="team-name-block">
+          <div class="team-name">${team}</div>
+          <div class="team-player-count">${players.length} player${players.length!==1?'s':''}</div>
         </div>
-        <div class="team-toggle">
-          <svg class="toggle-arrow" width="12" height="12" viewBox="0 0 12 12" fill="none">
-            <path d="M2 4.5L6 8.5L10 4.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-          Roster
+        <div class="team-salary-block">
+          <div class="team-salary-num">${fmt(total)}</div>
+          <div class="team-cap-pct ${cls}">${pct.toFixed(0)}% of cap</div>
         </div>
-        <div class="players-list${isOpen ? ' open' : ''}">
-          ${(isOpen && !matchesTeam ? matchedPlayers : players).map(p => `
-            <div class="player-row">
-              <span class="player-name">${p.name}</span>
-              <span class="player-salary">${fmt(p.salary)}</span>
-            </div>
-          `).join('')}
+      </div>
+      <div class="cap-bar-wrap">
+        <div class="cap-bar-track">
+          <div class="cap-bar-fill ${cls}" style="width:${Math.min(pct,100)}%"></div>
         </div>
-      </div>`;
+      </div>
+      <div class="team-toggle">
+        <svg class="toggle-arrow" width="11" height="11" viewBox="0 0 12 12" fill="none">
+          <path d="M2 4.5L6 8.5L10 4.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Roster
+      </div>
+      <div class="players-list${isOpen?' open':''}">
+        ${(isOpen&&!matchesTeam?matchedPlayers:players).map(p=>`
+          <div class="player-row">
+            <span class="player-name">${p.name}</span>
+            <span class="player-salary">${fmt(p.salary)}</span>
+          </div>`).join('')}
+      </div>
+    </div>`;
   });
 
   if (!anyVisible) {
-    html = `<div class="empty" style="grid-column:1/-1">
-      <div class="empty-icon">🏀</div>
-      <div class="empty-text">No teams or players match "<strong>${q}</strong>"</div>
+    html = `<div class="empty">
+      <div class="empty-icon"><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="8" stroke="#56566a" stroke-width="1.4"/><path d="M10 6v4" stroke="#56566a" stroke-width="1.4" stroke-linecap="round"/><circle cx="10" cy="13.5" r=".8" fill="#56566a"/></svg></div>
+      <h3>No Results</h3><p>No teams or players match "${q}"</p>
     </div>`;
   }
   grid.innerHTML = html;
@@ -873,24 +890,17 @@ function renderFA() {
   const q = searchQuery.toLowerCase();
   const freeAgents = allPlayers.filter(p => p.team === 'Free Agent');
   const filtered = q ? freeAgents.filter(p => p.name.toLowerCase().includes(q)) : freeAgents;
-  document.getElementById('fa-count').textContent = `${filtered.length} player${filtered.length !== 1 ? 's' : ''}`;
+  document.getElementById('fa-count').textContent = `${filtered.length} player${filtered.length!==1?'s':''}`;
   document.getElementById('fa-grid').innerHTML = filtered.length
-    ? filtered.map(p => `
-        <div class="fa-card">
-          <span class="fa-name">${p.name}</span>
-          <span class="fa-badge">${fmt(p.salary)}</span>
-        </div>`).join('')
-    : `<div class="empty" style="grid-column:1/-1">
-        <div class="empty-icon">🏀</div>
-        <div class="empty-text">No free agents match "<strong>${q}</strong>"</div>
-      </div>`;
+    ? filtered.map(p=>`<div class="fa-card"><span class="fa-name">${p.name}</span><span class="fa-badge">${fmt(p.salary)}</span></div>`).join('')
+    : `<div class="empty"><div class="empty-icon"><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="8" stroke="#56566a" stroke-width="1.4"/><path d="M10 6v4" stroke="#56566a" stroke-width="1.4" stroke-linecap="round"/><circle cx="10" cy="13.5" r=".8" fill="#56566a"/></svg></div><h3>No Results</h3><p>No free agents match "${q}"</p></div>`;
 }
 
 function toggleCard(card) {
   const list = card.querySelector('.players-list');
-  const isOpen = list.classList.contains('open');
-  list.classList.toggle('open', !isOpen);
-  card.classList.toggle('open', !isOpen);
+  const open = list.classList.contains('open');
+  list.classList.toggle('open', !open);
+  card.classList.toggle('open', !open);
 }
 
 function render() {
@@ -905,8 +915,6 @@ function render() {
   }
 }
 
-let adminUnlocked = false;
-
 function openAdmin() {
   document.getElementById('admin-modal').classList.add('open');
   document.getElementById('modal-result').className = 'modal-result';
@@ -920,7 +928,7 @@ function closeAdmin() {
 
 document.getElementById('admin-modal').addEventListener('click', closeAdmin);
 
-async function unlockAdmin() {
+function unlockAdmin() {
   const password = document.getElementById('admin-pass').value;
   if (!password) { showResult('Enter the admin password.', 'error'); return; }
   adminUnlocked = true;
@@ -930,29 +938,22 @@ async function unlockAdmin() {
 
 function renderAdminRoster() {
   const q = (document.getElementById('admin-search')?.value || '').toLowerCase();
-  const sorted = [...allPlayers].sort((a, b) => a.team.localeCompare(b.team) || a.name.localeCompare(b.name));
+  const sorted = [...allPlayers].sort((a,b) => a.team.localeCompare(b.team) || a.name.localeCompare(b.name));
   const filtered = q ? sorted.filter(p => p.name.toLowerCase().includes(q) || p.team.toLowerCase().includes(q)) : sorted;
-
   const container = document.getElementById('admin-roster-table');
   if (!filtered.length) {
-    container.innerHTML = '<div style="padding:24px;text-align:center;color:var(--muted);font-size:13px;">No players match your search.</div>';
+    container.innerHTML = '<div style="padding:20px;text-align:center;color:var(--muted);font-size:12px;">No players match your search.</div>';
     return;
   }
-
-  container.innerHTML = filtered.map(p => `
+  container.innerHTML = filtered.map(p=>`
     <div class="admin-row">
       <span class="admin-row-name">${p.name}</span>
       <span class="admin-row-team">${p.team}</span>
-      <input
-        class="admin-salary-input"
-        type="number"
-        value="${p.salary}"
+      <input class="admin-salary-input" type="number" value="${p.salary}"
         data-player="${encodeURIComponent(p.name)}"
-        onkeydown="if(event.key==='Enter')saveSalaryInline(this.dataset.player, this)"
-      >
-      <button class="admin-save-btn" onclick="saveSalaryInline(this.previousElementSibling.dataset.player, this.previousElementSibling)">Save</button>
-    </div>
-  `).join('');
+        onkeydown="if(event.key==='Enter')saveSalaryInline(this.dataset.player,this)">
+      <button class="admin-save-btn" onclick="saveSalaryInline(this.previousElementSibling.dataset.player,this.previousElementSibling)">Save</button>
+    </div>`).join('');
 }
 
 async function saveSalaryInline(encodedName, inputEl) {
@@ -960,40 +961,30 @@ async function saveSalaryInline(encodedName, inputEl) {
   const password = document.getElementById('admin-pass').value;
   const salary = Number(inputEl.value);
   if (!salary || salary < 0) { showResult('Invalid salary.', 'error'); return; }
-
   const btn = inputEl.nextElementSibling;
   if (btn) { btn.textContent = '…'; btn.disabled = true; }
-
   try {
     const res = await fetch('/api/admin', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ password, action: 'setSalary', name, salary })
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ password, action:'setSalary', name, salary })
     });
     const data = await res.json();
     if (data.ok) {
       showResult(data.message, 'success');
-      await loadPlayers();
-      renderAdminRoster();
-    } else {
-      showResult(data.error || 'Something went wrong.', 'error');
-    }
-  } catch (e) {
-    showResult('Network error.', 'error');
-  } finally {
-    if (btn) { btn.textContent = 'Save'; btn.disabled = false; }
-  }
+      toast(`${name} updated`, 'green');
+      await loadPlayers(); renderAdminRoster();
+    } else { showResult(data.error || 'Something went wrong.', 'error'); }
+  } catch(e) { showResult('Network error.', 'error'); }
+  finally { if (btn) { btn.textContent = 'Save'; btn.disabled = false; } }
 }
 
 function setAction(action, btn) {
   currentAction = action;
   document.querySelectorAll('.action-tab').forEach(t => t.classList.remove('active'));
   btn.classList.add('active');
-
-  document.getElementById('salary-field').classList.toggle('hidden', !['setSalary', 'addPlayer'].includes(action));
-  document.getElementById('team-field').classList.toggle('hidden', !['setTeam', 'addPlayer'].includes(action));
+  document.getElementById('salary-field').classList.toggle('hidden', !['setSalary','addPlayer'].includes(action));
+  document.getElementById('team-field').classList.toggle('hidden', !['setTeam','addPlayer'].includes(action));
   document.getElementById('newname-field').classList.toggle('hidden', action !== 'renamePlayer');
-
   document.getElementById('name-label').textContent = action === 'addPlayer' ? 'Player Name (to add)' : 'Player Name';
 }
 
@@ -1003,40 +994,31 @@ async function submitAdmin() {
   const salary = document.getElementById('admin-salary').value;
   const team = document.getElementById('admin-team').value;
   const newName = document.getElementById('admin-newname').value.trim();
-
   if (!password) { showResult('Enter the admin password.', 'error'); return; }
   if (!name) { showResult('Enter a player name.', 'error'); return; }
-
   try {
     const res = await fetch('/api/admin', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ password, action: currentAction, name, salary, team, newName })
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ password, action:currentAction, name, salary, team, newName })
     });
     const data = await res.json();
     if (data.ok) {
       showResult(data.message, 'success');
-      await loadPlayers();
-      renderAdminRoster();
-    } else {
-      showResult(data.error || 'Something went wrong.', 'error');
-    }
-  } catch (e) {
-    showResult('Network error.', 'error');
-  }
+      toast(data.message, 'green');
+      await loadPlayers(); renderAdminRoster();
+    } else { showResult(data.error || 'Something went wrong.', 'error'); }
+  } catch(e) { showResult('Network error.', 'error'); }
 }
 
 function showResult(msg, type) {
   const el = document.getElementById('modal-result');
-  el.textContent = msg;
-  el.className = `modal-result ${type}`;
+  el.textContent = msg; el.className = `modal-result ${type}`;
 }
 
-function showToast(msg, type = '') {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.className = `toast ${type} show`;
-  setTimeout(() => t.classList.remove('show'), 3000);
+function toast(msg, c='red', dur=5000) {
+  const t = Object.assign(document.createElement('div'),{className:`toast ${c}`,textContent:msg});
+  document.getElementById('toasts').prepend(t);
+  setTimeout(()=>{ t.classList.add('out'); setTimeout(()=>t.remove(),240); }, dur);
 }
 
 document.querySelectorAll('.tab').forEach(tab => {
