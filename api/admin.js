@@ -23,6 +23,45 @@ export default async function handler(req, res) {
 
   const entry = players.find(([, p]) => p.name.toLowerCase() === name?.toLowerCase());
 
+  // purgeStaff: cross-reference Discord roles, delete anyone who is Coach or Owner
+  if (action === 'purgeStaff') {
+    const DISCORD_BOT_TOKEN = process.env.DISCORD_BOT_TOKEN;
+    const DISCORD_GUILD_ID  = process.env.DISCORD_GUILD_ID;
+    async function dFetch(path) {
+      const r = await fetch(`https://discord.com/api/v10${path}`, {
+        headers: { Authorization: `Bot ${DISCORD_BOT_TOKEN}` }
+      });
+      if (!r.ok) throw new Error(`Discord ${r.status} on ${path}`);
+      return r.json();
+    }
+    const allRoles = await dFetch(`/guilds/${DISCORD_GUILD_ID}/roles`);
+    const roleMap = {};
+    allRoles.forEach(r => roleMap[r.id] = r.name);
+    let members = [], after = '0';
+    while (true) {
+      const batch = await dFetch(`/guilds/${DISCORD_GUILD_ID}/members?limit=1000&after=${after}`);
+      members = members.concat(batch);
+      if (batch.length < 1000) break;
+      after = batch[batch.length - 1].user.id;
+    }
+    const staffIds = new Set();
+    const staffNames = new Set();
+    for (const m of members) {
+      if (m.user?.bot) continue;
+      const roleNames = (m.roles || []).map(id => roleMap[id]).filter(Boolean);
+      if (roleNames.includes('Team Coaches') || roleNames.includes('Franchise Owners')) {
+        staffIds.add(m.user.id);
+        staffNames.add(m.user.username.toLowerCase());
+      }
+    }
+    // Delete any KV entry whose key OR name matches a staff member
+    const toDelete = players
+      .filter(([id, p]) => staffIds.has(id) || staffNames.has(p.name?.toLowerCase()))
+      .map(([id]) => id);
+    if (toDelete.length > 0) await redis.hdel('players', ...toDelete);
+    return res.json({ ok: true, message: `Purged ${toDelete.length} staff entr${toDelete.length===1?'y':'ies'} from players` });
+  }
+
   if (action === 'setSalary') {
     if (!entry) return res.status(404).json({ error: `Player "${name}" not found` });
     const [id, player] = entry;
@@ -38,10 +77,11 @@ export default async function handler(req, res) {
   }
 
   if (action === 'removePlayer') {
-    if (!entry) return res.status(404).json({ error: `Player "${name}" not found` });
-    const [id] = entry;
-    await redis.hdel('players', id);
-    return res.json({ ok: true, message: `${name} removed` });
+    // Delete ALL entries with this name (catches duplicates)
+    const allMatches = players.filter(([, p]) => p.name.toLowerCase() === name?.toLowerCase());
+    if (!allMatches.length) return res.status(404).json({ error: `Player "${name}" not found` });
+    await redis.hdel('players', ...allMatches.map(([id]) => id));
+    return res.json({ ok: true, message: `${name} removed (${allMatches.length} entr${allMatches.length===1?'y':'ies'})` });
   }
 
   if (action === 'addPlayer') {
