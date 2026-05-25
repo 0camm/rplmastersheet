@@ -49,6 +49,11 @@ export default async function handler(req, res) {
     for (const member of members) {
       if (member.user?.bot) continue;
 
+      const roleNames = (member.roles || []).map(id => roleMap[id]).filter(Boolean);
+
+      // Skip coaches and franchise owners — they don't count toward salary cap
+      if (roleNames.includes('Team Coaches') || roleNames.includes('Franchise Owners')) continue;
+
       let assignedTeam = null;
 
       // Check for team role first
