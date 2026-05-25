@@ -52,17 +52,19 @@ export default async function handler(req, res) {
       if (member.user?.bot) continue;
 
       const roleNames = (member.roles || []).map(id => roleMap[id]).filter(Boolean);
-      const isStaff = roleNames.includes('Team Coaches') || roleNames.includes('Franchise Owners');
+      const isCoach = roleNames.includes('Team Coaches');
+      const isOwner = roleNames.includes('Franchise Owners');
       const userId = member.user.id;
 
-      if (isStaff) {
-        // Actively remove stale staff entries that snuck into KV before this fix
+      if (isCoach) {
+        // Coaches don't count toward salary cap — delete from KV if present
         if (existing[userId]) {
           toDelete.push(userId);
           removed++;
         }
         continue;
       }
+      // Owners DO count toward salary cap — fall through to normal player logic
 
       let assignedTeam = null;
 
