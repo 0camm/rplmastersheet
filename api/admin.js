@@ -44,22 +44,23 @@ export default async function handler(req, res) {
       if (batch.length < 1000) break;
       after = batch[batch.length - 1].user.id;
     }
-    const staffIds = new Set();
-    const staffNames = new Set();
+    const coachIds = new Set();
+    const coachNames = new Set();
     for (const m of members) {
       if (m.user?.bot) continue;
       const roleNames = (m.roles || []).map(id => roleMap[id]).filter(Boolean);
-      if (roleNames.includes('Team Coaches') || roleNames.includes('Franchise Owners')) {
-        staffIds.add(m.user.id);
-        staffNames.add(m.user.username.toLowerCase());
+      // Only purge coaches — owners keep their salary cap entries
+      if (roleNames.includes('Team Coaches')) {
+        coachIds.add(m.user.id);
+        coachNames.add(m.user.username.toLowerCase());
       }
     }
-    // Delete any KV entry whose key OR name matches a staff member
+    // Delete any KV entry whose key OR name matches a coach
     const toDelete = players
-      .filter(([id, p]) => staffIds.has(id) || staffNames.has(p.name?.toLowerCase()))
+      .filter(([id, p]) => coachIds.has(id) || coachNames.has(p.name?.toLowerCase()))
       .map(([id]) => id);
     if (toDelete.length > 0) await redis.hdel('players', ...toDelete);
-    return res.json({ ok: true, message: `Purged ${toDelete.length} staff entr${toDelete.length===1?'y':'ies'} from players` });
+    return res.json({ ok: true, message: `Purged ${toDelete.length} coach entr${toDelete.length===1?'y':'ies'} from players` });
   }
 
   if (action === 'setSalary') {
