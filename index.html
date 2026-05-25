@@ -888,13 +888,13 @@ function renderTeams() {
       ...staff.owners.map(p => `
         <div class="staff-row">
           <div class="staff-pip owner"></div>
-          <span class="staff-row-name">${p.nick || p.name}</span>
+          <span class="staff-row-name">${p.name}</span>
           <span class="staff-role-chip owner">Owner</span>
         </div>`),
       ...staff.coaches.map(p => `
         <div class="staff-row">
           <div class="staff-pip coach"></div>
-          <span class="staff-row-name">${p.nick || p.name}</span>
+          <span class="staff-row-name">${p.name}</span>
           <span class="staff-role-chip coach">Coach</span>
         </div>`)
     ].join('');
