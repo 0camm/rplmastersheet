@@ -81,6 +81,11 @@ export default async function handler(req, res) {
     return found ? found.name : null;
   }).filter(Boolean);
 
+  // Coaches and franchise owners don't get salary cap entries
+  if (memberRoleNames.includes('Team Coaches') || memberRoleNames.includes('Franchise Owners')) {
+    return res.redirect(`/?registered=1&name=${encodeURIComponent(user.username)}&team=${encodeURIComponent('Staff')}`);
+  }
+
   let assignedTeam = 'Free Agent';
   for (const roleName of memberRoleNames) {
     const match = roleName.match(/^\[([A-Z]+)\]/);
