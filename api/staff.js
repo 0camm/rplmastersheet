@@ -62,7 +62,7 @@ export default async function handler(req, res) {
       const entry = {
         id:     member.user.id,
         name:   member.user.username,
-        nick:   member.nick || member.user.global_name || member.user.username,
+        nick:   member.user.username,
         avatar: member.user.avatar
           ? `https://cdn.discordapp.com/avatars/${member.user.id}/${member.user.avatar}.webp?size=64`
           : `https://cdn.discordapp.com/embed/avatars/${Number(member.user.discriminator || 0) % 5}.png`,
