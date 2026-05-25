@@ -81,12 +81,13 @@ export default async function handler(req, res) {
     return found ? found.name : null;
   }).filter(Boolean);
 
-  // Coaches and franchise owners don't get salary cap entries — delete them from KV if present
-  if (memberRoleNames.includes('Team Coaches') || memberRoleNames.includes('Franchise Owners')) {
+  // Coaches don't count toward salary cap — delete from KV if present and redirect
+  if (memberRoleNames.includes('Team Coaches')) {
     const existing = await redis.hget('players', user.id);
     if (existing) await redis.hdel('players', user.id);
     return res.redirect(`/?registered=1&name=${encodeURIComponent(user.username)}&team=${encodeURIComponent('Staff')}`);
   }
+  // Franchise Owners DO count toward salary cap — fall through to normal player logic
 
   let assignedTeam = 'Free Agent';
   for (const roleName of memberRoleNames) {
