@@ -731,7 +731,8 @@
       <div id="modal-result" class="modal-result"></div>
     </div>
 
-    <div style="margin-top:16px;text-align:right;">
+    <div style="margin-top:16px;display:flex;gap:8px;justify-content:space-between;align-items:center;flex-wrap:wrap;">
+      <button class="btn-secondary" onclick="purgeStaff()" id="purge-btn" style="border-color:rgba(245,158,11,.3);color:var(--amber);">🧹 Purge Staff Duplicates</button>
       <button class="btn-cancel" onclick="closeAdmin()">Close</button>
     </div>
   </div>
@@ -888,13 +889,13 @@ function renderTeams() {
       ...staff.owners.map(p => `
         <div class="staff-row">
           <div class="staff-pip owner"></div>
-          <span class="staff-row-name">${p.name}</span>
+          <span class="staff-row-name">${p.nick || p.name}</span>
           <span class="staff-role-chip owner">Owner</span>
         </div>`),
       ...staff.coaches.map(p => `
         <div class="staff-row">
           <div class="staff-pip coach"></div>
-          <span class="staff-row-name">${p.name}</span>
+          <span class="staff-row-name">${p.nick || p.name}</span>
           <span class="staff-role-chip coach">Coach</span>
         </div>`)
     ].join('');
@@ -1068,6 +1069,29 @@ async function submitAdmin() {
       await loadPlayers(); renderAdminRoster();
     } else { showResult(data.error || 'Something went wrong.', 'error'); }
   } catch(e) { showResult('Network error.', 'error'); }
+}
+
+async function purgeStaff() {
+  const password = document.getElementById('admin-pass').value;
+  if (!password) { showResult('Enter the admin password first.', 'error'); return; }
+  const btn = document.getElementById('purge-btn');
+  btn.textContent = '⏳ Purging…'; btn.disabled = true;
+  try {
+    const res = await fetch('/api/admin', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password, action: 'purgeStaff' })
+    });
+    const data = await res.json();
+    if (data.ok) {
+      showResult(data.message, 'success');
+      toast(data.message, 'green');
+      await loadPlayers();
+      if (adminUnlocked) renderAdminRoster();
+    } else {
+      showResult(data.error || 'Purge failed.', 'error');
+    }
+  } catch(e) { showResult('Network error.', 'error'); }
+  finally { btn.textContent = '🧹 Purge Staff Duplicates'; btn.disabled = false; }
 }
 
 function showResult(msg, type) {
