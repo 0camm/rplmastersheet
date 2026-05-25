@@ -44,15 +44,25 @@ export default async function handler(req, res) {
       after = batch[batch.length - 1].user.id;
     }
     const existing = await redis.hgetall('players') || {};
-    let updated = 0, added = 0;
+    let updated = 0, added = 0, removed = 0;
     const entries = {};
+    const toDelete = [];
+
     for (const member of members) {
       if (member.user?.bot) continue;
 
       const roleNames = (member.roles || []).map(id => roleMap[id]).filter(Boolean);
+      const isStaff = roleNames.includes('Team Coaches') || roleNames.includes('Franchise Owners');
+      const userId = member.user.id;
 
-      // Skip coaches and franchise owners — they don't count toward salary cap
-      if (roleNames.includes('Team Coaches') || roleNames.includes('Franchise Owners')) continue;
+      if (isStaff) {
+        // Actively remove stale staff entries that snuck into KV before this fix
+        if (existing[userId]) {
+          toDelete.push(userId);
+          removed++;
+        }
+        continue;
+      }
 
       let assignedTeam = null;
 
@@ -71,7 +81,6 @@ export default async function handler(req, res) {
       // Skip anyone with neither role
       if (!assignedTeam) continue;
 
-      const userId = member.user.id;
       const username = member.user.username;
       const prev = existing[userId];
       const salary = prev ? prev.salary : 2000000;
@@ -82,12 +91,19 @@ export default async function handler(req, res) {
       }
       entries[userId] = { id: userId, name: username, team: assignedTeam, salary };
     }
+
+    // Write new/updated players
     if (Object.keys(entries).length > 0) {
       await redis.hset('players', entries);
     }
+    // Delete stale staff entries
+    if (toDelete.length > 0) {
+      await redis.hdel('players', ...toDelete);
+    }
+
     return res.json({
       ok: true,
-      message: `Sync complete — ${added} added, ${updated} updated, ${Object.keys(entries).length} total`
+      message: `Sync complete — ${added} added, ${updated} updated, ${removed} staff removed, ${Object.keys(entries).length} total`
     });
   } catch (err) {
     console.error('Sync error:', err);
