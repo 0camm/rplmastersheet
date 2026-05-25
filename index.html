@@ -527,101 +527,29 @@
     .nav-cap-pill { display:none; }
   }
 
-  /* ── STAFF SECTION ── */
-  .staff-section { margin-top: 4px; }
-
-  .staff-group { margin-bottom: 32px; }
-
-  .staff-group-header {
-    display: flex; align-items: center; justify-content: space-between;
-    margin-bottom: 14px;
-  }
-  .staff-group-title {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 22px; letter-spacing: .04em; color: #fff;
+  /* ── STAFF ROWS (inside team dropdown) ── */
+  .staff-row {
     display: flex; align-items: center; gap: 10px;
+    padding: 8px 16px;
+    border-bottom: 1px solid var(--border2);
   }
-  .staff-group-icon {
-    width: 26px; height: 26px; border-radius: 6px;
-    display: flex; align-items: center; justify-content: center;
-    flex-shrink: 0;
-  }
-  .staff-group-icon.owner { background: rgba(245,158,11,.15); }
-  .staff-group-icon.coach { background: rgba(96,165,250,.15); }
+  .staff-row:last-of-type { border-bottom: 1px solid var(--border); }
 
-  .staff-group-count {
-    font-size: 10px; font-weight: 700; letter-spacing: .1em;
-    text-transform: uppercase; color: var(--muted);
-    background: var(--surface2); border: 1px solid var(--border);
-    padding: 3px 10px; border-radius: 20px;
+  .staff-pip {
+    width: 3px; height: 28px; border-radius: 2px; flex-shrink: 0;
   }
+  .staff-pip.owner { background: var(--amber); }
+  .staff-pip.coach { background: var(--blue); }
 
-  .staff-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-    gap: 8px;
-  }
+  .staff-row-name { font-size: 12px; color: var(--text); font-weight: 500; flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-  .staff-card {
-    background: var(--surface); border: 1px solid var(--border);
-    border-radius: 10px; padding: 13px 14px;
-    display: flex; align-items: center; gap: 12px;
-    transition: border-color .2s, background .2s;
-    position: relative; overflow: hidden;
-  }
-  .staff-card::before {
-    content: ''; position: absolute; left: 0; top: 0; bottom: 0;
-    width: 3px; border-radius: 10px 0 0 10px;
-  }
-  .staff-card.owner::before { background: var(--amber); }
-  .staff-card.coach::before { background: var(--blue); }
-  .staff-card:hover { background: var(--surface2); border-color: rgba(255,255,255,.12); }
-
-  .staff-avatar {
-    width: 36px; height: 36px; border-radius: 50%;
-    object-fit: cover; flex-shrink: 0;
-    background: var(--surface3);
-  }
-  .staff-avatar-fallback {
-    width: 36px; height: 36px; border-radius: 50%;
-    background: var(--surface3); border: 1px solid var(--border);
-    flex-shrink: 0;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 14px; font-weight: 700; color: var(--muted);
-    font-family: 'Bebas Neue', sans-serif; letter-spacing: .04em;
-  }
-
-  .staff-info { flex: 1; min-width: 0; }
-  .staff-name {
-    font-size: 12px; font-weight: 600; color: #fff;
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-  }
-  .staff-team {
-    font-size: 10px; color: var(--muted); margin-top: 2px;
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-  }
-  .staff-role-badge {
+  .staff-role-chip {
     font-size: 9px; font-weight: 700; letter-spacing: .08em;
     text-transform: uppercase; padding: 2px 7px; border-radius: 20px;
     flex-shrink: 0;
   }
-  .staff-role-badge.owner { background: rgba(245,158,11,.15); color: var(--amber); }
-  .staff-role-badge.coach { background: rgba(96,165,250,.15); color: var(--blue); }
-
-  .staff-divider {
-    border: none; border-top: 1px solid var(--border);
-    margin: 24px 0;
-  }
-
-  @media (max-width:640px) {
-    .staff-grid { grid-template-columns: 1fr 1fr; gap: 6px; }
-    .staff-card { padding: 10px 11px; gap: 9px; }
-    .staff-avatar, .staff-avatar-fallback { width: 30px; height: 30px; }
-    .staff-role-badge { display: none; }
-  }
-  @media (max-width:380px) {
-    .staff-grid { grid-template-columns: 1fr; }
-  }
+  .staff-role-chip.owner { background: rgba(245,158,11,.12); color: var(--amber); border: 1px solid rgba(245,158,11,.2); }
+  .staff-role-chip.coach { background: rgba(96,165,250,.12); color: var(--blue);  border: 1px solid rgba(96,165,250,.2); }
 
   @media (hover:none) and (pointer:coarse) {
     .team-card:hover  { border-color:var(--border); }
@@ -682,7 +610,6 @@
   <div class="tabs">
     <button class="tab active" data-tab="teams">All Teams</button>
     <button class="tab" data-tab="fa">Free Agents</button>
-    <button class="tab" data-tab="staff">League Staff</button>
   </div>
 
   <!-- TEAMS VIEW -->
@@ -712,59 +639,6 @@
       <div class="fa-grid" id="fa-grid"></div>
     </div>
   </div>
-  <!-- STAFF VIEW -->
-  <div id="view-staff" class="hidden">
-    <div class="staff-section">
-
-      <!-- Franchise Owners -->
-      <div class="staff-group">
-        <div class="staff-group-header">
-          <div class="staff-group-title">
-            <div class="staff-group-icon owner">
-              <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-                <path d="M8 1L10 5.5H15L11 8.5L12.5 13L8 10.5L3.5 13L5 8.5L1 5.5H6L8 1Z" fill="#f59e0b" opacity=".9"/>
-              </svg>
-            </div>
-            Franchise Owners
-          </div>
-          <div class="staff-group-count" id="owners-count">—</div>
-        </div>
-        <div class="staff-grid" id="owners-grid">
-          <div class="empty" style="grid-column:1/-1">
-            <div class="empty-icon"><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="8" stroke="#56566a" stroke-width="1.4"/><path d="M10 6v4" stroke="#56566a" stroke-width="1.4" stroke-linecap="round"/><circle cx="10" cy="13.5" r=".8" fill="#56566a"/></svg></div>
-            <h3>Loading…</h3><p>Fetching staff</p>
-          </div>
-        </div>
-      </div>
-
-      <hr class="staff-divider">
-
-      <!-- Team Coaches -->
-      <div class="staff-group">
-        <div class="staff-group-header">
-          <div class="staff-group-title">
-            <div class="staff-group-icon coach">
-              <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-                <circle cx="8" cy="5" r="3" stroke="#60a5fa" stroke-width="1.5"/>
-                <path d="M2 14c0-3.314 2.686-5 6-5s6 1.686 6 5" stroke="#60a5fa" stroke-width="1.5" stroke-linecap="round"/>
-              </svg>
-            </div>
-            Team Coaches
-          </div>
-          <div class="staff-group-count" id="coaches-count">—</div>
-        </div>
-        <div class="staff-grid" id="coaches-grid">
-          <div class="empty" style="grid-column:1/-1">
-            <div class="empty-icon"><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="8" stroke="#56566a" stroke-width="1.4"/><path d="M10 6v4" stroke="#56566a" stroke-width="1.4" stroke-linecap="round"/><circle cx="10" cy="13.5" r=".8" fill="#56566a"/></svg></div>
-            <h3>Loading…</h3><p>Fetching coaches</p>
-          </div>
-        </div>
-      </div>
-
-    </div>
-  </div>
-
-
 <div class="modal-overlay" id="admin-modal">
   <div class="modal admin-modal-wide" onclick="event.stopPropagation()">
     <div class="modal-title">Admin Panel</div>
@@ -911,8 +785,7 @@ const logos = {
 };
 
 let allPlayers = [];
-let staffData  = { owners: [], coaches: [] };
-let staffLoaded = false;
+let staffByTeam = {}; // { "Atlanta Hawks": { owners: [...], coaches: [...] } }
 let currentTab = 'teams';
 let searchQuery = '';
 let currentAction = 'setSalary';
@@ -921,28 +794,29 @@ let adminUnlocked = false;
 async function loadPlayers() {
   setLoading(true);
   try {
-    const res = await fetch('/api/players');
-    allPlayers = await res.json();
+    const [playersRes, staffRes] = await Promise.all([
+      fetch('/api/players'),
+      fetch('/api/staff')
+    ]);
+    allPlayers = await playersRes.json();
+    const staffData = await staffRes.json();
+    // Index staff by team for fast lookup
+    staffByTeam = {};
+    (staffData.owners || []).forEach(p => {
+      if (!p.team) return;
+      if (!staffByTeam[p.team]) staffByTeam[p.team] = { owners: [], coaches: [] };
+      staffByTeam[p.team].owners.push(p);
+    });
+    (staffData.coaches || []).forEach(p => {
+      if (!p.team) return;
+      if (!staffByTeam[p.team]) staffByTeam[p.team] = { owners: [], coaches: [] };
+      staffByTeam[p.team].coaches.push(p);
+    });
   } catch(e) {
     toast('Failed to load roster data', 'red');
   }
   setLoading(false);
   render();
-}
-
-async function loadStaff() {
-  if (staffLoaded) return;
-  setLoading(true);
-  try {
-    const res = await fetch('/api/staff');
-    staffData = await res.json();
-    staffLoaded = true;
-  } catch(e) {
-    toast('Failed to load staff data', 'red');
-    staffData = { owners: [], coaches: [] };
-  }
-  setLoading(false);
-  renderStaff();
 }
 
 function setLoading(on) {
@@ -995,15 +869,37 @@ function renderTeams() {
 
   teamList.forEach(team => {
     const players = grouped[team] || [];
+    const staff = staffByTeam[team] || { owners: [], coaches: [] };
     const matchesTeam = team.toLowerCase().includes(q);
     const matchedPlayers = q ? players.filter(p => p.name.toLowerCase().includes(q) || matchesTeam) : players;
-    if (q && !matchesTeam && matchedPlayers.length === 0) return;
+    const matchedStaff = q
+      ? [...staff.owners, ...staff.coaches].filter(p => p.name.toLowerCase().includes(q) || matchesTeam)
+      : [];
+    if (q && !matchesTeam && matchedPlayers.length === 0 && matchedStaff.length === 0) return;
     anyVisible = true;
 
     const total = players.reduce((s,p) => s + p.salary, 0);
     const pct = Math.min((total / CAP) * 100, 110);
     const cls = capColor(pct);
-    const isOpen = q && matchedPlayers.length > 0;
+    const isOpen = q && (matchedPlayers.length > 0 || matchedStaff.length > 0);
+
+    // Staff rows: owners first, then coaches
+    const staffRowsHTML = [
+      ...staff.owners.map(p => `
+        <div class="staff-row">
+          <div class="staff-pip owner"></div>
+          <span class="staff-row-name">${p.nick || p.name}</span>
+          <span class="staff-role-chip owner">Owner</span>
+        </div>`),
+      ...staff.coaches.map(p => `
+        <div class="staff-row">
+          <div class="staff-pip coach"></div>
+          <span class="staff-row-name">${p.nick || p.name}</span>
+          <span class="staff-role-chip coach">Coach</span>
+        </div>`)
+    ].join('');
+
+    const displayPlayers = (isOpen && !matchesTeam) ? matchedPlayers : players;
 
     html += `<div class="team-card${isOpen?' open':''}" onclick="toggleCard(this)">
       <div class="team-card-header">
@@ -1031,7 +927,8 @@ function renderTeams() {
         Roster
       </div>
       <div class="players-list${isOpen?' open':''}">
-        ${(isOpen&&!matchesTeam?matchedPlayers:players).map(p=>`
+        ${staffRowsHTML}
+        ${displayPlayers.map(p=>`
           <div class="player-row">
             <span class="player-name">${p.name}</span>
             <span class="player-salary">${fmt(p.salary)}</span>
@@ -1066,61 +963,16 @@ function toggleCard(card) {
   card.classList.toggle('open', !open);
 }
 
-function staffCardHTML(person, role) {
-  const initials = (person.nick || person.name).slice(0, 2).toUpperCase();
-  const avatarHTML = person.avatar
-    ? `<img class="staff-avatar" src="${person.avatar}" alt="${person.name}" onerror="this.outerHTML='<div class=\\'staff-avatar-fallback\\'>${initials}</div>'">`
-    : `<div class="staff-avatar-fallback">${initials}</div>`;
-  const teamLabel = person.team || 'Unassigned';
-  const logoHTML  = person.team && logos[person.team]
-    ? `<img src="${logos[person.team]}" style="width:12px;height:12px;object-fit:contain;vertical-align:middle;margin-right:4px;" loading="lazy">`
-    : '';
-  return `<div class="staff-card ${role}">
-    ${avatarHTML}
-    <div class="staff-info">
-      <div class="staff-name">${person.nick || person.name}</div>
-      <div class="staff-team">${logoHTML}${teamLabel}</div>
-    </div>
-    <div class="staff-role-badge ${role}">${role === 'owner' ? 'Owner' : 'Coach'}</div>
-  </div>`;
-}
-
-function renderStaff() {
-  const q = searchQuery.toLowerCase();
-
-  const filteredOwners  = q
-    ? staffData.owners.filter(p => p.name.toLowerCase().includes(q) || (p.team||'').toLowerCase().includes(q))
-    : staffData.owners;
-  const filteredCoaches = q
-    ? staffData.coaches.filter(p => p.name.toLowerCase().includes(q) || (p.team||'').toLowerCase().includes(q))
-    : staffData.coaches;
-
-  document.getElementById('owners-count').textContent =
-    `${filteredOwners.length} owner${filteredOwners.length !== 1 ? 's' : ''}`;
-  document.getElementById('coaches-count').textContent =
-    `${filteredCoaches.length} coach${filteredCoaches.length !== 1 ? 'es' : ''}`;
-
-  const emptyHTML = (label) => `<div class="empty" style="grid-column:1/-1">
-    <div class="empty-icon"><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="8" stroke="#56566a" stroke-width="1.4"/><path d="M10 6v4" stroke="#56566a" stroke-width="1.4" stroke-linecap="round"/><circle cx="10" cy="13.5" r=".8" fill="#56566a"/></svg></div>
-    <h3>No Results</h3><p>No ${label} match your search</p>
-  </div>`;
-
-  document.getElementById('owners-grid').innerHTML  = filteredOwners.length
-    ? filteredOwners.map(p => staffCardHTML(p, 'owner')).join('')
-    : emptyHTML('owners');
-  document.getElementById('coaches-grid').innerHTML = filteredCoaches.length
-    ? filteredCoaches.map(p => staffCardHTML(p, 'coach')).join('')
-    : emptyHTML('coaches');
-}
-
 function render() {
-  const views = { teams: 'view-teams', fa: 'view-fa', staff: 'view-staff' };
-  Object.values(views).forEach(id => document.getElementById(id).classList.add('hidden'));
-  document.getElementById(views[currentTab] || 'view-teams').classList.remove('hidden');
-
-  if (currentTab === 'teams')       renderTeams();
-  else if (currentTab === 'fa')     renderFA();
-  else if (currentTab === 'staff')  renderStaff();
+  if (currentTab === 'teams') {
+    document.getElementById('view-teams').classList.remove('hidden');
+    document.getElementById('view-fa').classList.add('hidden');
+    renderTeams();
+  } else {
+    document.getElementById('view-teams').classList.add('hidden');
+    document.getElementById('view-fa').classList.remove('hidden');
+    renderFA();
+  }
 }
 
 function openAdmin() {
@@ -1234,8 +1086,7 @@ document.querySelectorAll('.tab').forEach(tab => {
     document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
     tab.classList.add('active');
     currentTab = tab.dataset.tab;
-    if (currentTab === 'staff') loadStaff();
-    else render();
+    render();
   });
 });
 
