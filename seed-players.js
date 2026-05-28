@@ -1,6 +1,6 @@
 // seed-players.js
 // Run this once after deploying to import your existing roster into Vercel KV.
-// Usage: node seed-players.js
+// Usage: ADMIN_PASSWORD=your_password node seed-players.js
 
 // Paste your existing allPlayers array here (from your old HTML):
 const players = [
@@ -10,7 +10,14 @@ const players = [
 ];
 
 const SITE_URL = 'https://rplmastersheet.vercel.app/'; // ← change this
-const ADMIN_PASSWORD = 'RPLHRPASS$&';
+
+// Read password from environment — never hard-code credentials in source files
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
+if (!ADMIN_PASSWORD) {
+  console.error('Error: Set the ADMIN_PASSWORD environment variable before running.');
+  console.error('  Usage: ADMIN_PASSWORD=yourpassword node seed-players.js');
+  process.exit(1);
+}
 
 async function seed() {
   const res = await fetch(`${SITE_URL}/api/seed`, {
