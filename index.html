@@ -826,21 +826,23 @@ function setLoading(on) {
   if (!on) setTimeout(() => bar.style.width = '0%', 300);
 }
 
-function checkRegistration() {
-  const params = new URLSearchParams(window.location.search);
-  if (params.get('registered')) {
-    const name = params.get('name'), team = params.get('team');
-    localStorage.setItem('rpl_user', JSON.stringify({ name, team }));
+async function checkRegistration() {
+  // Clean up the URL if we just came back from OAuth (no data in params anymore)
+  if (new URLSearchParams(window.location.search).get('registered')) {
     window.history.replaceState({}, '', '/');
   }
-  const stored = localStorage.getItem('rpl_user');
-  if (stored) {
-    const { name, team } = JSON.parse(stored);
+  // Fetch identity from server using the HttpOnly session cookie
+  try {
+    const res = await fetch('/api/me');
+    if (!res.ok) return; // Not logged in or session expired — show login button
+    const { name, team } = await res.json();
     const banner = document.getElementById('reg-banner');
     banner.textContent = `✓ Logged in as ${name} · ${team}`;
     banner.classList.remove('hidden');
     document.getElementById('user-area').innerHTML = `
       <div class="user-chip"><div class="dot"></div>${name} · ${team}</div>`;
+  } catch (e) {
+    // Network error — silently fail, user stays logged out
   }
 }
 
@@ -1119,7 +1121,7 @@ document.getElementById('search').addEventListener('input', e => {
   render();
 });
 
-checkRegistration();
+checkRegistration(); // async — runs in parallel with loadPlayers intentionally
 loadPlayers();
 </script>
 </body>
