@@ -58,9 +58,10 @@ export default async function handler(req, res) {
       }
 
       // Only expose display name and team — no Discord IDs or avatar URLs
+      // Always use the Discord username (not the server nickname)
       const entry = {
         name: member.user.username,
-        nick: member.nick || member.user.username,
+        nick: member.user.username,
         team,
       };
 
