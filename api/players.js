@@ -11,6 +11,7 @@ export default async function handler(req, res) {
   const raw = await redis.hgetall('players');
   if (!raw) return res.json([]);
 
-  const players = Object.values(raw);
+  // Strip internal Discord IDs — only expose what the frontend needs
+  const players = Object.values(raw).map(({ name, team, salary }) => ({ name, team, salary }));
   res.json(players);
 }
