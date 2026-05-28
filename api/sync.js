@@ -25,12 +25,21 @@ async function discordFetch(path) {
 }
 export default async function handler(req, res) {
   if (req.method !== 'GET' && req.method !== 'POST') return res.status(405).end();
-  if (req.method === 'POST') {
+
+  // Cron GET requests are authenticated by Vercel using CRON_SECRET header.
+  // Manual POST requests require the admin password.
+  if (req.method === 'GET') {
+    const authHeader = req.headers['authorization'];
+    if (!process.env.CRON_SECRET || authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+  } else {
     const { password } = req.body || {};
-    if (password !== process.env.ADMIN_PASSWORD) {
+    if (!process.env.ADMIN_PASSWORD || password !== process.env.ADMIN_PASSWORD) {
       return res.status(401).json({ error: 'Invalid password' });
     }
   }
+
   try {
     const guildId = process.env.DISCORD_GUILD_ID;
     const allRoles = await discordFetch(`/guilds/${guildId}/roles`);
@@ -53,34 +62,25 @@ export default async function handler(req, res) {
 
       const roleNames = (member.roles || []).map(id => roleMap[id]).filter(Boolean);
       const isCoach = roleNames.includes('Team Coaches');
-      const isOwner = roleNames.includes('Franchise Owners');
       const userId = member.user.id;
 
       if (isCoach) {
-        // Coaches don't count toward salary cap — delete from KV if present
         if (existing[userId]) {
           toDelete.push(userId);
           removed++;
         }
         continue;
       }
-      // Owners DO count toward salary cap — fall through to normal player logic
 
       let assignedTeam = null;
-
-      // Check for team role first
       for (const roleId of (member.roles || [])) {
         const match = (roleMap[roleId] || '').match(/^\[([A-Z]+)\]/);
         if (match && ROLE_TO_TEAM[match[1]]) { assignedTeam = ROLE_TO_TEAM[match[1]]; break; }
       }
-
-      // If no team role, check for "Free Agents" role
       if (!assignedTeam) {
         const hasFARole = member.roles.some(roleId => roleMap[roleId] === 'Free Agents');
         if (hasFARole) assignedTeam = 'Free Agent';
       }
-
-      // Skip anyone with neither role
       if (!assignedTeam) continue;
 
       const username = member.user.username;
@@ -94,11 +94,9 @@ export default async function handler(req, res) {
       entries[userId] = { id: userId, name: username, team: assignedTeam, salary };
     }
 
-    // Write new/updated players
     if (Object.keys(entries).length > 0) {
       await redis.hset('players', entries);
     }
-    // Delete stale staff entries
     if (toDelete.length > 0) {
       await redis.hdel('players', ...toDelete);
     }
