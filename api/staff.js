@@ -32,7 +32,6 @@ export default async function handler(req, res) {
     const roleMap  = {};
     allRoles.forEach(r => roleMap[r.id] = r.name);
 
-    // Paginate through all guild members
     let members = [], after = '0';
     while (true) {
       const batch = await discordFetch(`/guilds/${guildId}/members?limit=1000&after=${after}`);
@@ -48,29 +47,25 @@ export default async function handler(req, res) {
       if (member.user?.bot) continue;
       const roleNames = (member.roles || []).map(id => roleMap[id]).filter(Boolean);
 
-      const isOwner  = roleNames.includes(FRANCHISE_OWNER_ROLE);
-      const isCoach  = roleNames.includes(TEAM_COACH_ROLE);
+      const isOwner = roleNames.includes(FRANCHISE_OWNER_ROLE);
+      const isCoach = roleNames.includes(TEAM_COACH_ROLE);
       if (!isOwner && !isCoach) continue;
 
-      // Resolve team from [ABC] role
       let team = null;
       for (const rn of roleNames) {
         const m = rn.match(/^\[([A-Z]+)\]/);
         if (m && ROLE_TO_TEAM[m[1]]) { team = ROLE_TO_TEAM[m[1]]; break; }
       }
 
+      // Only expose display name and team — no Discord IDs or avatar URLs
       const entry = {
-        id:     member.user.id,
-        name:   member.user.username,
-        nick:   member.user.username,
-        avatar: member.user.avatar
-          ? `https://cdn.discordapp.com/avatars/${member.user.id}/${member.user.avatar}.webp?size=64`
-          : `https://cdn.discordapp.com/embed/avatars/${Number(member.user.discriminator || 0) % 5}.png`,
+        name: member.user.username,
+        nick: member.nick || member.user.username,
         team,
       };
 
-      if (isOwner)  owners.push(entry);
-      if (isCoach)  coaches.push(entry);
+      if (isOwner) owners.push(entry);
+      if (isCoach) coaches.push(entry);
     }
 
     owners.sort( (a,b) => (a.team||'zzz').localeCompare(b.team||'zzz') || a.name.localeCompare(b.name));
