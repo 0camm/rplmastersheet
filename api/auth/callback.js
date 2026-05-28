@@ -6,36 +6,16 @@ const redis = new Redis({
 });
 
 const ROLE_TO_TEAM = {
-  'ATL': 'Atlanta Hawks',
-  'BKN': 'Brooklyn Nets',
-  'BOS': 'Boston Celtics',
-  'CHI': 'Chicago Bulls',
-  'CLE': 'Cleveland Cavaliers',
-  'CHA': 'Charlotte Hornets',
-  'DAL': 'Dallas Mavericks',
-  'DEN': 'Denver Nuggets',
-  'DET': 'Detroit Pistons',
-  'GSW': 'Golden State Warriors',
-  'HOU': 'Houston Rockets',
-  'IND': 'Indiana Pacers',
-  'LAC': 'LA Clippers',
-  'LAL': 'Los Angeles Lakers',
-  'MIA': 'Miami Heat',
-  'MIL': 'Milwaukee Bucks',
-  'MEM': 'Memphis Grizzlies',
-  'MIN': 'Minnesota Timberwolves',
-  'NOP': 'New Orleans Pelicans',
-  'NYK': 'New York Knicks',
-  'OKC': 'Oklahoma City Thunder',
-  'ORL': 'Orlando Magic',
-  'PHI': 'Philadelphia 76ers',
-  'PHX': 'Phoenix Suns',
-  'POR': 'Portland Trail Blazers',
-  'SAC': 'Sacramento Kings',
-  'SAN': 'San Antonio Spurs',
-  'TOR': 'Toronto Raptors',
-  'UTA': 'Utah Jazz',
-  'WAS': 'Washington Wizards',
+  'ATL': 'Atlanta Hawks', 'BKN': 'Brooklyn Nets', 'BOS': 'Boston Celtics',
+  'CHI': 'Chicago Bulls', 'CLE': 'Cleveland Cavaliers', 'CHA': 'Charlotte Hornets',
+  'DAL': 'Dallas Mavericks', 'DEN': 'Denver Nuggets', 'DET': 'Detroit Pistons',
+  'GSW': 'Golden State Warriors', 'HOU': 'Houston Rockets', 'IND': 'Indiana Pacers',
+  'LAC': 'LA Clippers', 'LAL': 'Los Angeles Lakers', 'MIA': 'Miami Heat',
+  'MIL': 'Milwaukee Bucks', 'MEM': 'Memphis Grizzlies', 'MIN': 'Minnesota Timberwolves',
+  'NOP': 'New Orleans Pelicans', 'NYK': 'New York Knicks', 'OKC': 'Oklahoma City Thunder',
+  'ORL': 'Orlando Magic', 'PHI': 'Philadelphia 76ers', 'PHX': 'Phoenix Suns',
+  'POR': 'Portland Trail Blazers', 'SAC': 'Sacramento Kings', 'SAN': 'San Antonio Spurs',
+  'TOR': 'Toronto Raptors', 'UTA': 'Utah Jazz', 'WAS': 'Washington Wizards',
 };
 
 export default async function handler(req, res) {
@@ -81,13 +61,14 @@ export default async function handler(req, res) {
     return found ? found.name : null;
   }).filter(Boolean);
 
-  // Coaches don't count toward salary cap — delete from KV if present and redirect
+  const username = user.username;
+
   if (memberRoleNames.includes('Team Coaches')) {
     const existing = await redis.hget('players', user.id);
     if (existing) await redis.hdel('players', user.id);
-    return res.redirect(`/?registered=1&name=${encodeURIComponent(user.username)}&team=${encodeURIComponent('Staff')}`);
+    // Don't leak name/team in redirect query params — use a session token or just a success flag
+    return res.redirect('/?registered=1');
   }
-  // Franchise Owners DO count toward salary cap — fall through to normal player logic
 
   let assignedTeam = 'Free Agent';
   for (const roleName of memberRoleNames) {
@@ -98,8 +79,6 @@ export default async function handler(req, res) {
     }
   }
 
-  // Always use the actual Discord username (not display name / global_name)
-  const username = user.username;
   const existing = await redis.hget('players', user.id);
   const salary = existing ? existing.salary : 2000000;
 
@@ -107,5 +86,11 @@ export default async function handler(req, res) {
     [user.id]: { id: user.id, name: username, team: assignedTeam, salary }
   });
 
-  res.redirect(`/?registered=1&name=${encodeURIComponent(username)}&team=${encodeURIComponent(assignedTeam)}`);
+  // Store login info server-side in KV instead of exposing it in the URL.
+  // The frontend reads it from /api/me using a short-lived cookie-keyed token.
+  const sessionToken = crypto.randomUUID();
+  await redis.set(`session:${sessionToken}`, JSON.stringify({ name: username, team: assignedTeam }), { ex: 3600 });
+
+  res.setHeader('Set-Cookie', `rpl_session=${sessionToken}; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=3600`);
+  res.redirect('/?registered=1');
 }
