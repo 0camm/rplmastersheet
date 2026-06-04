@@ -727,8 +727,6 @@
 <!-- NAV -->
 <nav>
   <div class="nav-left">
-    <div class="nav-logo">R</div>
-    <div class="nav-title"><em>RPL</em> Salary Caps</div>
     <div class="nav-cap-pill">Cap <strong>$58M</strong></div>
   </div>
   <div class="nav-right">
@@ -1177,16 +1175,34 @@ function closeAdmin() {
   document.getElementById('admin-panel').classList.remove('open');
 }
 
-function unlockAdmin() {
+async function unlockAdmin() {
   const password = document.getElementById('admin-pass').value;
-  if (!password) { return; }
-  adminUnlocked = true;
-  document.getElementById('admin-lock-screen').classList.add('hidden');
-  const ul = document.getElementById('admin-unlocked');
-  ul.classList.remove('hidden');
-  ul.style.display = 'flex';
-  document.getElementById('admin-sub-text').textContent = 'Changes apply instantly to the live site.';
-  renderAdminRoster();
+  if (!password) return;
+  const btn = document.querySelector('.admin-lock-btn');
+  btn.textContent = '…'; btn.disabled = true;
+  try {
+    const res = await fetch('/api/admin', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password, action: 'setSalary', name: '__auth_check__', salary: 0 })
+    });
+    if (res.status === 401) {
+      document.getElementById('admin-pass').style.borderColor = 'rgba(232,0,29,.6)';
+      toast('Wrong password', 'red', 3000);
+      return;
+    }
+    document.getElementById('admin-pass').style.borderColor = '';
+    adminUnlocked = true;
+    document.getElementById('admin-lock-screen').classList.add('hidden');
+    const ul = document.getElementById('admin-unlocked');
+    ul.classList.remove('hidden');
+    ul.style.display = 'flex';
+    document.getElementById('admin-sub-text').textContent = 'Changes apply instantly to the live site.';
+    renderAdminRoster();
+  } catch(e) {
+    toast('Network error — could not verify password', 'red', 3000);
+  } finally {
+    btn.textContent = 'Unlock'; btn.disabled = false;
+  }
 }
 
 function switchAdminTab(tab, btn) {
