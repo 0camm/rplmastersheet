@@ -556,17 +556,31 @@
   .aroster-salary-wrap {
     display:flex; align-items:center; gap:6px;
   }
-  .aroster-salary-input {
+  .aroster-salary-stepper {
+    display:flex; align-items:center; gap:0;
     background:var(--bg); border:1px solid var(--border);
-    border-radius:7px; padding:7px 9px;
-    color:var(--text); font-family:'Bebas Neue',sans-serif;
-    font-size:15px; letter-spacing:.04em;
-    width:96px; text-align:right; outline:none;
+    border-radius:7px; overflow:hidden;
     transition:border-color .2s;
-    -moz-appearance:textfield;
   }
-  .aroster-salary-input::-webkit-inner-spin-button { display:none; }
-  .aroster-salary-input:focus { border-color:rgba(232,0,29,.4); }
+  .aroster-salary-stepper:focus-within { border-color:rgba(232,0,29,.4); }
+  .salary-step-btn {
+    width:28px; height:34px; border:none;
+    background:var(--surface2); color:var(--muted);
+    font-size:16px; font-weight:700; cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    transition:background .15s, color .15s; flex-shrink:0;
+    line-height:1;
+  }
+  .salary-step-btn:hover { background:var(--surface3); color:var(--text); }
+  .salary-step-btn:active { background:rgba(232,0,29,.15); color:var(--red); }
+  .salary-step-btn:disabled { opacity:.3; cursor:not-allowed; }
+  .aroster-salary-display {
+    font-family:'Bebas Neue',sans-serif;
+    font-size:14px; letter-spacing:.04em;
+    color:var(--text); text-align:center;
+    min-width:64px; padding:0 4px;
+    user-select:none; line-height:34px;
+  }
   .aroster-save {
     background:var(--red); border:none; border-radius:7px;
     padding:7px 11px; color:#fff;
@@ -893,7 +907,11 @@
         </div>
         <div class="add-field">
           <label>Salary</label>
-          <input type="number" id="add-salary" placeholder="e.g. 10000000" value="2000000">
+          <div class="aroster-salary-stepper" style="border-radius:10px;">
+            <button class="salary-step-btn" style="width:36px;height:44px;font-size:18px;" onclick="stepAddSalary(-1)" title="Decrease">−</button>
+            <span class="aroster-salary-display" id="add-salary-display" data-salary="2000000" style="flex:1;line-height:44px;font-size:16px;">$2M</span>
+            <button class="salary-step-btn" style="width:36px;height:44px;font-size:18px;" onclick="stepAddSalary(1)" title="Increase">+</button>
+          </div>
         </div>
         <button class="add-submit" onclick="addPlayer()">Add Player</button>
       </div>
@@ -1237,11 +1255,12 @@ function renderAdminRoster() {
         <div class="aroster-team" id="ateam-${encodeURIComponent(p.id||p.name)}">${p.team}</div>
       </div>
       <div class="aroster-salary-wrap">
-        <input class="aroster-salary-input" type="number" value="${p.salary}"
-          data-id="${encodeURIComponent(p.id||'')}"
-          data-player="${encodeURIComponent(p.name)}"
-          onkeydown="if(event.key==='Enter')saveSalary(this)">
-        <button class="aroster-save" onclick="saveSalary(this.previousElementSibling)">Save</button>
+        <div class="aroster-salary-stepper">
+          <button class="salary-step-btn" onclick="stepSalary('${encodeURIComponent(p.id||p.name)}',-1)" title="Decrease salary">−</button>
+          <span class="aroster-salary-display" id="saldisplay-${encodeURIComponent(p.id||p.name)}" data-salary="${p.salary}" data-id="${encodeURIComponent(p.id||'')}" data-player="${encodeURIComponent(p.name)}">${fmtSalaryShort(p.salary)}</span>
+          <button class="salary-step-btn" onclick="stepSalary('${encodeURIComponent(p.id||p.name)}',1)" title="Increase salary">+</button>
+        </div>
+        <button class="aroster-save" onclick="saveSalaryById('${encodeURIComponent(p.id||p.name)}')">Save</button>
       </div>
       <div class="aroster-actions">
         <button class="aroster-btn" title="Move to team" onclick="toggleMoveRow('${encodeURIComponent(p.id||p.name)}','${encodeURIComponent(p.id||'')}','${encodeURIComponent(p.name)}','${encodeURIComponent(p.team)}')">
@@ -1310,7 +1329,74 @@ async function confirmMove(rowKey, encodedId, encodedName) {
   finally { btn.textContent = origText; btn.disabled = false; }
 }
 
-async function saveSalary(inputEl) {
+const SALARY_STEPS = [2000000, 5000000, 8000000, 10000000, 12000000, 15000000, 18000000, 20000000, 22000000];
+
+function fmtSalaryShort(v) {
+  return '$' + (v / 1000000) + 'M';
+}
+
+function nearestStepIndex(salary) {
+  // snap to the closest step
+  let best = 0, bestDist = Infinity;
+  SALARY_STEPS.forEach((s, i) => {
+    const d = Math.abs(s - salary);
+    if (d < bestDist) { bestDist = d; best = i; }
+  });
+  return best;
+}
+
+function stepSalary(rowKey, dir) {
+  const el = document.getElementById(`saldisplay-${rowKey}`);
+  if (!el) return;
+  const cur = Number(el.dataset.salary);
+  const idx = nearestStepIndex(cur);
+  const next = Math.max(0, Math.min(SALARY_STEPS.length - 1, idx + dir));
+  el.dataset.salary = SALARY_STEPS[next];
+  el.textContent = fmtSalaryShort(SALARY_STEPS[next]);
+  // dim +/- buttons at boundaries
+  const wrap = el.parentElement;
+  const [minusBtn, plusBtn] = wrap.querySelectorAll('.salary-step-btn');
+  if (minusBtn) minusBtn.disabled = next === 0;
+  if (plusBtn)  plusBtn.disabled  = next === SALARY_STEPS.length - 1;
+}
+
+function stepAddSalary(dir) {
+  const el = document.getElementById('add-salary-display');
+  if (!el) return;
+  const cur = Number(el.dataset.salary);
+  const idx = nearestStepIndex(cur);
+  const next = Math.max(0, Math.min(SALARY_STEPS.length - 1, idx + dir));
+  el.dataset.salary = SALARY_STEPS[next];
+  el.textContent = fmtSalaryShort(SALARY_STEPS[next]);
+}
+
+async function saveSalaryById(rowKey) {
+  const el = document.getElementById(`saldisplay-${rowKey}`);
+  if (!el) return;
+  const name = decodeURIComponent(el.dataset.player);
+  const id = decodeURIComponent(el.dataset.id || '');
+  const salary = Number(el.dataset.salary);
+  const password = document.getElementById('admin-pass').value;
+  if (!salary || salary < 0) { showAdminResult('Invalid salary.', 'error'); return; }
+  // find save button: it's the next sibling of the stepper wrap
+  const btn = el.closest('.aroster-salary-wrap')?.querySelector('.aroster-save');
+  if (btn) { btn.textContent = '…'; btn.disabled = true; }
+  try {
+    const res = await fetch('/api/admin', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ password, action:'setSalary', id, name, salary })
+    });
+    const data = await res.json();
+    if (data.ok) {
+      showAdminResult(data.message, 'success');
+      toast(`${name} → ${fmtSalaryShort(salary)}`, 'green');
+      await loadPlayers(); renderAdminRoster();
+    } else { showAdminResult(data.error || 'Something went wrong.', 'error'); }
+  } catch(e) { showAdminResult('Network error.', 'error'); }
+  finally { if (btn) { btn.textContent = 'Save'; btn.disabled = false; } }
+}
+
+
   const name = decodeURIComponent(inputEl.dataset.player);
   const id = decodeURIComponent(inputEl.dataset.id || '');
   const password = document.getElementById('admin-pass').value;
@@ -1358,7 +1444,7 @@ async function removePlayer(encodedId, encodedName, btn) {
 async function addPlayer() {
   const name = document.getElementById('add-name').value.trim();
   const team = document.getElementById('add-team').value;
-  const salary = Number(document.getElementById('add-salary').value) || 2000000;
+  const salary = Number(document.getElementById('add-salary-display')?.dataset?.salary) || 2000000;
   const password = document.getElementById('admin-pass').value;
   if (!name) { showAdminResult('Enter a player username.', 'error'); return; }
   const btn = document.querySelector('.add-submit');
@@ -1373,7 +1459,8 @@ async function addPlayer() {
       showAdminResult(data.message, 'success');
       toast(`${name} added`, 'green');
       document.getElementById('add-name').value = '';
-      document.getElementById('add-salary').value = '2000000';
+      const addSalEl = document.getElementById('add-salary-display');
+      if (addSalEl) { addSalEl.dataset.salary = '2000000'; addSalEl.textContent = '$2M'; }
       await loadPlayers();
     } else { showAdminResult(data.error || 'Failed.', 'error'); }
   } catch(e) { showAdminResult('Network error.', 'error'); }
