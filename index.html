@@ -1397,27 +1397,7 @@ async function saveSalaryById(rowKey) {
 }
 
 
-  const name = decodeURIComponent(inputEl.dataset.player);
-  const id = decodeURIComponent(inputEl.dataset.id || '');
-  const password = document.getElementById('admin-pass').value;
-  const salary = Number(inputEl.value);
-  if (!salary || salary < 0) { showAdminResult('Invalid salary.', 'error'); return; }
-  const btn = inputEl.nextElementSibling;
-  if (btn) { btn.textContent = '…'; btn.disabled = true; }
-  try {
-    const res = await fetch('/api/admin', {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ password, action:'setSalary', id, name, salary })
-    });
-    const data = await res.json();
-    if (data.ok) {
-      showAdminResult(data.message, 'success');
-      toast(`${name} → ${fmt(salary)}`, 'green');
-      await loadPlayers(); renderAdminRoster();
-    } else { showAdminResult(data.error || 'Something went wrong.', 'error'); }
-  } catch(e) { showAdminResult('Network error.', 'error'); }
-  finally { if (btn) { btn.textContent = 'Save'; btn.disabled = false; } }
-}
+
 
 async function removePlayer(encodedId, encodedName, btn) {
   const name = decodeURIComponent(encodedName);
