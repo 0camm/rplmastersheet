@@ -1014,13 +1014,15 @@ function renderAdminRoster() {
       <span class="admin-row-team">${p.team}</span>
       <input class="admin-salary-input" type="number" value="${p.salary}"
         data-player="${encodeURIComponent(p.name)}"
-        onkeydown="if(event.key==='Enter')saveSalaryInline(this.dataset.player,this)">
-      <button class="admin-save-btn" onclick="saveSalaryInline(this.previousElementSibling.dataset.player,this.previousElementSibling)">Save</button>
+        data-id="${encodeURIComponent(p.id||'')}"
+        onkeydown="if(event.key==='Enter')saveSalaryInline(this.dataset.player,this.dataset.id,this)">
+      <button class="admin-save-btn" onclick="saveSalaryInline(this.previousElementSibling.dataset.player,this.previousElementSibling.dataset.id,this.previousElementSibling)">Save</button>
     </div>`).join('');
 }
 
-async function saveSalaryInline(encodedName, inputEl) {
+async function saveSalaryInline(encodedName, encodedId, inputEl) {
   const name = decodeURIComponent(encodedName);
+  const id = decodeURIComponent(encodedId || '');
   const password = document.getElementById('admin-pass').value;
   const salary = Number(inputEl.value);
   if (!salary || salary < 0) { showResult('Invalid salary.', 'error'); return; }
@@ -1029,7 +1031,7 @@ async function saveSalaryInline(encodedName, inputEl) {
   try {
     const res = await fetch('/api/admin', {
       method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ password, action:'setSalary', name, salary })
+      body: JSON.stringify({ password, action:'setSalary', id, name, salary })
     });
     const data = await res.json();
     if (data.ok) {
@@ -1059,10 +1061,13 @@ async function submitAdmin() {
   const newName = document.getElementById('admin-newname').value.trim();
   if (!password) { showResult('Enter the admin password.', 'error'); return; }
   if (!name) { showResult('Enter a player name.', 'error'); return; }
+  // Resolve stable ID from the loaded roster (won't exist for addPlayer, which is fine)
+  const match = allPlayers.find(p => p.name.toLowerCase() === name.toLowerCase());
+  const id = match?.id || '';
   try {
     const res = await fetch('/api/admin', {
       method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ password, action:currentAction, name, salary, team, newName })
+      body: JSON.stringify({ password, action:currentAction, id, name, salary, team, newName })
     });
     const data = await res.json();
     if (data.ok) {
