@@ -21,7 +21,10 @@ export default async function handler(req, res) {
   const raw = await redis.hgetall('players');
   const players = raw ? Object.entries(raw) : [];
 
-  const entry = players.find(([, p]) => p.name.toLowerCase() === name?.toLowerCase());
+  // Prefer stable Discord ID lookup; fall back to name for manually-added / legacy entries
+  const { id: targetId } = req.body;
+  const entry = (targetId && players.find(([key]) => key === targetId))
+    || players.find(([, p]) => p.name.toLowerCase() === name?.toLowerCase());
 
   // purgeStaff: cross-reference Discord roles, delete anyone who is Coach or Owner
   if (action === 'purgeStaff') {
@@ -78,8 +81,10 @@ export default async function handler(req, res) {
   }
 
   if (action === 'removePlayer') {
-    // Delete ALL entries with this name (catches duplicates)
-    const allMatches = players.filter(([, p]) => p.name.toLowerCase() === name?.toLowerCase());
+    // If a stable ID was provided, delete exactly that entry; otherwise fall back to name (catches duplicates)
+    const allMatches = targetId
+      ? players.filter(([key]) => key === targetId)
+      : players.filter(([, p]) => p.name.toLowerCase() === name?.toLowerCase());
     if (!allMatches.length) return res.status(404).json({ error: `Player "${name}" not found` });
     await redis.hdel('players', ...allMatches.map(([id]) => id));
     return res.json({ ok: true, message: `${name} removed (${allMatches.length} entr${allMatches.length===1?'y':'ies'})` });
