@@ -53,6 +53,16 @@ export default async function handler(req, res) {
       after = batch[batch.length - 1].user.id;
     }
     const existing = await redis.hgetall('players') || {};
+
+    // Build a name→key index for non-snowflake keys (seed_*, manual_*) so we can
+    // salvage manually-set salaries and delete the old duplicate entry on sync.
+    const legacyByName = {}; // lowercase username → { key, salary }
+    for (const [key, val] of Object.entries(existing)) {
+      if (!/^\d{15,20}$/.test(key)) { // not a Discord snowflake
+        legacyByName[val.name?.toLowerCase()] = { key, salary: val.salary };
+      }
+    }
+
     let updated = 0, added = 0, removed = 0;
     const entries = {};
     const toDelete = [];
@@ -65,10 +75,11 @@ export default async function handler(req, res) {
       const userId = member.user.id;
 
       if (isCoach) {
-        if (existing[userId]) {
-          toDelete.push(userId);
-          removed++;
-        }
+        // Remove by snowflake ID and any legacy name-keyed entry
+        if (existing[userId]) { toDelete.push(userId); removed++; }
+        const username = member.user.username;
+        const leg = legacyByName[username.toLowerCase()];
+        if (leg && !toDelete.includes(leg.key)) { toDelete.push(leg.key); }
         continue;
       }
 
@@ -84,13 +95,23 @@ export default async function handler(req, res) {
       if (!assignedTeam) continue;
 
       const username = member.user.username;
-      const prev = existing[userId];
-      const salary = prev ? prev.salary : 2000000;
-      if (prev) {
-        if (prev.team !== assignedTeam || prev.name !== username) updated++;
+
+      // Prefer the snowflake-keyed entry for salary; fall back to any legacy entry with this name
+      const prevById   = existing[userId];
+      const prevByName = legacyByName[username.toLowerCase()];
+      const salary = prevById ? prevById.salary : (prevByName ? prevByName.salary : 2000000);
+
+      if (prevById) {
+        if (prevById.team !== assignedTeam || prevById.name !== username) updated++;
       } else {
         added++;
       }
+
+      // If a legacy entry existed under a different key, queue it for deletion (de-dupe)
+      if (prevByName && !existing[userId]) {
+        if (!toDelete.includes(prevByName.key)) toDelete.push(prevByName.key);
+      }
+
       entries[userId] = { id: userId, name: username, team: assignedTeam, salary };
     }
 
