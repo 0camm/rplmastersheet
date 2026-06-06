@@ -1,3 +1,4 @@
+// api/seed.js
 import { Redis } from '@upstash/redis';
 
 const redis = new Redis({
@@ -24,10 +25,23 @@ export default async function handler(req, res) {
 
   const entries = {};
   players.forEach((p, i) => {
-    const id = `seed_${i}_${p.name.replace(/\s+/g, '_')}`;
-    entries[id] = { id, name: p.name, team: p.team, salary: Number(p.salary) };
+    // FIX: if a Discord snowflake ID is provided, use it as the key so this
+    // entry is treated identically to one written by /api/sync or /api/callback.
+    // Salary will survive future syncs with no name-matching required.
+    const isSnowflake = p.discordId && /^\d{15,20}$/.test(p.discordId);
+    const id = isSnowflake
+      ? p.discordId
+      : `manual_${Date.now()}_${i}_${p.name.replace(/\s+/g, '_')}`;
+
+    entries[id] = { id, name: p.name, team: p.team, salary: Number(p.salary) || 2000000 };
   });
 
   await redis.hset('players', entries);
-  return res.json({ ok: true, message: `${players.length} players seeded` });
+
+  const withId = Object.values(entries).filter(e => /^\d{15,20}$/.test(e.id)).length;
+  const manual = Object.keys(entries).length - withId;
+  return res.json({
+    ok: true,
+    message: `${Object.keys(entries).length} players seeded (${withId} by Discord ID, ${manual} manual)`
+  });
 }
