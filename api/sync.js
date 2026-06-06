@@ -26,8 +26,6 @@ async function discordFetch(path) {
 export default async function handler(req, res) {
   if (req.method !== 'GET' && req.method !== 'POST') return res.status(405).end();
 
-  // Cron GET requests are authenticated by Vercel using CRON_SECRET header.
-  // Manual POST requests require the admin password.
   if (req.method === 'GET') {
     const authHeader = req.headers['authorization'];
     if (!process.env.CRON_SECRET || authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
@@ -54,11 +52,12 @@ export default async function handler(req, res) {
     }
     const existing = await redis.hgetall('players') || {};
 
-    // Build a name→key index for non-snowflake keys (seed_*, manual_*) so we can
-    // salvage manually-set salaries and delete the old duplicate entry on sync.
+    // FIX: Build name→entry index for all non-snowflake keys using lowercase for reliable matching.
+    // The old code stored { key, salary } but lookups used p.name?.toLowerCase() — consistent now.
     const legacyByName = {}; // lowercase username → { key, salary }
     for (const [key, val] of Object.entries(existing)) {
       if (!/^\d{15,20}$/.test(key)) { // not a Discord snowflake
+        // FIX: store the whole entry so we can read .salary reliably later
         legacyByName[val.name?.toLowerCase()] = { key, salary: val.salary };
       }
     }
@@ -75,10 +74,10 @@ export default async function handler(req, res) {
       const userId = member.user.id;
 
       if (isCoach) {
-        // Remove by snowflake ID and any legacy name-keyed entry
         if (existing[userId]) { toDelete.push(userId); removed++; }
-        const username = member.user.username;
-        const leg = legacyByName[username.toLowerCase()];
+        // FIX: use toLowerCase() consistently — the index is keyed by lowercase
+        const usernameLower = member.user.username.toLowerCase();
+        const leg = legacyByName[usernameLower];
         if (leg && !toDelete.includes(leg.key)) { toDelete.push(leg.key); }
         continue;
       }
@@ -95,11 +94,14 @@ export default async function handler(req, res) {
       if (!assignedTeam) continue;
 
       const username = member.user.username;
+      // FIX: always use lowercase for the lookup — matches the index built above
+      const usernameLower = username.toLowerCase();
 
-      // Prefer the snowflake-keyed entry for salary; fall back to any legacy entry with this name
       const prevById   = existing[userId];
-      const prevByName = legacyByName[username.toLowerCase()];
-      const salary = prevById ? prevById.salary : (prevByName ? prevByName.salary : 2000000);
+      const prevByName = legacyByName[usernameLower];
+
+      // Salary priority: snowflake entry > legacy name-keyed entry > default
+      const salary = prevById?.salary ?? prevByName?.salary ?? 2000000;
 
       if (prevById) {
         if (prevById.team !== assignedTeam || prevById.name !== username) updated++;
