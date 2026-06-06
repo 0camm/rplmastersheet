@@ -1,17 +1,25 @@
 // seed-players.js
-// Run this once after deploying to import your existing roster into Vercel KV.
+// Run this once to import your roster into Vercel KV.
 // Usage: ADMIN_PASSWORD=your_password node seed-players.js
+//
+// Each player entry supports an optional discordId field.
+// When provided, the player is stored under their Discord snowflake ID —
+// exactly matching what /api/sync and /api/callback produce — so salaries
+// survive future syncs without any name-matching heuristics.
+//
+// Players WITHOUT a discordId fall back to a manual_* key (same as addPlayer).
+// You can backfill IDs later by running sync, which will migrate them.
 
-// Paste your existing allPlayers array here (from your old HTML):
 const players = [
-  // EXAMPLE FORMAT — replace with your full list:
-  // {name:"PlayerName", team:"Atlanta Hawks", salary:10000000},
-  // {name:"FreeAgent1", team:"Free Agent", salary:5000000},
+  // With Discord ID (preferred — salary survives syncs):
+  // { discordId: '123456789012345678', name: 'PlayerName', team: 'Atlanta Hawks', salary: 10000000 },
+
+  // Without Discord ID (manual key, name-matched on first sync):
+  // { name: 'FreeAgent1', team: 'Free Agent', salary: 5000000 },
 ];
 
-const SITE_URL = 'https://rplmastersheet.vercel.app/'; // ← change this
+const SITE_URL = 'https://rplmastersheet.vercel.app'; // ← no trailing slash
 
-// Read password from environment — never hard-code credentials in source files
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
 if (!ADMIN_PASSWORD) {
   console.error('Error: Set the ADMIN_PASSWORD environment variable before running.');
