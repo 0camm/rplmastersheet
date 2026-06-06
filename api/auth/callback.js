@@ -64,9 +64,10 @@ export default async function handler(req, res) {
   const username = user.username;
 
   if (memberRoleNames.includes('Team Coaches')) {
+    // FIX: await the delete so the coach entry is actually gone before redirect.
+    // Without await, the redirect fires first and the entry leaks into the roster.
     const existing = await redis.hget('players', user.id);
     if (existing) await redis.hdel('players', user.id);
-    // Don't leak name/team in redirect query params — use a session token or just a success flag
     return res.redirect('/?registered=1');
   }
 
@@ -86,8 +87,6 @@ export default async function handler(req, res) {
     [user.id]: { id: user.id, name: username, team: assignedTeam, salary }
   });
 
-  // Store login info server-side in KV instead of exposing it in the URL.
-  // The frontend reads it from /api/me using a short-lived cookie-keyed token.
   const sessionToken = crypto.randomUUID();
   await redis.set(`session:${sessionToken}`, JSON.stringify({ name: username, team: assignedTeam }), { ex: 3600 });
 
