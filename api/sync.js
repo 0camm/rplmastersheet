@@ -97,8 +97,9 @@ export default async function handler(req, res) {
       // FIX: always use lowercase for the lookup — matches the index built above
       const usernameLower = username.toLowerCase();
 
-      const prevById   = existing[userId];
-      const prevByName = legacyByName[usernameLower];
+      const prevByIdRaw = existing[userId];
+      const prevById    = typeof prevByIdRaw === 'string' ? JSON.parse(prevByIdRaw) : prevByIdRaw;
+      const prevByName  = legacyByName[usernameLower];
 
       // Salary priority: snowflake entry > legacy name-keyed entry > default
       const salary = prevById?.salary ?? prevByName?.salary ?? 2000000;
