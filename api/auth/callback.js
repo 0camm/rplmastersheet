@@ -81,7 +81,20 @@ export default async function handler(req, res) {
   }
 
   const existing = await redis.hget('players', user.id);
-  const salary = existing ? existing.salary : 2000000;
+  // If no snowflake entry exists yet, fall back to any manual_* entry matching this
+  // user's current OR previous username — prevents salary reset on username changes.
+  let salary = existing?.salary;
+  if (salary == null) {
+    const allPlayers = await redis.hgetall('players') || {};
+    const usernameLower = username.toLowerCase();
+    for (const [key, p] of Object.entries(allPlayers)) {
+      if (!/^\d{15,20}$/.test(key) && p.name?.toLowerCase() === usernameLower && p.salary != null) {
+        salary = p.salary;
+        break;
+      }
+    }
+    salary = salary ?? 2000000;
+  }
 
   await redis.hset('players', {
     [user.id]: { id: user.id, name: username, team: assignedTeam, salary }
