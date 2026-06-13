@@ -1608,18 +1608,26 @@ function openTeamModal(team) {
   salEl.textContent = `${fmt(total)} / ${fmt(CAP)}`;
   salEl.className = 'mseason';
 
-  const staffHtml = [...staff.owners.map(p => `
+  const staffHtml = [
+    ...(staff.owners.length ? [
+      `<div class="staff-section-title" style="margin-top:0;">Franchise Owners</div>`,
+      ...staff.owners.map(p => `
     <div class="staff-row-m">
       <div class="staff-pip owner"></div>
       <span class="staff-row-name-m">${p.nick || p.name}</span>
       <span class="staff-role-chip owner">Owner</span>
-    </div>`),
-  ...staff.coaches.map(p => `
+    </div>`)
+    ] : []),
+    ...(staff.coaches.length ? [
+      `<div class="staff-section-title" style="margin-top:${staff.owners.length ? '10px' : '0'};">Team Coaches</div>`,
+      ...staff.coaches.map(p => `
     <div class="staff-row-m">
       <div class="staff-pip coach"></div>
       <span class="staff-row-name-m">${p.nick || p.name}</span>
       <span class="staff-role-chip coach">Coach</span>
-    </div>`)].join('');
+    </div>`)
+    ] : []),
+  ].join('');
 
   const hasStaff = staff.owners.length || staff.coaches.length;
 
@@ -1635,7 +1643,7 @@ function openTeamModal(team) {
       </div>
       <div class="mcap-track"><div class="mcap-fill ${st}" style="width:${pctCapped.toFixed(1)}%"></div></div>
     </div>
-    ${hasStaff ? `<div><div class="staff-section-title">Coaching Staff</div>${staffHtml}</div>` : ''}
+    ${hasStaff ? `<div>${staffHtml}</div>` : ''}
     <div>
       <div class="staff-section-title">Roster (${players.length} players)</div>
       <div class="bstbl-wrap">
