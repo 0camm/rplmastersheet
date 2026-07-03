@@ -19,7 +19,11 @@ export default async function handler(req, res) {
   }
 
   const raw = await redis.hgetall('players');
-  const players = raw ? Object.entries(raw) : [];
+  // BUGFIX: normalize possible string-shaped values (see sync.js/callback.js) —
+  // otherwise name/salary lookups below silently miss for those entries.
+  const players = raw
+    ? Object.entries(raw).map(([k, v]) => [k, typeof v === 'string' ? JSON.parse(v) : v])
+    : [];
 
   // Prefer stable Discord ID lookup; fall back to name for manually-added / legacy entries
   const { id: targetId } = req.body;

@@ -849,6 +849,7 @@ select.fc{
         <span>Login with Discord</span>
       </a>
     </div>
+    <button class="admin-btn" onclick="openRules()">Rules</button>
     <button class="admin-btn" onclick="openAdmin()">Admin</button>
   </div>
 </div>
@@ -870,9 +871,11 @@ select.fc{
         <span class="hdot"></span>
         Min 10 players
         <span class="hdot"></span>
-        20M max: 1 per team · 18M max: 1 per team
+        Pure total roster value — no per-contract limits
         <span class="hdot"></span>
         All unlisted players $2M
+        <span class="hdot"></span>
+        <a href="javascript:void(0)" onclick="openRules()" style="color:var(--red);text-decoration:none;font-weight:600;">View full rules →</a>
       </div>
     </div>
     <div class="hero-key">
@@ -1002,6 +1005,70 @@ select.fc{
       <button class="mclose" id="m-close" aria-label="Close">✕</button>
     </div>
     <div class="mbody" id="m-body"></div>
+  </div>
+</div>
+
+<!-- RULES MODAL -->
+<div class="mbg" id="rules-mbg" role="dialog" aria-modal="true" aria-label="Salary Cap Rules">
+  <div class="modal" style="max-width:560px;">
+    <div class="mhd">
+      <div class="mteam-info">
+        <div>
+          <div class="mteam-name">💰 RPL Salary Cap Update</div>
+          <div class="mteam-sub">Season 12 roster rules</div>
+        </div>
+      </div>
+      <button class="mclose" id="rules-close" aria-label="Close">✕</button>
+    </div>
+    <div class="mbody" style="gap:16px;">
+      <div style="font-size:13px;color:var(--tx2);line-height:1.55;">
+        We've changed how roster rules work to make everything simpler and easier to understand.
+        Rules used to be based on <strong style="color:var(--tx)">specific contract combinations</strong>
+        (like limiting certain $18M or $20M pairings). That caused confusion and weird situations where
+        some lineups were banned even though they were actually weaker than allowed ones.
+      </div>
+
+      <div>
+        <div class="staff-section-title">💵 Available Contracts</div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;">
+          <span class="mbadge safe" style="font-size:12px;padding:5px 10px;">$2M</span>
+          <span class="mbadge safe" style="font-size:12px;padding:5px 10px;">$5M</span>
+          <span class="mbadge safe" style="font-size:12px;padding:5px 10px;">$10M</span>
+          <span class="mbadge safe" style="font-size:12px;padding:5px 10px;">$12M</span>
+          <span class="mbadge safe" style="font-size:12px;padding:5px 10px;">$15M</span>
+          <span class="mbadge safe" style="font-size:12px;padding:5px 10px;">$18M</span>
+          <span class="mbadge safe" style="font-size:12px;padding:5px 10px;">$20M</span>
+          <span class="mbadge safe" style="font-size:12px;padding:5px 10px;">$22M</span>
+        </div>
+      </div>
+
+      <div>
+        <div class="staff-section-title">✅ Examples</div>
+        <div class="bstbl-wrap">
+          <table class="bstbl">
+            <tbody>
+              <tr><td>$22M + $18M + $10M + $5M + $2M</td><td class="pts">$57M</td><td style="color:var(--win);">✔️</td></tr>
+              <tr><td>$20M + $18M + $15M + $5M</td><td class="pts">$58M</td><td style="color:var(--win);">✔️</td></tr>
+              <tr><td>$22M + $20M + $18M</td><td style="color:var(--lose);">$60M</td><td style="color:var(--lose);">❌ over cap</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div>
+        <div class="staff-section-title">⚠️ Important Change</div>
+        <div style="font-size:13px;color:var(--tx2);line-height:1.55;">
+          We are <strong style="color:var(--tx)">no longer using individual contract restrictions</strong>
+          (like "max 18M players" or "max 20M combinations"). It's now purely about
+          <strong style="color:var(--tx)">total roster value</strong>.
+        </div>
+      </div>
+
+      <div class="mcap-section" style="text-align:center;padding:12px;background:var(--s2);border:1px solid var(--b);border-radius:10px;">
+        <span style="font-size:11px;color:var(--mu);letter-spacing:.08em;text-transform:uppercase;">Salary cap still remains</span>
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:.04em;color:#fff;">$58M</div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -1677,7 +1744,18 @@ function closeModal() {
 
 document.getElementById('m-close').addEventListener('click', closeModal);
 document.getElementById('modal-bg').addEventListener('click', e => { if (e.target.id === 'modal-bg') closeModal(); });
-document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeModal(); closeRules(); } });
+
+function openRules() {
+  document.getElementById('rules-mbg').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeRules() {
+  document.getElementById('rules-mbg').classList.remove('open');
+  document.body.style.overflow = '';
+}
+document.getElementById('rules-close').addEventListener('click', closeRules);
+document.getElementById('rules-mbg').addEventListener('click', e => { if (e.target.id === 'rules-mbg') closeRules(); });
 
 /* ══════════════════════════════════════════
    MAIN RENDER

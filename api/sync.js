@@ -55,10 +55,17 @@ export default async function handler(req, res) {
     // FIX: Build name→entry index for all non-snowflake keys using lowercase for reliable matching.
     // The old code stored { key, salary } but lookups used p.name?.toLowerCase() — consistent now.
     const legacyByName = {}; // lowercase username → { key, salary }
-    for (const [key, val] of Object.entries(existing)) {
+    for (const [key, rawVal] of Object.entries(existing)) {
       if (!/^\d{15,20}$/.test(key)) { // not a Discord snowflake
-        // FIX: store the whole entry so we can read .salary reliably later
-        legacyByName[val.name?.toLowerCase()] = { key, salary: val.salary };
+        // BUGFIX: hgetall can hand back either a parsed object or a raw JSON
+        // string depending on how the entry was originally written. Only the
+        // ID-keyed lookup below was guarding against this — this index wasn't,
+        // so val.name was silently `undefined` for string-shaped entries and
+        // every legacy record collapsed into a single "undefined" bucket,
+        // which meant renamed users could never be matched to their old
+        // salary and always fell back to the $2M default.
+        const val = typeof rawVal === 'string' ? JSON.parse(rawVal) : rawVal;
+        if (val?.name) legacyByName[val.name.toLowerCase()] = { key, salary: val.salary };
       }
     }
 
@@ -118,6 +125,22 @@ export default async function handler(req, res) {
       entries[userId] = { id: userId, name: username, team: assignedTeam, salary };
     }
 
+    // BUGFIX: previously, anyone who left the Discord server entirely was
+    // never removed — sync only ever added/updated members who were still
+    // present, so their old snowflake-keyed entry (with their old username)
+    // stayed on the sheet forever. Any ID-keyed entry that no longer
+    // corresponds to a current guild member gets cleaned up here. Manual
+    // (non-snowflake) entries are left alone since they aren't necessarily
+    // tied to a live Discord account.
+    const currentMemberIds = new Set(members.filter(m => !m.user?.bot).map(m => m.user.id));
+    let left = 0;
+    for (const key of Object.keys(existing)) {
+      if (/^\d{15,20}$/.test(key) && !currentMemberIds.has(key) && !toDelete.includes(key)) {
+        toDelete.push(key);
+        left++;
+      }
+    }
+
     if (Object.keys(entries).length > 0) {
       await redis.hset('players', entries);
     }
@@ -127,7 +150,7 @@ export default async function handler(req, res) {
 
     return res.json({
       ok: true,
-      message: `Sync complete — ${added} added, ${updated} updated, ${removed} staff removed, ${Object.keys(entries).length} total`
+      message: `Sync complete — ${added} added, ${updated} updated, ${removed} staff removed, ${left} left-server entries removed, ${Object.keys(entries).length} total`
     });
   } catch (err) {
     console.error('Sync error:', err);

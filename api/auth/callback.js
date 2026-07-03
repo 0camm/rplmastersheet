@@ -80,16 +80,40 @@ export default async function handler(req, res) {
     }
   }
 
-  const existing = await redis.hget('players', user.id);
-  // If no snowflake entry exists yet, fall back to any manual_* entry matching this
-  // user's current OR previous username — prevents salary reset on username changes.
+  const existingRaw = await redis.hget('players', user.id);
+  // BUGFIX: hget/hgetall can return either a parsed object or a raw JSON
+  // string depending on how an entry was originally written (seed.js vs
+  // addPlayer vs sync). This wasn't normalized here, so `existing?.salary`
+  // could silently be undefined even when a real snowflake entry existed —
+  // pushing every login onto the legacy name-matching fallback below and,
+  // if the username had since changed, straight into the $2M default.
+  const existing = typeof existingRaw === 'string' ? JSON.parse(existingRaw) : existingRaw;
   let salary = existing?.salary;
+
+  // BUGFIX: this only matched a legacy manual_* entry by the user's CURRENT
+  // username, but manual entries are seeded under whatever name the admin
+  // typed at the time. If the user had renamed on Discord even once before
+  // their first login, the match always failed (defaulting to $2M) — and
+  // worse, the stale manual_* entry was never deleted, so it kept showing
+  // up on the roster forever under the old name while a second, separate
+  // $2M entry appeared under the new name. We now also match on the
+  // Discord-verified previous username where available, and — whichever
+  // way the legacy entry is found — delete it once its salary has been
+  // migrated so it stops showing up as a ghost duplicate.
+  let legacyKeyToRemove = null;
   if (salary == null) {
-    const allPlayers = await redis.hgetall('players') || {};
-    const usernameLower = username.toLowerCase();
+    const allPlayersRaw = await redis.hgetall('players') || {};
+    const allPlayers = {};
+    for (const [k, v] of Object.entries(allPlayersRaw)) {
+      allPlayers[k] = typeof v === 'string' ? JSON.parse(v) : v;
+    }
+    const candidateNames = new Set([username.toLowerCase()]);
+    if (user.global_name) candidateNames.add(user.global_name.toLowerCase());
+
     for (const [key, p] of Object.entries(allPlayers)) {
-      if (!/^\d{15,20}$/.test(key) && p.name?.toLowerCase() === usernameLower && p.salary != null) {
+      if (!/^\d{15,20}$/.test(key) && p?.name && candidateNames.has(p.name.toLowerCase()) && p.salary != null) {
         salary = p.salary;
+        legacyKeyToRemove = key;
         break;
       }
     }
@@ -99,6 +123,11 @@ export default async function handler(req, res) {
   await redis.hset('players', {
     [user.id]: { id: user.id, name: username, team: assignedTeam, salary }
   });
+  // Clean up the migrated legacy entry so the old username stops appearing
+  // as a stale duplicate row on the roster.
+  if (legacyKeyToRemove) {
+    await redis.hdel('players', legacyKeyToRemove);
+  }
 
   const sessionToken = crypto.randomUUID();
   await redis.set(`session:${sessionToken}`, JSON.stringify({ name: username, team: assignedTeam }), { ex: 3600 });
