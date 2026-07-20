@@ -1267,7 +1267,8 @@ function capStatus(pct) {
 }
 
 function capLabel(pct) {
-  if (pct >= 100) return 'OVER CAP';
+  if (pct > 100) return 'OVER CAP';
+  if (pct === 100) return 'MAX CAP';
   if (pct >= 80) return 'NEAR CAP';
   return 'OK';
 }
