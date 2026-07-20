@@ -16,6 +16,7 @@
   --gr:#18d464;--gr-d:rgba(24,212,100,.09);
   --am:#f5a623;--am-d:rgba(245,166,35,.09);
   --bl:#5b9cf6;--bl-d:rgba(91,156,246,.09);
+  --max:#a78bfa;--max-dim:rgba(167,139,250,.09);--max-mid:rgba(167,139,250,.18);
   --win:#3de87a;--lose:#f06070;
   /* salary-specific */
   --green:#22c55e;--green-dim:rgba(34,197,94,.12);
@@ -246,6 +247,7 @@ select.fc{
 .hr.cs-safe::before{background:var(--gr)}
 .hr.cs-warn::before{background:var(--am)}
 .hr.cs-over::before{background:var(--red)}
+.hr.cs-max::before{background:var(--max)}
 
 /* row number */
 .hn{font-size:10px;color:var(--mu2);text-align:center;font-family:'JetBrains Mono',monospace;}
@@ -274,11 +276,13 @@ select.fc{
 .hsalary.over{color:var(--lose)}
 .hsalary.warn{color:var(--am)}
 .hsalary.safe{color:var(--tx)}
+.hsalary.max{color:var(--max)}
 
 /* cap pct */
 .hpct{text-align:center;font-size:11px;color:var(--mu);font-family:'JetBrains Mono',monospace;}
 .hpct.over{color:var(--lose)}
 .hpct.warn{color:var(--am)}
+.hpct.max{color:var(--max)}
 
 /* cap bar cell */
 .hbar-cell{display:flex;align-items:center;gap:6px;}
@@ -287,6 +291,7 @@ select.fc{
 .hbar-fill.safe{background:var(--gr)}
 .hbar-fill.warn{background:var(--am)}
 .hbar-fill.over{background:var(--red)}
+.hbar-fill.max{background:var(--max)}
 
 /* expand arrow */
 .harrow{color:var(--red);font-size:10px;opacity:0;transform:translateX(-3px);transition:opacity .14s,transform .14s;margin-left:2px;}
@@ -339,6 +344,7 @@ select.fc{
 .conf-tag.safe{background:var(--gr-d);color:var(--gr);border:1px solid rgba(24,212,100,.18)}
 .conf-tag.warn{background:var(--am-d);color:var(--am);border:1px solid rgba(245,166,35,.18)}
 .conf-tag.over{background:var(--red-dim);color:var(--red);border:1px solid var(--red-mid)}
+.conf-tag.max{background:var(--max-dim);color:var(--max);border:1px solid var(--max-mid)}
 .conf-tag.fa{background:var(--bl-d);color:var(--bl);border:1px solid rgba(91,156,246,.18)}
 .conf-name{font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:.05em;color:#fff}
 
@@ -383,6 +389,7 @@ select.fc{
 .srow.s-safe::before{background:var(--gr)}
 .srow.s-warn::before{background:var(--am)}
 .srow.s-over::before{background:var(--red)}
+.srow.s-max::before{background:var(--max)}
 
 @keyframes rfl{0%{background:rgba(232,0,29,.08)}100%{background:transparent}}
 .srow.flash{animation:rfl 1.8s ease forwards}
@@ -404,13 +411,14 @@ select.fc{
 .rbadge.over{background:rgba(248,113,113,.1);color:var(--lose)}
 .rbadge.warn{background:rgba(245,166,35,.1);color:var(--am)}
 .rbadge.safe{background:rgba(24,212,100,.09);color:var(--gr)}
+.rbadge.max{background:rgba(167,139,250,.1);color:var(--max)}
 
 .rplayers{text-align:center;font-size:12px;color:var(--tx2);font-family:'JetBrains Mono',monospace;}
 .rplayers.low{color:var(--lose)}
 .rsal{text-align:center;font-size:12px;font-family:'JetBrains Mono',monospace;font-variant-numeric:tabular-nums;font-weight:600;color:var(--tx2)}
-.rsal.over{color:var(--lose)}.rsal.warn{color:var(--am)}.rsal.safe{color:var(--win)}
+.rsal.over{color:var(--lose)}.rsal.warn{color:var(--am)}.rsal.safe{color:var(--win)}.rsal.max{color:var(--max)}
 .rpct{text-align:center;font-size:11px;font-family:'JetBrains Mono',monospace;font-variant-numeric:tabular-nums;color:var(--tx2)}
-.rpct.over{color:var(--lose)}.rpct.warn{color:var(--am)}.rpct.safe{color:var(--win)}
+.rpct.over{color:var(--lose)}.rpct.warn{color:var(--am)}.rpct.safe{color:var(--win)}.rpct.max{color:var(--max)}
 
 /* FA section in conf-grid */
 .fa-mini-grid{display:flex;flex-direction:column;gap:4px;}
@@ -485,8 +493,9 @@ select.fc{
 .mbadge.safe{background:var(--gr-d);color:var(--gr);border:1px solid rgba(24,212,100,.18)}
 .mbadge.warn{background:var(--am-d);color:var(--am);border:1px solid rgba(245,166,35,.18)}
 .mbadge.over{background:var(--red-dim);color:var(--red);border:1px solid var(--red-mid)}
+.mbadge.max{background:var(--max-dim);color:var(--max);border:1px solid var(--max-mid)}
 .msal-big{font-family:'JetBrains Mono',monospace;font-size:20px;font-weight:700;color:#fff;}
-.msal-big.over{color:var(--lose)}.msal-big.warn{color:var(--am)}.msal-big.safe{color:var(--win)}
+.msal-big.over{color:var(--lose)}.msal-big.warn{color:var(--am)}.msal-big.safe{color:var(--win)}.msal-big.max{color:var(--max)}
 .mseason{font-size:10px;color:var(--mu);font-family:'JetBrains Mono',monospace}
 .mclose{
   background:var(--s3);border:1px solid var(--b);cursor:pointer;
@@ -506,7 +515,7 @@ select.fc{
 .mcap-val{font-size:11px;font-weight:600;font-family:'JetBrains Mono',monospace;}
 .mcap-track{height:6px;background:var(--b2);border-radius:3px;overflow:hidden;width:100%;}
 .mcap-fill{height:100%;border-radius:3px;transition:width .4s ease;}
-.mcap-fill.safe{background:var(--gr)}.mcap-fill.warn{background:var(--am)}.mcap-fill.over{background:var(--red)}
+.mcap-fill.safe{background:var(--gr)}.mcap-fill.warn{background:var(--am)}.mcap-fill.over{background:var(--red)}.mcap-fill.max{background:var(--max)}
 
 /* staff rows in modal */
 .staff-section-title{font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--mu);margin-bottom:6px;}
@@ -881,6 +890,7 @@ select.fc{
     <div class="hero-key">
       <div class="kc"><div class="kc-pip safe"></div><span class="kc-code">OK</span><span class="kc-lbl">Under cap</span></div>
       <div class="kc"><div class="kc-pip warn"></div><span class="kc-code">WARN</span><span class="kc-lbl">80–99% of cap</span></div>
+      <div class="kc"><div class="kc-pip max"></div><span class="kc-code">MAX</span><span class="kc-lbl">Exactly at cap</span></div>
       <div class="kc"><div class="kc-pip over"></div><span class="kc-code">OVER</span><span class="kc-lbl">Over cap</span></div>
       <div class="kc"><div class="kc-pip low"></div><span class="kc-code">&lt;10</span><span class="kc-lbl">Under min roster</span></div>
     </div>
@@ -1273,6 +1283,14 @@ function capLabel(pct) {
   return 'OK';
 }
 
+// Visual/color class for a team's cap state. Same buckets as capStatus for
+// filtering/grouping purposes, but a team sitting exactly at 100% gets its
+// own 'max' color instead of being painted red like a team that's over.
+function capVisualStatus(pct) {
+  if (pct === 100) return 'max';
+  return capStatus(pct);
+}
+
 function timeAgo(iso) {
   if (!iso) return '';
   const s = Math.floor((Date.now() - new Date(iso)) / 1000);
@@ -1446,7 +1464,7 @@ function renderTeams() {
   rowsEl.innerHTML = slice.map((d, i) => {
     const num = start + i + 1;
     const pctCapped = Math.min(d.pct, 100);
-    const st = d.status;
+    const st = capVisualStatus(d.pct);
     const fl = changed.has(d.team) ? ' flash-row' : '';
     const logoUrl = logos[d.team] || '';
     const lowRoster = d.players.length < MIN_ROSTER;
@@ -1539,7 +1557,7 @@ function renderSummary() {
   const stdTable = (teams, label, tagCls) => {
     if (!teams.length) return '';
     const rows = teams.map((d, i) => {
-      const sc = d.status;
+      const sc = capVisualStatus(d.pct);
       const logoUrl = logos[d.team] || '';
       const lowRoster = d.players.length < MIN_ROSTER;
       return `<div class="srow s-${sc}" role="button" tabindex="0" data-team="${encodeURIComponent(d.team)}">
@@ -1657,7 +1675,7 @@ function openTeamModal(team) {
   const staff = staffByTeam[team] || { owners: [], coaches: [] };
   const total = players.reduce((s, p) => s + p.salary, 0);
   const pct = (total / CAP) * 100;
-  const st = capStatus(pct);
+  const st = capVisualStatus(pct);
   const pctCapped = Math.min(pct, 100);
   const logoUrl = logos[team] || '';
 
@@ -1703,7 +1721,7 @@ function openTeamModal(team) {
     <div class="mcap-section">
       <div class="mcap-row">
         <span class="mcap-label">Total Salary</span>
-        <span class="mcap-val" style="color:var(--${st === 'over' ? 'lose' : st === 'warn' ? 'am' : 'win'})">${fmt(total)}</span>
+        <span class="mcap-val" style="color:var(--${st === 'over' ? 'lose' : st === 'warn' ? 'am' : st === 'max' ? 'max' : 'win'})">${fmt(total)}</span>
       </div>
       <div class="mcap-row" style="margin-bottom:8px;">
         <span class="mcap-label">Cap: ${fmt(CAP)}</span>
