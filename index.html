@@ -22,6 +22,14 @@
   --green:#22c55e;--green-dim:rgba(34,197,94,.12);
   --amber:#f59e0b;--amber-dim:rgba(245,158,11,.12);
   --blue:#60a5fa;
+  /* cap-health tier scale (0-10 / 11-20 / 21-30 / 31-40 / 41-50 / 51-58 / 59+) */
+  --t1:#8CE99A;--t1-dim:rgba(140,233,154,.12);
+  --t2:#22c55e;--t2-dim:rgba(34,197,94,.12);
+  --t3:#eab308;--t3-dim:rgba(234,179,8,.12);
+  --t4:#f59e0b;--t4-dim:rgba(245,158,11,.12);
+  --t5:#f97316;--t5-dim:rgba(249,115,22,.12);
+  --t6:#ef4444;--t6-dim:rgba(239,68,68,.12);
+  --t7:#7f1d1d;--t7-dim:rgba(127,29,29,.22);
 }
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
 html{scroll-behavior:smooth}
@@ -420,6 +428,64 @@ select.fc{
 .rpct{text-align:center;font-size:11px;font-family:'JetBrains Mono',monospace;font-variant-numeric:tabular-nums;color:var(--tx2)}
 .rpct.over{color:var(--lose)}.rpct.warn{color:var(--am)}.rpct.safe{color:var(--win)}.rpct.max{color:var(--max)}
 
+/* cap tier colors — applied to salary text & dots regardless of over/warn/safe grouping */
+.tier-1{color:var(--t1)!important}.tier-2{color:var(--t2)!important}.tier-3{color:var(--t3)!important}
+.tier-4{color:var(--t4)!important}.tier-5{color:var(--t5)!important}.tier-6{color:var(--t6)!important}.tier-7{color:var(--t7)!important}
+.tier-dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:5px;flex-shrink:0;vertical-align:middle}
+.tier-dot.tier-1{background:var(--t1)}.tier-dot.tier-2{background:var(--t2)}.tier-dot.tier-3{background:var(--t3)}
+.tier-dot.tier-4{background:var(--t4)}.tier-dot.tier-5{background:var(--t5)}.tier-dot.tier-6{background:var(--t6)}.tier-dot.tier-7{background:var(--t7)}
+.rsal-wrap{display:flex;align-items:center;justify-content:center;gap:0}
+
+/* ── CAP SUMMARY: OVERVIEW STATS ── */
+.cs-section{grid-column:1/-1;margin-bottom:6px}
+.cs-section-title{
+  font-size:10px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--mu);margin-bottom:10px;display:flex;align-items:center;gap:8px;
+}
+.cs-section-title::after{content:'';flex:1;height:1px;background:var(--b)}
+
+.ov-grid{
+  display:grid;grid-template-columns:repeat(6,1fr);gap:10px;
+}
+@media(max-width:980px){.ov-grid{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:560px){.ov-grid{grid-template-columns:repeat(2,1fr)}}
+.ov-card{
+  background:var(--s1);border:1px solid var(--b);border-radius:10px;
+  padding:12px 14px;position:relative;overflow:hidden;
+}
+.ov-card::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:var(--ov-accent,var(--b));
+}
+.ov-lbl{font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--mu);margin-bottom:6px}
+.ov-val{font-family:'JetBrains Mono',monospace;font-size:19px;font-weight:700;color:#fff;line-height:1}
+.ov-sub{font-size:10px;color:var(--tx2);margin-top:4px}
+
+/* ── CAP HEALTH DISTRIBUTION BAR ── */
+.tier-legend{
+  display:flex;flex-wrap:wrap;gap:8px;background:var(--s1);
+  border:1px solid var(--b);border-radius:10px;padding:12px 14px;
+}
+.tier-chip{
+  display:flex;align-items:center;gap:6px;
+  padding:5px 10px;border-radius:7px;background:var(--s2);
+  border:1px solid var(--b);font-size:11px;flex:1;min-width:120px;
+}
+.tier-chip .tc-name{color:var(--tx2);font-weight:500;flex:1}
+.tier-chip .tc-count{font-family:'JetBrains Mono',monospace;font-weight:700;color:#fff}
+.tier-chip.tc-1{border-color:rgba(140,233,154,.18)}.tier-chip.tc-2{border-color:rgba(34,197,94,.18)}
+.tier-chip.tc-3{border-color:rgba(234,179,8,.18)}.tier-chip.tc-4{border-color:rgba(245,158,11,.18)}
+.tier-chip.tc-5{border-color:rgba(249,115,22,.18)}.tier-chip.tc-6{border-color:rgba(239,68,68,.18)}
+.tier-chip.tc-7{border-color:rgba(127,29,29,.35)}
+
+.cs-badge-row{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:4px}
+.cs-mini-badge{
+  font-size:10px;font-weight:600;color:var(--tx2);
+  background:var(--s2);border:1px solid var(--b);border-radius:6px;
+  padding:4px 9px;display:flex;align-items:center;gap:5px;
+}
+.cs-mini-badge strong{color:#fff;font-family:'JetBrains Mono',monospace}
+
 /* FA section in conf-grid */
 .fa-mini-grid{display:flex;flex-direction:column;gap:4px;}
 .fa-mini-row{
@@ -516,6 +582,9 @@ select.fc{
 .mcap-track{height:6px;background:var(--b2);border-radius:3px;overflow:hidden;width:100%;}
 .mcap-fill{height:100%;border-radius:3px;transition:width .4s ease;}
 .mcap-fill.safe{background:var(--gr)}.mcap-fill.warn{background:var(--am)}.mcap-fill.over{background:var(--red)}.mcap-fill.max{background:var(--max)}
+.mcap-fill.tier-1{background:var(--t1)}.mcap-fill.tier-2{background:var(--t2)}.mcap-fill.tier-3{background:var(--t3)}
+.mcap-fill.tier-4{background:var(--t4)}.mcap-fill.tier-5{background:var(--t5)}.mcap-fill.tier-6{background:var(--t6)}.mcap-fill.tier-7{background:var(--t7)}
+.mcap-tier-lbl{font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:2px 7px;border-radius:5px;margin-left:6px}
 
 /* staff rows in modal */
 .staff-section-title{font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--mu);margin-bottom:6px;}
@@ -1291,6 +1360,27 @@ function capVisualStatus(pct) {
   return capStatus(pct);
 }
 
+/* ── CAP HEALTH TIER SCALE ──
+   Independent, finer-grained color scale layered on top of the existing
+   over/warn/safe grouping. Buckets are in millions of committed salary
+   (cap = $58M), so a team's raw spend maps directly onto 0–58+. */
+const CAP_TIERS = [
+  { id: 1, cls: 'tier-1', max: 10, label: 'Very Healthy', desc: '$0M – $10M committed' },
+  { id: 2, cls: 'tier-2', max: 20, label: 'Healthy',       desc: '$11M – $20M committed' },
+  { id: 3, cls: 'tier-3', max: 30, label: 'Moderate',      desc: '$21M – $30M committed' },
+  { id: 4, cls: 'tier-4', max: 40, label: 'Getting High',  desc: '$31M – $40M committed' },
+  { id: 5, cls: 'tier-5', max: 50, label: 'High',          desc: '$41M – $50M committed' },
+  { id: 6, cls: 'tier-6', max: 58, label: 'Very High',     desc: '$51M – $58M committed' },
+  { id: 7, cls: 'tier-7', max: Infinity, label: 'Critical', desc: '$59M+ committed' },
+];
+
+// totalDollars -> tier object. Buckets are evaluated against the salary
+// expressed in millions (matches the $58M cap scale 1:1).
+function capTier(totalDollars) {
+  const m = totalDollars / 1000000;
+  return CAP_TIERS.find(t => m <= t.max) || CAP_TIERS[CAP_TIERS.length - 1];
+}
+
 function timeAgo(iso) {
   if (!iso) return '';
   const s = Math.floor((Date.now() - new Date(iso)) / 1000);
@@ -1392,7 +1482,8 @@ function buildTeamData() {
     const total = players.reduce((s, p) => s + p.salary, 0);
     const pct = (total / CAP) * 100;
     const status = capStatus(pct);
-    return { team, players, total, pct, status };
+    const tier = capTier(total);
+    return { team, players, total, pct, status, tier };
   });
 }
 
@@ -1554,10 +1645,69 @@ function renderSummary() {
 
   const grid = document.getElementById('cap-summary-grid');
 
+  /* ── overview stats ── */
+  const leagueTotal = data.reduce((s, d) => s + d.total, 0);
+  const leagueCapacity = CAP * data.length;
+  const avgPct = data.length ? data.reduce((s, d) => s + d.pct, 0) / data.length : 0;
+  const underMin = data.filter(d => d.players.length < MIN_ROSTER).length;
+  const faTotal = fa.reduce((s, p) => s + p.salary, 0);
+  const topSpender = data.length ? [...data].sort((a, b) => b.total - a.total)[0] : null;
+  const mostRoom = data.length ? [...data].sort((a, b) => a.total - b.total)[0] : null;
+
+  const ovCard = (lbl, val, sub, accentVar) => `
+    <div class="ov-card" style="--ov-accent:${accentVar}">
+      <div class="ov-lbl">${lbl}</div>
+      <div class="ov-val">${val}</div>
+      ${sub ? `<div class="ov-sub">${sub}</div>` : ''}
+    </div>`;
+
+  const overviewHtml = `
+    <div class="cs-section">
+      <div class="cs-section-title">League Overview</div>
+      <div class="ov-grid">
+        ${ovCard('League Spend', fmt(leagueTotal), `of ${fmt(leagueCapacity)} capacity`, 'var(--bl)')}
+        ${ovCard('Avg Cap Usage', avgPct.toFixed(1) + '%', `across ${data.length} teams`, 'var(--am)')}
+        ${ovCard('Over Cap', over.length, over.length ? over.map(d => d.team.split(' ').pop()).slice(0,2).join(', ') + (over.length > 2 ? '…' : '') : 'no teams over', 'var(--red)')}
+        ${ovCard('Near Cap', warn.length, '80–99% of $58M', 'var(--am)')}
+        ${ovCard('Under Min Roster', underMin, `fewer than ${MIN_ROSTER} players`, 'var(--red)')}
+        ${ovCard('Free Agents', fa.length, fa.length ? `${fmt(faTotal)} in unsigned value` : 'no free agents', 'var(--bl)')}
+      </div>
+    </div>`;
+
+  /* ── cap health tier distribution ── */
+  const tierCounts = CAP_TIERS.map(t => ({
+    ...t,
+    count: data.filter(d => d.tier.id === t.id).length,
+  }));
+  const tierLegendHtml = `
+    <div class="cs-section">
+      <div class="cs-section-title">Cap Health Distribution</div>
+      <div class="tier-legend">
+        ${tierCounts.map(t => `
+          <div class="tier-chip tc-${t.id}" title="${t.desc}">
+            <span class="tier-dot ${t.cls}"></span>
+            <span class="tc-name">${t.label}</span>
+            <span class="tc-count">${t.count}</span>
+          </div>`).join('')}
+      </div>
+    </div>`;
+
+  /* ── quick highlights row ── */
+  const highlightsHtml = (topSpender || mostRoom) ? `
+    <div class="cs-section">
+      <div class="cs-badge-row">
+        ${topSpender ? `<span class="cs-mini-badge">🔺 Highest Spend: <strong>${topSpender.team}</strong> (${fmt(topSpender.total)})</span>` : ''}
+        ${mostRoom ? `<span class="cs-mini-badge">🔻 Most Cap Room: <strong>${mostRoom.team}</strong> (${fmt(CAP - mostRoom.total)} left)</span>` : ''}
+        <span class="cs-mini-badge">📋 Roster Compliance: <strong>${data.length - underMin}/${data.length}</strong> teams at min roster</span>
+      </div>
+    </div>`
+    : '';
+
   const stdTable = (teams, label, tagCls) => {
     if (!teams.length) return '';
     const rows = teams.map((d, i) => {
       const sc = capVisualStatus(d.pct);
+      const tier = d.tier;
       const logoUrl = logos[d.team] || '';
       const lowRoster = d.players.length < MIN_ROSTER;
       return `<div class="srow s-${sc}" role="button" tabindex="0" data-team="${encodeURIComponent(d.team)}">
@@ -1572,7 +1722,10 @@ function renderSummary() {
           </div>
         </span>
         <span class="rplayers${lowRoster ? ' low' : ''}">${d.players.length}</span>
-        <span class="rsal ${sc}">${fmt(d.total)}</span>
+        <span class="rsal-wrap" title="${tier.label} · ${tier.desc}">
+          <span class="tier-dot ${tier.cls}"></span>
+          <span class="rsal ${tier.cls}">${fmt(d.total)}</span>
+        </span>
         <span class="rpct ${sc}">${d.pct.toFixed(1)}%</span>
       </div>`;
     }).join('');
@@ -1608,6 +1761,9 @@ function renderSummary() {
   }
 
   grid.innerHTML =
+    overviewHtml +
+    tierLegendHtml +
+    highlightsHtml +
     stdTable(over, 'Over Cap', 'over') +
     stdTable(warn, 'Near Cap', 'warn') +
     stdTable(safe, 'Under Cap', 'safe') +
@@ -1676,6 +1832,7 @@ function openTeamModal(team) {
   const total = players.reduce((s, p) => s + p.salary, 0);
   const pct = (total / CAP) * 100;
   const st = capVisualStatus(pct);
+  const tier = capTier(total);
   const pctCapped = Math.min(pct, 100);
   const logoUrl = logos[team] || '';
 
@@ -1721,13 +1878,16 @@ function openTeamModal(team) {
     <div class="mcap-section">
       <div class="mcap-row">
         <span class="mcap-label">Total Salary</span>
-        <span class="mcap-val" style="color:var(--${st === 'over' ? 'lose' : st === 'warn' ? 'am' : st === 'max' ? 'max' : 'win'})">${fmt(total)}</span>
+        <span>
+          <span class="mcap-val ${tier.cls}">${fmt(total)}</span>
+          <span class="mcap-tier-lbl ${tier.cls}" style="background:var(--t${tier.id}-dim,transparent)">${tier.label}</span>
+        </span>
       </div>
       <div class="mcap-row" style="margin-bottom:8px;">
         <span class="mcap-label">Cap: ${fmt(CAP)}</span>
         <span class="mcap-val">${pct.toFixed(1)}%</span>
       </div>
-      <div class="mcap-track"><div class="mcap-fill ${st}" style="width:${pctCapped.toFixed(1)}%"></div></div>
+      <div class="mcap-track"><div class="mcap-fill ${tier.cls}" style="width:${pctCapped.toFixed(1)}%"></div></div>
     </div>
     ${hasStaff ? `<div>${staffHtml}</div>` : ''}
     <div>
