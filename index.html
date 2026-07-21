@@ -445,9 +445,9 @@ select.fc{
 .cs-section-title::after{content:'';flex:1;height:1px;background:var(--b)}
 
 .ov-grid{
-  display:grid;grid-template-columns:repeat(6,1fr);gap:10px;
+  display:grid;grid-template-columns:repeat(7,1fr);gap:10px;
 }
-@media(max-width:980px){.ov-grid{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:980px){.ov-grid{grid-template-columns:repeat(4,1fr)}}
 @media(max-width:560px){.ov-grid{grid-template-columns:repeat(2,1fr)}}
 .ov-card{
   background:var(--s1);border:1px solid var(--b);border-radius:10px;
@@ -998,6 +998,7 @@ select.fc{
         <select class="fc" id="f-cap">
           <option value="">All cap states</option>
           <option value="over">Over cap</option>
+          <option value="max">At cap (exactly $58M)</option>
           <option value="warn">Near cap (80%+)</option>
           <option value="safe">Under cap</option>
         </select>
@@ -1349,8 +1350,13 @@ function fmtSalaryShort(v) {
   return '$' + (v / 1000000) + 'M';
 }
 
+// Single source of truth for a team's cap bucket. A team exactly at the cap
+// (pct === 100, i.e. total === CAP) is "max" — at the cap, not over it. Only
+// a team whose total salary exceeds the cap (pct > 100, total > CAP) is
+// "over". This must stay in sync with capLabel below.
 function capStatus(pct) {
-  if (pct >= 100) return 'over';
+  if (pct > 100) return 'over';
+  if (pct === 100) return 'max';
   if (pct >= 80) return 'warn';
   return 'safe';
 }
@@ -1362,11 +1368,9 @@ function capLabel(pct) {
   return 'OK';
 }
 
-// Visual/color class for a team's cap state. Same buckets as capStatus for
-// filtering/grouping purposes, but a team sitting exactly at 100% gets its
-// own 'max' color instead of being painted red like a team that's over.
+// Kept as an alias for callers written against the old name — delegates
+// straight to capStatus so the two buckets can never drift apart again.
 function capVisualStatus(pct) {
-  if (pct === 100) return 'max';
   return capStatus(pct);
 }
 
@@ -1649,6 +1653,7 @@ function renderFA() {
 function renderSummary() {
   const data = buildTeamData();
   const over = data.filter(d => d.status === 'over').sort((a, b) => b.total - a.total);
+  const atCap = data.filter(d => d.status === 'max').sort((a, b) => b.total - a.total);
   const warn = data.filter(d => d.status === 'warn').sort((a, b) => b.total - a.total);
   const safe = data.filter(d => d.status === 'safe').sort((a, b) => b.total - a.total);
   const fa = allPlayers.filter(p => p.team === 'Free Agent').sort((a, b) => b.salary - a.salary);
@@ -1678,6 +1683,7 @@ function renderSummary() {
         ${ovCard('League Spend', fmt(leagueTotal), `of ${fmt(leagueCapacity)} capacity`, 'var(--bl)')}
         ${ovCard('Avg Cap Usage', avgPct.toFixed(1) + '%', `across ${data.length} teams`, 'var(--am)')}
         ${ovCard('Over Cap', over.length, over.length ? over.map(d => d.team.split(' ').pop()).slice(0,2).join(', ') + (over.length > 2 ? '…' : '') : 'no teams over', 'var(--red)')}
+        ${ovCard('At Cap', atCap.length, atCap.length ? `exactly ${fmt(CAP)}` : 'no teams at exact cap', 'var(--max)')}
         ${ovCard('Near Cap', warn.length, '80–99% of $58M', 'var(--am)')}
         ${ovCard('Under Min Roster', underMin, `fewer than ${MIN_ROSTER} players`, 'var(--red)')}
         ${ovCard('Free Agents', fa.length, fa.length ? `${fmt(faTotal)} in unsigned value` : 'no free agents', 'var(--bl)')}
@@ -1775,6 +1781,7 @@ function renderSummary() {
     tierLegendHtml +
     highlightsHtml +
     stdTable(over, 'Over Cap', 'over') +
+    stdTable(atCap, 'At Cap', 'max') +
     stdTable(warn, 'Near Cap', 'warn') +
     stdTable(safe, 'Under Cap', 'safe') +
     faHtml;
