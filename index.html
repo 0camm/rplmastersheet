@@ -926,7 +926,7 @@ select.fc{
       <div class="ldot"></div>
       <span id="live-lbl">Loading</span>
     </div>
-    <span class="nav-cap-pill">Cap <strong>$58M</strong></span>
+    <span class="nav-cap-pill">Cap <strong>$60M</strong></span>
   </div>
   <div class="sbar-right">
     <div id="user-area">
@@ -952,7 +952,7 @@ select.fc{
 <div class="hero">
   <div class="hero-top">
     <div class="hero-left">
-      <div class="hero-eyebrow">Season 12 · Salary Cap Dashboard</div>
+      <div class="hero-eyebrow">Season 13 · Salary Cap Dashboard</div>
       <div class="hero-h1"><em>RPL</em> Salary Caps</div>
       <div class="hero-sub">
         30 franchises
@@ -998,7 +998,7 @@ select.fc{
         <select class="fc" id="f-cap">
           <option value="">All cap states</option>
           <option value="over">Over cap</option>
-          <option value="max">At cap (exactly $58M)</option>
+          <option value="max">At cap (exactly $60M)</option>
           <option value="warn">Near cap (80%+)</option>
           <option value="safe">Under cap</option>
         </select>
@@ -1105,7 +1105,7 @@ select.fc{
       <div class="mteam-info">
         <div>
           <div class="mteam-name">💰 RPL Salary Cap Update</div>
-          <div class="mteam-sub">Season 12 roster rules</div>
+          <div class="mteam-sub">Season 13 roster rules</div>
         </div>
       </div>
       <button class="mclose" id="rules-close" aria-label="Close">✕</button>
@@ -1139,7 +1139,7 @@ select.fc{
             <tbody>
               <tr><td>$22M + $18M + $10M + $5M + $2M</td><td class="pts">$57M</td><td style="color:var(--win);">✔️</td></tr>
               <tr><td>$20M + $18M + $15M + $5M</td><td class="pts">$58M</td><td style="color:var(--win);">✔️</td></tr>
-              <tr><td>$22M + $20M + $18M</td><td style="color:var(--lose);">$60M</td><td style="color:var(--lose);">❌ over cap</td></tr>
+              <tr><td>$22M + $20M + $18M + $2M</td><td style="color:var(--lose);">$62M</td><td style="color:var(--lose);">❌ over cap</td></tr>
             </tbody>
           </table>
         </div>
@@ -1156,7 +1156,7 @@ select.fc{
 
       <div class="mcap-section" style="text-align:center;padding:12px;background:var(--s2);border:1px solid var(--b);border-radius:10px;">
         <span style="font-size:11px;color:var(--mu);letter-spacing:.08em;text-transform:uppercase;">Salary cap still remains</span>
-        <div style="font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:.04em;color:#fff;">$58M</div>
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:.04em;color:#fff;">$60M</div>
       </div>
     </div>
   </div>
@@ -1285,7 +1285,7 @@ select.fc{
 /* ══════════════════════════════════════════
    CONSTANTS & STATE
 ══════════════════════════════════════════ */
-const CAP = 58000000;
+const CAP = 60000000;
 const MIN_ROSTER = 10;
 
 const teamList = [
@@ -1377,19 +1377,19 @@ function capVisualStatus(pct) {
 /* ── CAP HEALTH TIER SCALE ──
    Independent, finer-grained color scale layered on top of the existing
    over/warn/safe grouping. Buckets are in millions of committed salary
-   (cap = $58M), so a team's raw spend maps directly onto 0–58+. */
+   (cap = $60M), so a team's raw spend maps directly onto 0–60+. */
 const CAP_TIERS = [
   { id: 1, cls: 'tier-1', max: 10, label: 'Very Healthy', desc: '$0M – $10M committed' },
   { id: 2, cls: 'tier-2', max: 20, label: 'Healthy',       desc: '$11M – $20M committed' },
   { id: 3, cls: 'tier-3', max: 30, label: 'Moderate',      desc: '$21M – $30M committed' },
   { id: 4, cls: 'tier-4', max: 40, label: 'Getting High',  desc: '$31M – $40M committed' },
   { id: 5, cls: 'tier-5', max: 50, label: 'High',          desc: '$41M – $50M committed' },
-  { id: 6, cls: 'tier-6', max: 58, label: 'Very High',     desc: '$51M – $58M committed' },
-  { id: 7, cls: 'tier-7', max: Infinity, label: 'Critical', desc: '$59M+ committed' },
+  { id: 6, cls: 'tier-6', max: 60, label: 'Very High',     desc: '$51M – $60M committed' },
+  { id: 7, cls: 'tier-7', max: Infinity, label: 'Critical', desc: '$61M+ committed' },
 ];
 
 // totalDollars -> tier object. Buckets are evaluated against the salary
-// expressed in millions (matches the $58M cap scale 1:1).
+// expressed in millions (matches the $60M cap scale 1:1).
 function capTier(totalDollars) {
   const m = totalDollars / 1000000;
   return CAP_TIERS.find(t => m <= t.max) || CAP_TIERS[CAP_TIERS.length - 1];
@@ -1684,7 +1684,7 @@ function renderSummary() {
         ${ovCard('Avg Cap Usage', avgPct.toFixed(1) + '%', `across ${data.length} teams`, 'var(--am)')}
         ${ovCard('Over Cap', over.length, over.length ? over.map(d => d.team.split(' ').pop()).slice(0,2).join(', ') + (over.length > 2 ? '…' : '') : 'no teams over', 'var(--red)')}
         ${ovCard('At Cap', atCap.length, atCap.length ? `exactly ${fmt(CAP)}` : 'no teams at exact cap', 'var(--max)')}
-        ${ovCard('Near Cap', warn.length, '80–99% of $58M', 'var(--am)')}
+        ${ovCard('Near Cap', warn.length, '80–99% of $60M', 'var(--am)')}
         ${ovCard('Under Min Roster', underMin, `fewer than ${MIN_ROSTER} players`, 'var(--red)')}
         ${ovCard('Free Agents', fa.length, fa.length ? `${fmt(faTotal)} in unsigned value` : 'no free agents', 'var(--bl)')}
       </div>
@@ -1857,7 +1857,7 @@ function openTeamModal(team) {
     ${logoUrl ? `<img src="${logoUrl}" alt="">` : ''}
     <div>
       <div class="mteam-name">${team}</div>
-      <div class="mteam-sub">${players.length} player${players.length !== 1 ? 's' : ''} · Season 12</div>
+      <div class="mteam-sub">${players.length} player${players.length !== 1 ? 's' : ''} · Season 13</div>
     </div>`;
 
   const badge = document.getElementById('m-badge');
