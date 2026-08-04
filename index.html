@@ -68,24 +68,6 @@ body{
 
 /* nav-right items */
 .sbar-right{display:flex;align-items:center;gap:8px;flex-shrink:0;}
-.discord-btn{
-  display:flex;align-items:center;gap:7px;
-  background:#5865F2;color:#fff;
-  border:none;border-radius:6px;padding:6px 12px;
-  font-family:'Inter',sans-serif;font-size:11px;font-weight:600;
-  cursor:pointer;text-decoration:none;
-  transition:background .2s;white-space:nowrap;
-  letter-spacing:.04em;
-}
-.discord-btn:hover{background:#4752c4;}
-.user-chip{
-  display:flex;align-items:center;gap:7px;
-  background:var(--s2);border:1px solid var(--b);
-  border-radius:6px;padding:5px 10px;
-  font-size:11px;color:var(--tx);white-space:nowrap;
-  max-width:160px;overflow:hidden;text-overflow:ellipsis;
-}
-.user-chip .dot{width:6px;height:6px;border-radius:50%;background:var(--gr);flex-shrink:0;}
 .admin-btn{
   background:none;border:1px solid var(--b);border-radius:6px;
   padding:5px 12px;
@@ -155,13 +137,6 @@ body{
 .kc-pip.low{background:var(--bl)}
 .kc-code{font-weight:700;color:var(--tx2);font-family:'JetBrains Mono',monospace;font-size:10px}
 .kc-lbl{color:var(--mu);font-size:10px}
-
-/* reg banner */
-.reg-banner{
-  background:var(--gr-d);border-bottom:1px solid rgba(24,212,100,.15);
-  padding:10px 20px;font-size:12px;color:var(--gr);
-  display:flex;align-items:center;gap:8px;font-weight:500;
-}
 
 /* ── ALERT ── */
 .alert{
@@ -892,8 +867,6 @@ select.fc{
   .mteam-name{font-size:18px}
   .msal-big{font-size:17px}
 
-  .discord-btn span{display:none}
-  .discord-btn{padding:6px 9px;gap:0}
 }
 @media(max-width:360px){
   .hero-h1{font-size:28px}
@@ -929,21 +902,10 @@ select.fc{
     <span class="nav-cap-pill">Cap <strong>$60M</strong></span>
   </div>
   <div class="sbar-right">
-    <div id="user-area">
-      <a class="discord-btn" href="/api/auth/discord" id="login-btn">
-        <svg width="16" height="12" viewBox="0 0 16 12" fill="none">
-          <path d="M13.552 1.02A13.25 13.25 0 0 0 10.26 0c-.155.277-.336.65-.46.946a12.3 12.3 0 0 0-3.6 0A10.13 10.13 0 0 0 5.738 0 13.298 13.298 0 0 0 2.443 1.023C.352 4.147-.215 7.194.068 10.199a13.36 13.36 0 0 0 4.072 2.057 10.1 10.1 0 0 0 .872-1.424 8.658 8.658 0 0 1-1.373-.66c.115-.084.228-.172.337-.262a9.516 9.516 0 0 0 8.048 0c.11.09.223.178.337.263a8.68 8.68 0 0 1-1.376.661c.254.505.548.983.872 1.424a13.32 13.32 0 0 0 4.075-2.058c.334-3.488-.568-6.506-2.38-9.18ZM5.34 8.35c-.777 0-1.414-.714-1.414-1.59 0-.876.622-1.591 1.414-1.591.793 0 1.43.715 1.415 1.59C6.756 7.636 6.134 8.35 5.341 8.35Zm5.32 0c-.778 0-1.414-.714-1.414-1.59 0-.876.621-1.591 1.413-1.591.793 0 1.43.715 1.414 1.59 0 .877-.62 1.591-1.413 1.591Z" fill="white"/>
-        </svg>
-        <span>Login with Discord</span>
-      </a>
-    </div>
     <button class="admin-btn" onclick="openRules()">Rules</button>
     <button class="admin-btn" onclick="openAdmin()">Admin</button>
   </div>
 </div>
-
-<!-- REG BANNER -->
-<div id="reg-banner" class="reg-banner hidden"></div>
 
 <!-- ALERT -->
 <div class="alert" id="alert"></div>
@@ -1461,22 +1423,6 @@ async function loadPlayers() {
   }
   setLoading(false);
   render();
-}
-
-async function checkRegistration() {
-  if (new URLSearchParams(window.location.search).get('registered')) {
-    window.history.replaceState({}, '', '/');
-  }
-  try {
-    const res = await fetch('/api/me');
-    if (!res.ok) return;
-    const { name, team } = await res.json();
-    const banner = document.getElementById('reg-banner');
-    banner.textContent = `✓ Logged in as ${name} · ${team}`;
-    banner.classList.remove('hidden');
-    document.getElementById('user-area').innerHTML =
-      `<div class="user-chip"><div class="dot"></div>${name} · ${team}</div>`;
-  } catch (e) {}
 }
 
 /* ══════════════════════════════════════════
@@ -2311,7 +2257,6 @@ function clearAdminResult() {
 /* ══════════════════════════════════════════
    INIT
 ══════════════════════════════════════════ */
-checkRegistration();
 loadPlayers();
 
 // auto-refresh every 30s (matches standings page poll interval)
