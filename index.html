@@ -68,6 +68,14 @@ body{
 
 /* nav-right items */
 .sbar-right{display:flex;align-items:center;gap:8px;flex-shrink:0;}
+.user-chip{
+  display:flex;align-items:center;gap:7px;
+  background:var(--s2);border:1px solid var(--b);
+  border-radius:6px;padding:5px 10px;
+  font-size:11px;color:var(--tx);white-space:nowrap;
+  max-width:160px;overflow:hidden;text-overflow:ellipsis;
+}
+.user-chip .dot{width:6px;height:6px;border-radius:50%;background:var(--gr);flex-shrink:0;}
 .admin-btn{
   background:none;border:1px solid var(--b);border-radius:6px;
   padding:5px 12px;
