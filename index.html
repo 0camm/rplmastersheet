@@ -1341,6 +1341,14 @@ select.fc{
             <button class="tool-btn red" id="purge-btn" onclick="purgeStaff()">Purge Staff</button>
           </div>
         </div>
+        <div class="tool-card">
+          <div class="tool-icon amber">💵</div>
+          <div class="tool-info">
+            <div class="tool-name">Sync Salary Roles</div>
+            <div class="tool-desc">Push every player's current salary bracket onto their Discord roles. Run once after adding new salary roles, or any time roles drift.</div>
+            <button class="tool-btn amber" id="salary-sync-btn" onclick="syncSalaryRoles()">Sync Salary Roles</button>
+          </div>
+        </div>
       </div>
     </div>
     <div id="admin-result" class="admin-result"></div>
@@ -2452,6 +2460,24 @@ async function purgeStaff() {
     } else { showAdminResult(data.error || 'Purge failed.', 'error'); }
   } catch (e) { showAdminResult('Network error.', 'error'); }
   finally { btn.textContent = 'Purge Staff'; btn.disabled = false; }
+}
+
+async function syncSalaryRoles() {
+  const password = document.getElementById('admin-pass').value;
+  const btn = document.getElementById('salary-sync-btn');
+  btn.textContent = 'Syncing…'; btn.disabled = true;
+  try {
+    const res = await fetch('/api/admin', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password, action: 'syncSalaryRoles' })
+    });
+    const data = await res.json();
+    if (data.ok) {
+      showAdminResult(data.message, 'success');
+      toast(data.message, 'green');
+    } else { showAdminResult(data.error || 'Salary role sync failed.', 'error'); }
+  } catch (e) { showAdminResult('Network error.', 'error'); }
+  finally { btn.textContent = 'Sync Salary Roles'; btn.disabled = false; }
 }
 
 function showAdminResult(msg, type) {

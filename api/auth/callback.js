@@ -1,22 +1,10 @@
 import { Redis } from '@upstash/redis';
+import { ROLE_TO_TEAM } from '../_lib/discord-teams.js';
 
 const redis = new Redis({
   url: process.env.KV_REST_API_URL,
   token: process.env.KV_REST_API_TOKEN,
 });
-
-const ROLE_TO_TEAM = {
-  'ATL': 'Atlanta Hawks', 'BKN': 'Brooklyn Nets', 'BOS': 'Boston Celtics',
-  'CHI': 'Chicago Bulls', 'CLE': 'Cleveland Cavaliers', 'CHA': 'Charlotte Hornets',
-  'DAL': 'Dallas Mavericks', 'DEN': 'Denver Nuggets', 'DET': 'Detroit Pistons',
-  'GSW': 'Golden State Warriors', 'HOU': 'Houston Rockets', 'IND': 'Indiana Pacers',
-  'LAC': 'LA Clippers', 'LAL': 'Los Angeles Lakers', 'MIA': 'Miami Heat',
-  'MIL': 'Milwaukee Bucks', 'MEM': 'Memphis Grizzlies', 'MIN': 'Minnesota Timberwolves',
-  'NOP': 'New Orleans Pelicans', 'NYK': 'New York Knicks', 'OKC': 'Oklahoma City Thunder',
-  'ORL': 'Orlando Magic', 'PHI': 'Philadelphia 76ers', 'PHX': 'Phoenix Suns',
-  'POR': 'Portland Trail Blazers', 'SAC': 'Sacramento Kings', 'SAN': 'San Antonio Spurs',
-  'TOR': 'Toronto Raptors', 'UTA': 'Utah Jazz', 'WAS': 'Washington Wizards',
-};
 
 export default async function handler(req, res) {
   const { code } = req.query;

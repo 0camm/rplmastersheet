@@ -1,5 +1,6 @@
 import { Redis } from '@upstash/redis';
 import { ROLE_TO_TEAM, TEAM_TO_TAG } from './_lib/discord-teams.js';
+import { salaryToRoleName, ALL_SALARY_ROLE_NAMES } from './_lib/salary-roles.js';
 
 const redis = new Redis({
   url: process.env.KV_REST_API_URL,
@@ -80,6 +81,44 @@ async function syncDiscordRole(discordUserId, newTeam) {
   return { ok: true, removed: toRemove.length, added: toAdd.length, targetRoleFound: !!targetRoleId };
 }
 
+// REVERSE SYNC: push a salary change made on the website onto the member's
+// Discord roles, tagging them with whichever bracket role matches their new
+// salary (see _lib/salary-roles.js) and removing whatever bracket role they
+// held before, so a member is never tagged with two brackets at once.
+async function syncDiscordSalaryRole(discordUserId, salary) {
+  if (!process.env.DISCORD_BOT_TOKEN || !process.env.DISCORD_GUILD_ID) {
+    return { skipped: true, reason: 'Discord bot not configured' };
+  }
+  const guildId = process.env.DISCORD_GUILD_ID;
+
+  const allRoles = await discordFetch(`/guilds/${guildId}/roles`);
+  const member = await discordFetch(`/guilds/${guildId}/members/${discordUserId}`).catch(() => null);
+  if (!member) return { skipped: true, reason: 'member not found in Discord server (may have left)' };
+
+  const roleMap = {};
+  allRoles.forEach(r => { roleMap[r.id] = r.name; });
+
+  const targetRoleName = salaryToRoleName(salary);
+  const targetRole = allRoles.find(r => r.name === targetRoleName);
+
+  // Every role this member holds that is one of our known salary-bracket roles.
+  const currentBracketRoleIds = (member.roles || []).filter(id =>
+    ALL_SALARY_ROLE_NAMES.includes(roleMap[id])
+  );
+
+  const toRemove = currentBracketRoleIds.filter(id => id !== targetRole?.id);
+  const toAdd = targetRole && !currentBracketRoleIds.includes(targetRole.id) ? [targetRole.id] : [];
+
+  for (const roleId of toRemove) {
+    await discordFetch(`/guilds/${guildId}/members/${discordUserId}/roles/${roleId}`, { method: 'DELETE' });
+  }
+  for (const roleId of toAdd) {
+    await discordFetch(`/guilds/${guildId}/members/${discordUserId}/roles/${roleId}`, { method: 'PUT' });
+  }
+
+  return { ok: true, removed: toRemove.length, added: toAdd.length, targetRoleFound: !!targetRole };
+}
+
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -148,8 +187,50 @@ export default async function handler(req, res) {
   if (action === 'setSalary') {
     if (!entry) return res.status(404).json({ error: `Player "${name}" not found` });
     const [id, player] = entry;
-    await redis.hset('players', { [id]: { ...player, salary: Number(salary) } });
-    return res.json({ ok: true, message: `${player.name} salary set to $${Number(salary).toLocaleString()}` });
+    const newSalary = Number(salary);
+    await redis.hset('players', { [id]: { ...player, salary: newSalary } });
+
+    // REVERSE SYNC: only meaningful for real Discord accounts — manually
+    // added / legacy entries are keyed by a "manual_..." string, not a
+    // Discord snowflake, so there's no Discord member to update.
+    let discordNote = '';
+    if (/^\d{15,20}$/.test(id)) {
+      try {
+        const result = await syncDiscordSalaryRole(id, newSalary);
+        if (result.skipped) {
+          discordNote = ` (Discord not updated: ${result.reason})`;
+        } else if (!result.targetRoleFound) {
+          discordNote = ` (Discord role "${salaryToRoleName(newSalary)}" not found — create a role with that exact name)`;
+        }
+      } catch (err) {
+        discordNote = ` (Discord role update failed: ${err.message})`;
+      }
+    }
+
+    return res.json({ ok: true, message: `${player.name} salary set to $${newSalary.toLocaleString()}${discordNote}` });
+  }
+
+  // BULK REVERSE SYNC: push every current player's salary bracket onto
+  // Discord in one pass. Meant to be run once when the salary-role feature
+  // is first turned on (so existing players get tagged for the first time),
+  // and afterwards as a manual "fix drift" button if roles are ever hand-
+  // edited in Discord. Skips manual/legacy (non-snowflake) entries.
+  if (action === 'syncSalaryRoles') {
+    let updated = 0, skipped = 0, failed = 0;
+    for (const [id, player] of players) {
+      if (!/^\d{15,20}$/.test(id)) { skipped++; continue; }
+      try {
+        const result = await syncDiscordSalaryRole(id, player.salary);
+        if (result.skipped || !result.targetRoleFound) skipped++;
+        else updated++;
+      } catch (err) {
+        failed++;
+      }
+    }
+    return res.json({
+      ok: true,
+      message: `Salary role sync complete — ${updated} updated, ${skipped} skipped, ${failed} failed`
+    });
   }
 
   if (action === 'setTeam') {

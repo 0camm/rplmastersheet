@@ -5,6 +5,9 @@
   "functions": {
     "api/sync.js": {
       "maxDuration": 60
+    },
+    "api/admin.js": {
+      "maxDuration": 60
     }
   },
   "crons": [

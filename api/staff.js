@@ -1,22 +1,11 @@
 // api/staff.js — returns Franchise Owners and Team Coaches from Discord
+import { ROLE_TO_TEAM } from './_lib/discord-teams.js';
+
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
 
   const FRANCHISE_OWNER_ROLE = 'Franchise Owners';
   const TEAM_COACH_ROLE      = 'Team Coaches';
-
-  const ROLE_TO_TEAM = {
-    'ATL':'Atlanta Hawks','BKN':'Brooklyn Nets','BOS':'Boston Celtics',
-    'CHI':'Chicago Bulls','CLE':'Cleveland Cavaliers','CHA':'Charlotte Hornets',
-    'DAL':'Dallas Mavericks','DEN':'Denver Nuggets','DET':'Detroit Pistons',
-    'GSW':'Golden State Warriors','HOU':'Houston Rockets','IND':'Indiana Pacers',
-    'LAC':'LA Clippers','LAL':'Los Angeles Lakers','MIA':'Miami Heat',
-    'MIL':'Milwaukee Bucks','MEM':'Memphis Grizzlies','MIN':'Minnesota Timberwolves',
-    'NOP':'New Orleans Pelicans','NYK':'New York Knicks','OKC':'Oklahoma City Thunder',
-    'ORL':'Orlando Magic','PHI':'Philadelphia 76ers','PHX':'Phoenix Suns',
-    'POR':'Portland Trail Blazers','SAC':'Sacramento Kings','SAN':'San Antonio Spurs',
-    'TOR':'Toronto Raptors','UTA':'Utah Jazz','WAS':'Washington Wizards',
-  };
 
   async function discordFetch(path) {
     const r = await fetch(`https://discord.com/api/v10${path}`, {
