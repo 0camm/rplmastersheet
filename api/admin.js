@@ -147,15 +147,16 @@ async function bulkSyncSalaryRoles(playerEntries) {
   members.forEach(m => { memberById[m.user.id] = m; });
 
   let updated = 0, skipped = 0, failed = 0;
+  const skipReasons = { notDiscordAccount: 0, leftServer: 0, roleNotFound: 0 };
 
   for (const [id, player] of playerEntries) {
-    if (!/^\d{15,20}$/.test(id)) { skipped++; continue; }
+    if (!/^\d{15,20}$/.test(id)) { skipped++; skipReasons.notDiscordAccount++; continue; }
     const member = memberById[id];
-    if (!member) { skipped++; continue; } // left the server
+    if (!member) { skipped++; skipReasons.leftServer++; continue; } // left the server
 
     const targetRoleName = salaryToRoleName(player.salary);
     const targetRoleId = roleIdByName[targetRoleName];
-    if (!targetRoleId) { skipped++; continue; } // that bracket role doesn't exist in Discord
+    if (!targetRoleId) { skipped++; skipReasons.roleNotFound++; continue; } // that bracket role doesn't exist in Discord
 
     const currentBracketRoleIds = (member.roles || []).filter(rid =>
       ALL_SALARY_ROLE_NAMES.includes(roleNameById[rid])
@@ -178,7 +179,7 @@ async function bulkSyncSalaryRoles(playerEntries) {
     }
   }
 
-  return { ok: true, updated, skipped, failed };
+  return { ok: true, updated, skipped, failed, skipReasons, knownRoleNames: Object.keys(roleIdByName) };
 }
 
 export default async function handler(req, res) {
@@ -285,7 +286,8 @@ export default async function handler(req, res) {
       }
       return res.json({
         ok: true,
-        message: `Salary role sync complete — ${result.updated} updated, ${result.skipped} skipped, ${result.failed} failed`
+        message: `Salary role sync complete — ${result.updated} updated, ${result.skipped} skipped (${result.skipReasons.notDiscordAccount} manual, ${result.skipReasons.leftServer} left server, ${result.skipReasons.roleNotFound} missing role), ${result.failed} failed`,
+        knownSalaryRoleNamesInDiscord: result.knownRoleNames
       });
     } catch (err) {
       console.error('Bulk salary role sync error:', err);
