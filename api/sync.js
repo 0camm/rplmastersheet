@@ -16,64 +16,12 @@ const ROLE_TO_TEAM = {
   'POR': 'Portland Trail Blazers','SAC': 'Sacramento Kings','SAN': 'San Antonio Spurs',
   'TOR': 'Toronto Raptors','UTA': 'Utah Jazz','WAS': 'Washington Wizards',
 };
-// Salary-cap roles, mapped role ID -> cap amount. If a member holds more than
-// one of these (shouldn't normally happen), the HIGHEST value wins.
-const ROLE_TO_SALARY = {
-  '1538934486815735949': 22000000, // $22M
-  '1538934567342182521': 20000000, // $20M
-  '1538934663223967875': 18000000, // $18M
-  '1538934730970632302': 15000000, // $15M
-  '1538934599239868456': 12000000, // $12M
-  '1538934791527989332': 10000000, // $10M
-  '1538934845034729664': 8000000,  // $8M
-  '1538934920510971974': 5000000,  // $5M
-  '1538934966929334342': 2000000,  // $2M
-};
-// Returns the dollar value of a member's highest salary-cap role, or null if
-// they don't currently hold any of the cap roles.
-function highestCapRoleSalary(memberRoleIds) {
-  let highest = null;
-  for (const roleId of memberRoleIds) {
-    const amount = ROLE_TO_SALARY[roleId];
-    if (amount != null && (highest === null || amount > highest)) highest = amount;
-  }
-  return highest;
-}
-// Reverse of ROLE_TO_SALARY — dollar amount -> role ID. Used to figure out
-// which single role a player SHOULD hold once their cap is known.
-const SALARY_TO_ROLE = Object.fromEntries(
-  Object.entries(ROLE_TO_SALARY).map(([roleId, amount]) => [amount, roleId])
-);
-async function discordFetch(path, options = {}) {
+async function discordFetch(path) {
   const res = await fetch(`https://discord.com/api/v10${path}`, {
-    method: options.method || 'GET',
-    headers: {
-      Authorization: `Bot ${process.env.DISCORD_BOT_TOKEN}`,
-      ...(options.body ? { 'Content-Type': 'application/json' } : {}),
-    },
-    body: options.body ? JSON.stringify(options.body) : undefined,
+    headers: { Authorization: `Bot ${process.env.DISCORD_BOT_TOKEN}` }
   });
-  if (!res.ok && res.status !== 204) throw new Error(`Discord ${res.status} on ${path}: ${await res.text()}`);
-  return res.status === 204 ? null : res.json();
-}
-// Makes a member's cap roles match their stored salary: adds the role for
-// their current cap if missing, and strips any other cap role they're
-// holding so a player never ends up wearing two cap roles at once.
-async function syncCapRole(guildId, userId, memberRoleIds, salary) {
-  const desiredRoleId = SALARY_TO_ROLE[salary];
-  const heldCapRoleIds = memberRoleIds.filter((id) => ROLE_TO_SALARY[id] != null);
-  let assigned = false, removed = 0;
-
-  if (desiredRoleId && !heldCapRoleIds.includes(desiredRoleId)) {
-    await discordFetch(`/guilds/${guildId}/members/${userId}/roles/${desiredRoleId}`, { method: 'PUT' });
-    assigned = true;
-  }
-  for (const roleId of heldCapRoleIds) {
-    if (roleId === desiredRoleId) continue;
-    await discordFetch(`/guilds/${guildId}/members/${userId}/roles/${roleId}`, { method: 'DELETE' });
-    removed++;
-  }
-  return { assigned, removed };
+  if (!res.ok) throw new Error(`Discord ${res.status} on ${path}: ${await res.text()}`);
+  return res.json();
 }
 export default async function handler(req, res) {
   if (req.method !== 'GET' && req.method !== 'POST') return res.status(405).end();
@@ -121,7 +69,7 @@ export default async function handler(req, res) {
       }
     }
 
-    let updated = 0, added = 0, removed = 0, rolesAssigned = 0, rolesRemoved = 0;
+    let updated = 0, added = 0, removed = 0;
     const entries = {};
     const toDelete = [];
 
@@ -160,11 +108,8 @@ export default async function handler(req, res) {
       const prevById    = typeof prevByIdRaw === 'string' ? JSON.parse(prevByIdRaw) : prevByIdRaw;
       const prevByName  = legacyByName[usernameLower];
 
-      // Salary priority: highest held salary-cap role > snowflake entry >
-      // legacy name-keyed entry > default. A player with NO cap role yet
-      // keeps whatever was already stored — never falls back to a reset.
-      const capRoleSalary = highestCapRoleSalary(member.roles || []);
-      const salary = capRoleSalary ?? prevById?.salary ?? prevByName?.salary ?? 2000000;
+      // Salary priority: snowflake entry > legacy name-keyed entry > default
+      const salary = prevById?.salary ?? prevByName?.salary ?? 2000000;
 
       if (prevById) {
         if (prevById.team !== assignedTeam || prevById.name !== username) updated++;
@@ -178,17 +123,6 @@ export default async function handler(req, res) {
       }
 
       entries[userId] = { id: userId, name: username, team: assignedTeam, salary };
-
-      // Push the role onto Discord to match the salary we just resolved.
-      // Wrapped per-member so one permission/hierarchy hiccup on one player
-      // logs and moves on instead of aborting the whole sync.
-      try {
-        const roleResult = await syncCapRole(guildId, userId, member.roles || [], salary);
-        if (roleResult.assigned) rolesAssigned++;
-        rolesRemoved += roleResult.removed;
-      } catch (roleErr) {
-        console.error(`Cap role sync failed for ${username} (${userId}):`, roleErr.message);
-      }
     }
 
     // BUGFIX: previously, anyone who left the Discord server entirely was
@@ -216,7 +150,7 @@ export default async function handler(req, res) {
 
     return res.json({
       ok: true,
-      message: `Sync complete — ${added} added, ${updated} updated, ${removed} staff removed, ${left} left-server entries removed, ${rolesAssigned} cap roles assigned, ${rolesRemoved} stale cap roles removed, ${Object.keys(entries).length} total`
+      message: `Sync complete — ${added} added, ${updated} updated, ${removed} staff removed, ${left} left-server entries removed, ${Object.keys(entries).length} total`
     });
   } catch (err) {
     console.error('Sync error:', err);

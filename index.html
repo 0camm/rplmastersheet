@@ -243,6 +243,18 @@ select.fc{
 /* row number */
 .hn{font-size:10px;color:var(--mu2);text-align:center;font-family:'JetBrains Mono',monospace;}
 
+/* free agents table (# / player / salary) — was hardcoded inline, which
+   overrode every mobile breakpoint below since inline > class specificity.
+   Moved into real classes so it can actually shrink on narrow screens. */
+.ht-3col,.hr-3col{grid-template-columns:30px 1fr 120px;min-width:0;}
+.ht-3col span,.hr-3col span{min-width:0;}
+
+/* player cap viewer table (# / player / team / salary) — same issue: the
+   160px+120px fixed columns left almost no room for the name on phones,
+   which is what caused the squished/overlapping look. */
+.ht-4col,.hr-4col{grid-template-columns:30px 1fr 160px 120px;min-width:0;}
+.ht-4col span,.hr-4col span{min-width:0;}
+
 /* logo cell */
 .hlogo{display:flex;align-items:center;justify-content:center;}
 .hlogo img{width:22px;height:22px;object-fit:contain;opacity:.85;}
@@ -902,6 +914,18 @@ select.fc{
   .mteam-name{font-size:18px}
   .msal-big{font-size:17px}
 
+  /* free agents / cap viewer tables — shrink fixed columns instead of
+     letting the name column get crushed to a few px wide */
+  .ht-3col,.hr-3col{grid-template-columns:20px 1fr 74px;padding:7px 10px;}
+  .ht-4col,.hr-4col{grid-template-columns:20px 1fr 84px 74px;padding:7px 10px;}
+  .hr-3col,.hr-4col{padding-top:9px;padding-bottom:9px;}
+
+}
+@media(max-width:400px){
+  /* even tighter: drop the Team column in the cap viewer entirely rather
+     than squeeze three text columns into ~340px */
+  .ht-4col,.hr-4col{grid-template-columns:20px 1fr 74px;}
+  .ht-4col span:nth-child(3),.hr-4col span:nth-child(3){display:none}
 }
 @media(max-width:360px){
   .hero-h1{font-size:28px}
@@ -1057,7 +1081,7 @@ select.fc{
     </div>
 
     <div class="ht-wrap">
-      <div class="ht-hd" style="grid-template-columns:30px 1fr 120px;padding:8px 14px;">
+      <div class="ht-hd ht-3col" style="padding:8px 14px;">
         <span>#</span><span>Player</span><span style="text-align:right;">Salary</span>
       </div>
       <div id="fa-rows"></div>
@@ -1107,7 +1131,7 @@ select.fc{
     </div>
 
     <div class="ht-wrap">
-      <div class="ht-hd" style="grid-template-columns:30px 1fr 160px 120px;padding:8px 14px;">
+      <div class="ht-hd ht-4col" style="padding:8px 14px;">
         <span>#</span><span>Player</span><span>Team</span><span style="text-align:right;">Salary Cap</span>
       </div>
       <div id="cap-rows"></div>
@@ -1667,10 +1691,10 @@ function renderFA() {
   emptyEl.style.display = 'none';
 
   rowsEl.innerHTML = slice.map((p, i) => `
-    <div class="hr" style="grid-template-columns:30px 1fr 120px;cursor:default;" >
+    <div class="hr hr-3col" style="cursor:default;">
       <span class="hn">${start + i + 1}</span>
-      <span style="font-size:13px;font-weight:500;color:#fff;">${p.name}</span>
-      <span style="text-align:right;font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;color:var(--red);">${fmt(p.salary)}</span>
+      <span style="font-size:13px;font-weight:500;color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${p.name}</span>
+      <span style="text-align:right;font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;color:var(--red);white-space:nowrap;">${fmt(p.salary)}</span>
     </div>`).join('');
 
   renderPager('fa', filt.length, pp, total);
@@ -1761,11 +1785,11 @@ function renderCapRows() {
   emptyEl.style.display = 'none';
 
   rowsEl.innerHTML = slice.map((p, i) => `
-    <div class="hr" style="grid-template-columns:30px 1fr 160px 120px;cursor:default;">
+    <div class="hr hr-4col" style="cursor:default;">
       <span class="hn">${start + i + 1}</span>
-      <span style="font-size:13px;font-weight:500;color:#fff;">${p.name}</span>
-      <span style="font-size:12px;color:var(--mu);">${capTeamLabel(p.team)}</span>
-      <span style="text-align:right;font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;color:var(--red);">${p.salary == null ? 'Not set' : fmt(p.salary)}</span>
+      <span style="font-size:13px;font-weight:500;color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${p.name}</span>
+      <span style="font-size:12px;color:var(--mu);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${capTeamLabel(p.team)}</span>
+      <span style="text-align:right;font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;color:var(--red);white-space:nowrap;">${p.salary == null ? 'Not set' : fmt(p.salary)}</span>
     </div>`).join('');
 
   renderPager('cap', filt.length, pp, total);
