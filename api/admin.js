@@ -127,7 +127,7 @@ async function syncDiscordSalaryRole(discordUserId, salary) {
 // on larger rosters. Skips manual/legacy (non-snowflake) entries.
 async function bulkSyncSalaryRoles(playerEntries) {
   if (!process.env.DISCORD_BOT_TOKEN || !process.env.DISCORD_GUILD_ID) {
-    return { skipped: true, reason: 'Discord bot not configured' };
+    return { notConfigured: true, reason: 'Discord bot not configured' };
   }
   const guildId = process.env.DISCORD_GUILD_ID;
 
@@ -280,7 +280,7 @@ export default async function handler(req, res) {
   if (action === 'syncSalaryRoles') {
     try {
       const result = await bulkSyncSalaryRoles(players);
-      if (result.skipped) {
+      if (result.notConfigured) {
         return res.json({ ok: true, message: `Salary role sync skipped: ${result.reason}` });
       }
       return res.json({
