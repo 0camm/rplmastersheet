@@ -9,15 +9,15 @@
 // something like "Tier 1".."Tier 9" or "$2,000,000" instead of "$2M",
 // change the strings below — nothing else needs to change.
 export const SALARY_BRACKETS = [
-  { amount: 2000000,  role: '$2M'  },
-  { amount: 5000000,  role: '$5M'  },
-  { amount: 8000000,  role: '$8M'  },
-  { amount: 10000000, role: '$10M' },
-  { amount: 12000000, role: '$12M' },
-  { amount: 15000000, role: '$15M' },
-  { amount: 18000000, role: '$18M' },
-  { amount: 20000000, role: '$20M' },
-  { amount: 22000000, role: '$22M' },
+  { amount: 2000000,  role: '$2,000,000'  },
+  { amount: 5000000,  role: '$5,000,000'  },
+  { amount: 8000000,  role: '$8,000,000'  },
+  { amount: 10000000, role: '$10,000,000' },
+  { amount: 12000000, role: '$12,000,000' },
+  { amount: 15000000, role: '$15,000,000' },
+  { amount: 18000000, role: '$18,000,000' },
+  { amount: 20000000, role: '$20,000,000' },
+  { amount: 22000000, role: '$22,000,000' },
 ];
 
 // Same "nearest step" logic as index.html's nearestStepIndex(), so a salary
