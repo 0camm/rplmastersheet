@@ -1087,16 +1087,16 @@ select.fc{
         <div class="sec-rule"></div>
       </div>
       <div class="filters">
-        <input class="fc fc-search" id="cap-search" placeholder="Search by username or permanent Roblox User ID…" autocomplete="off" spellcheck="false" style="max-width:360px;">
+        <input class="fc fc-search" id="cap-search" placeholder="Search by username or permanent Discord User ID…" autocomplete="off" spellcheck="false" style="max-width:360px;">
       </div>
       <div style="font-size:11px;color:var(--mu);margin-top:8px;line-height:1.5;">
-        Every player has an individual cap record tied to their permanent Roblox User ID — it works whether they're
+        Every player has an individual cap record tied to their permanent Discord User ID — it works whether they're
         rostered, a free agent, off every roster, or previously rostered. Renaming a username never resets it.
       </div>
     </div>
 
     <div id="cap-results" class="cap-results"></div>
-    <div class="hist-empty" id="cap-empty">Start typing a username or Roblox User ID above to find a player.</div>
+    <div class="hist-empty" id="cap-empty">Start typing a username or Discord User ID above to find a player.</div>
     <div id="cap-profile" class="cap-profile hidden"></div>
   </div>
 
@@ -1274,40 +1274,6 @@ select.fc{
         <button class="add-submit" onclick="addPlayer()">Add Player</button>
       </div>
     </div>
-    <!-- PLAYER CAPS TAB -->
-    <div id="atab-caps" class="admin-body hidden">
-      <div style="font-size:11px;color:var(--mu);padding:2px 2px 12px;line-height:1.5;">
-        Add or update a player's individual cap by their permanent Roblox User ID. This is independent of the
-        Discord roster — the record stays put even if the player's username changes or they aren't on a team.
-      </div>
-      <div class="add-form">
-        <div class="add-field">
-          <label>Roblox User ID</label>
-          <input type="text" id="cap-admin-robloxid" placeholder="Permanent numeric ID, e.g. 156..." autocomplete="off" inputmode="numeric">
-        </div>
-        <div class="add-field">
-          <label>Username</label>
-          <input type="text" id="cap-admin-username" placeholder="Current Roblox username" autocomplete="off">
-        </div>
-        <div class="add-field">
-          <label>Team</label>
-          <select id="cap-admin-team">
-            <option value="">Not currently on a team</option>
-            <option value="Free Agent">Free Agent</option>
-          </select>
-        </div>
-        <div class="add-field">
-          <label>Salary</label>
-          <div class="aroster-salary-stepper" style="border-radius:10px;">
-            <button class="salary-step-btn" style="width:36px;height:44px;font-size:18px;" onclick="stepCapAdminSalary(-1)" title="Decrease">−</button>
-            <span class="aroster-salary-display" id="cap-admin-salary-display" data-salary="2000000" style="flex:1;line-height:44px;font-size:16px;">$2M</span>
-            <button class="salary-step-btn" style="width:36px;height:44px;font-size:18px;" onclick="stepCapAdminSalary(1)" title="Increase">+</button>
-          </div>
-        </div>
-        <button class="add-submit" onclick="saveCapAdmin()">Save Player Cap</button>
-        <button class="add-submit" style="background:var(--s3);color:var(--tx2);margin-top:8px;" onclick="removeCapAdmin()">Remove Cap Record</button>
-      </div>
-    </div>
     <!-- TOOLS TAB -->
     <div id="atab-tools" class="admin-body hidden">
       <div class="tools-section">
@@ -1385,15 +1351,6 @@ const logos = {
 };
 
 let allPlayers = [];
-(function populateCapAdminTeams() {
-  const sel = document.getElementById('cap-admin-team');
-  if (!sel) return;
-  teamList.forEach(t => {
-    const opt = document.createElement('option');
-    opt.value = t; opt.textContent = t;
-    sel.appendChild(opt);
-  });
-})();
 let staffByTeam = {};
 let currentView = 'teams';
 let teamsPg = 1, faPg = 1;
@@ -1699,8 +1656,9 @@ function renderFA() {
 ══════════════════════════════════════════ */
 /* ══════════════════════════════════════════
    PLAYER CAP LOOKUP
-   Searches the /api/player-cap store, which is keyed permanently by
-   Roblox User ID and independent of live roster status — so a player
+   Searches the /api/player-cap endpoint, which reads the same players
+   store used everywhere else on the site and is keyed permanently by
+   Discord User ID, independent of live roster status — so a player
    shows up here whether they're rostered, a free agent, on no team at
    all, or previously rostered and since removed.
 ══════════════════════════════════════════ */
@@ -1714,7 +1672,7 @@ function renderCapView() {
   if (!q) {
     document.getElementById('cap-results').innerHTML = '';
     document.getElementById('cap-empty').style.display = '';
-    document.getElementById('cap-empty').textContent = 'Start typing a username or Roblox User ID above to find a player.';
+    document.getElementById('cap-empty').textContent = 'Start typing a username or Discord User ID above to find a player.';
   }
 }
 
@@ -1731,7 +1689,7 @@ async function doCapSearch() {
   if (!q) {
     document.getElementById('cap-results').innerHTML = '';
     document.getElementById('cap-empty').style.display = '';
-    document.getElementById('cap-empty').textContent = 'Start typing a username or Roblox User ID above to find a player.';
+    document.getElementById('cap-empty').textContent = 'Start typing a username or Discord User ID above to find a player.';
     return;
   }
 
@@ -1769,18 +1727,18 @@ function renderCapResults(results) {
 
   empty.style.display = 'none';
   container.innerHTML = results.map(p => `
-    <div class="cap-result-row" onclick="selectCapPlayer('${encodeURIComponent(p.robloxId)}')">
-      <span class="cap-result-name">${p.username}</span>
+    <div class="cap-result-row" onclick="selectCapPlayer('${encodeURIComponent(p.id)}')">
+      <span class="cap-result-name">${p.name}</span>
       <span class="cap-result-team">${p.team && p.team !== 'Free Agent' ? p.team : (p.team === 'Free Agent' ? 'Free Agent' : 'No team')}</span>
-      <span class="cap-result-id">ID ${p.robloxId}</span>
+      <span class="cap-result-id">${p.discordId ? 'Discord ID ' + p.discordId : 'Manual entry'}</span>
     </div>
   `).join('');
 }
 
-async function selectCapPlayer(encodedRobloxId) {
-  const robloxId = decodeURIComponent(encodedRobloxId);
+async function selectCapPlayer(encodedId) {
+  const id = decodeURIComponent(encodedId);
   try {
-    const res = await fetch(`/api/player-cap?robloxId=${encodeURIComponent(robloxId)}`);
+    const res = await fetch(`/api/player-cap?id=${encodeURIComponent(id)}`);
     const data = await res.json();
     if (!data.found) { toast('That player record could not be found.', 'red'); return; }
     renderCapProfile(data.player);
@@ -1793,17 +1751,17 @@ function renderCapProfile(player) {
   const el = document.getElementById('cap-profile');
   el.innerHTML = `
     <div class="cap-profile-top">
-      <div class="cap-profile-name">${player.username}</div>
+      <div class="cap-profile-name">${player.name}</div>
       ${capTeamBadge(player.team)}
     </div>
     <div class="cap-profile-id-row">
-      <span class="cap-profile-id-label">Permanent Roblox User ID</span>
-      <span class="cap-profile-id-val">${player.robloxId}</span>
+      <span class="cap-profile-id-label">${player.discordId ? 'Permanent Discord User ID' : 'Record ID (manually added)'}</span>
+      <span class="cap-profile-id-val">${player.discordId || player.id}</span>
     </div>
     <div class="cap-profile-grid">
       <div class="cap-profile-stat">
         <div class="cap-profile-stat-label">Individual Salary Cap</div>
-        <div class="cap-profile-stat-val">${fmt(player.salary)}</div>
+        <div class="cap-profile-stat-val">${player.salary == null ? 'Not set' : fmt(player.salary)}</div>
       </div>
       <div class="cap-profile-stat">
         <div class="cap-profile-stat-label">Current Team</div>
@@ -2219,7 +2177,6 @@ function switchAdminTab(tab, btn) {
   btn.classList.add('active');
   document.getElementById('atab-roster').classList.toggle('hidden', tab !== 'roster');
   document.getElementById('atab-add').classList.toggle('hidden', tab !== 'add');
-  document.getElementById('atab-caps').classList.toggle('hidden', tab !== 'caps');
   document.getElementById('atab-tools').classList.toggle('hidden', tab !== 'tools');
   clearAdminResult();
 }
@@ -2415,61 +2372,6 @@ async function addPlayer() {
     } else { showAdminResult(data.error || 'Failed.', 'error'); }
   } catch (e) { showAdminResult('Network error.', 'error'); }
   finally { btn.textContent = 'Add Player'; btn.disabled = false; }
-}
-
-function stepCapAdminSalary(dir) {
-  const el = document.getElementById('cap-admin-salary-display');
-  if (!el) return;
-  const cur = Number(el.dataset.salary);
-  const idx = nearestStepIndex(cur);
-  const next = Math.max(0, Math.min(SALARY_STEPS.length - 1, idx + dir));
-  el.dataset.salary = SALARY_STEPS[next];
-  el.textContent = fmtSalaryShort(SALARY_STEPS[next]);
-}
-
-async function saveCapAdmin() {
-  const robloxId = document.getElementById('cap-admin-robloxid').value.trim();
-  const username = document.getElementById('cap-admin-username').value.trim();
-  const team = document.getElementById('cap-admin-team').value;
-  const salary = Number(document.getElementById('cap-admin-salary-display')?.dataset?.salary) || 2000000;
-  const password = document.getElementById('admin-pass').value;
-  if (!/^\d+$/.test(robloxId)) { showAdminResult('Enter a valid numeric Roblox User ID.', 'error'); return; }
-  if (!username) { showAdminResult('Enter a username.', 'error'); return; }
-  const btn = document.querySelector('#atab-caps .add-submit');
-  const origText = btn ? btn.textContent : null;
-  if (btn) { btn.textContent = 'Saving…'; btn.disabled = true; }
-  try {
-    const res = await fetch('/api/player-cap', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ password, action: 'upsert', robloxId, username, team, salary })
-    });
-    const data = await res.json();
-    if (data.ok) {
-      showAdminResult(data.message, 'success');
-      toast(`${username} cap saved`, 'green');
-    } else { showAdminResult(data.error || 'Failed.', 'error'); }
-  } catch (e) { showAdminResult('Network error.', 'error'); }
-  finally { if (btn) { btn.textContent = origText; btn.disabled = false; } }
-}
-
-async function removeCapAdmin() {
-  const robloxId = document.getElementById('cap-admin-robloxid').value.trim();
-  const password = document.getElementById('admin-pass').value;
-  if (!/^\d+$/.test(robloxId)) { showAdminResult('Enter a valid numeric Roblox User ID to remove.', 'error'); return; }
-  if (!confirm(`Remove the cap record for Roblox ID ${robloxId}?`)) return;
-  const btn = document.querySelectorAll('#atab-caps .add-submit')[1];
-  const origText = btn ? btn.textContent : null;
-  if (btn) { btn.textContent = 'Removing…'; btn.disabled = true; }
-  try {
-    const res = await fetch('/api/player-cap', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ password, action: 'remove', robloxId })
-    });
-    const data = await res.json();
-    if (data.ok) { showAdminResult(data.message, 'success'); toast('Cap record removed', 'red'); }
-    else { showAdminResult(data.error || 'Failed.', 'error'); }
-  } catch (e) { showAdminResult('Network error.', 'error'); }
-  finally { if (btn) { btn.textContent = origText; btn.disabled = false; } }
 }
 
 async function syncDiscord() {
