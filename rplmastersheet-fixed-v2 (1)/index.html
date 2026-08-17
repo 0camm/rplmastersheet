@@ -1,0 +1,2478 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RPL Salary Cap Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --red:#e8001d;--red-a:.08;
+  --red-dim:rgba(232,0,29,.08);--red-mid:rgba(232,0,29,.18);--red-edge:rgba(232,0,29,.4);
+  --bg:#08080f;--s1:#0e0e1a;--s2:#131322;--s3:#191929;--s4:#202034;
+  --b:rgba(255,255,255,.06);--b2:rgba(255,255,255,.03);
+  --mu:#52526a;--mu2:#3c3c55;
+  --tx:#e2e2f2;--tx2:#9898b8;
+  --gr:#18d464;--gr-d:rgba(24,212,100,.09);
+  --am:#f5a623;--am-d:rgba(245,166,35,.09);
+  --bl:#5b9cf6;--bl-d:rgba(91,156,246,.09);
+  --max:#ef4444;--max-dim:rgba(239,68,68,.12);--max-mid:rgba(239,68,68,.18);
+  --win:#3de87a;--lose:#f06070;
+  /* salary-specific */
+  --green:#22c55e;--green-dim:rgba(34,197,94,.12);
+  --amber:#f59e0b;--amber-dim:rgba(245,158,11,.12);
+  --blue:#60a5fa;
+  /* cap-health tier scale (0-10 / 11-20 / 21-30 / 31-40 / 41-50 / 51-58 / 59+) */
+  --t1:#8CE99A;--t1-dim:rgba(140,233,154,.12);
+  --t2:#22c55e;--t2-dim:rgba(34,197,94,.12);
+  --t3:#eab308;--t3-dim:rgba(234,179,8,.12);
+  --t4:#f59e0b;--t4-dim:rgba(245,158,11,.12);
+  --t5:#f97316;--t5-dim:rgba(249,115,22,.12);
+  --t6:#ef4444;--t6-dim:rgba(239,68,68,.12);
+  --t7:#7f1d1d;--t7-dim:rgba(127,29,29,.22);
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  background:var(--bg);color:var(--tx);
+  font-family:'Inter',sans-serif;font-size:14px;
+  min-height:100vh;-webkit-font-smoothing:antialiased;
+  width:100%;max-width:100vw;overflow-x:hidden;
+}
+
+/* ── LOADING BAR ── */
+.loading-bar{
+  height:2px;background:var(--red);
+  width:0%;position:fixed;
+  top:0;left:0;z-index:999;
+  transition:width .3s ease;
+}
+
+/* ── STATUS BAR ── */
+.sbar{
+  display:flex;align-items:center;justify-content:space-between;
+  gap:14px;padding:9px 20px;
+  width:100%;
+}
+.sbar-left{display:flex;align-items:center;gap:10px;}
+.sbar-sync{font-size:11px;color:var(--mu);font-family:'JetBrains Mono',monospace}
+.live-chip{
+  display:flex;align-items:center;gap:5px;
+  font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--mu);
+}
+.live-chip.on{color:var(--gr)}
+.ldot{width:6px;height:6px;border-radius:50%;background:currentColor;flex-shrink:0}
+.live-chip.on .ldot{animation:blink 1.8s ease infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.15}}
+
+/* nav-right items */
+.sbar-right{display:flex;align-items:center;gap:8px;flex-shrink:0;}
+.user-chip{
+  display:flex;align-items:center;gap:7px;
+  background:var(--s2);border:1px solid var(--b);
+  border-radius:6px;padding:5px 10px;
+  font-size:11px;color:var(--tx);white-space:nowrap;
+  max-width:160px;overflow:hidden;text-overflow:ellipsis;
+}
+.user-chip .dot{width:6px;height:6px;border-radius:50%;background:var(--gr);flex-shrink:0;}
+.admin-btn{
+  background:none;border:1px solid var(--b);border-radius:6px;
+  padding:5px 12px;
+  font-family:'Inter',sans-serif;font-size:11px;font-weight:600;
+  letter-spacing:.06em;text-transform:uppercase;
+  color:var(--mu);cursor:pointer;
+  transition:border-color .2s,color .2s;white-space:nowrap;
+  min-height:32px;
+}
+.admin-btn:hover{border-color:rgba(232,0,29,.4);color:var(--tx);}
+
+/* cap pill */
+.nav-cap-pill{
+  font-size:10px;font-weight:600;letter-spacing:.08em;
+  color:var(--mu);text-transform:uppercase;
+  background:var(--s2);border:1px solid var(--b);
+  border-radius:20px;padding:3px 9px;
+}
+.nav-cap-pill strong{color:var(--tx);font-weight:700;margin-left:4px;}
+
+/* ── HERO ── */
+.hero{
+  padding:28px 20px 24px;
+  position:relative;
+  border-bottom:1px solid var(--b2);
+  width:100%;
+}
+.hero::after{
+  content:'';position:absolute;bottom:0;left:0;width:180px;height:2px;
+  background:linear-gradient(90deg,var(--red),transparent);
+}
+.hero-top{
+  display:flex;align-items:flex-start;justify-content:space-between;
+  gap:16px;flex-wrap:wrap;
+}
+.hero-eyebrow{
+  font-size:10px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;
+  color:var(--red);margin-bottom:8px;
+  display:flex;align-items:center;gap:7px;
+}
+.hero-eyebrow::before{content:'';width:16px;height:1px;background:var(--red);flex-shrink:0}
+.hero-h1{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:44px;letter-spacing:.02em;line-height:.92;color:#fff;
+}
+.hero-h1 em{color:var(--red);font-style:normal}
+.hero-sub{
+  margin-top:8px;font-size:11px;color:var(--mu);
+  display:flex;align-items:center;gap:7px;flex-wrap:wrap;
+}
+.hdot{width:3px;height:3px;border-radius:50%;background:var(--mu2);flex-shrink:0}
+
+/* legend (cap key) */
+.hero-key{
+  display:flex;flex-wrap:wrap;gap:5px;align-self:flex-end;
+  max-width:100%;
+}
+.kc{
+  display:flex;align-items:center;gap:6px;
+  padding:6px 10px;border-radius:7px;
+  background:var(--s2);border:1px solid var(--b);
+}
+.kc-pip{width:3px;height:13px;border-radius:2px;flex-shrink:0}
+.kc-pip.safe{background:var(--gr)}
+.kc-pip.warn{background:var(--am)}
+.kc-pip.over{background:var(--red)}
+.kc-pip.low{background:var(--bl)}
+.kc-code{font-weight:700;color:var(--tx2);font-family:'JetBrains Mono',monospace;font-size:10px}
+.kc-lbl{color:var(--mu);font-size:10px}
+
+/* ── ALERT ── */
+.alert{
+  display:none;margin:12px 20px 0;
+  padding:10px 14px;font-size:12px;color:var(--mu);
+  background:var(--s1);border:1px solid var(--b);
+  border-left:3px solid var(--am);border-radius:0 7px 7px 0;
+}
+.alert.on{display:block}
+
+/* ── MAIN ── */
+.main{padding:24px 20px 72px;width:100%}
+
+/* ── SECTION HEADER ── */
+.sec-hd{margin-bottom:14px;width:100%}
+.sec-hd-top{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+.sec-title{font-family:'Bebas Neue',sans-serif;font-size:19px;letter-spacing:.08em;color:#fff}
+.sec-ct{
+  font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--mu);background:var(--s3);border:1px solid var(--b);
+  border-radius:20px;padding:2px 9px;
+}
+.sec-rule{flex:1;height:1px;background:var(--b2)}
+
+/* filters row */
+.filters{
+  display:flex;align-items:center;gap:6px;flex-wrap:wrap;
+  width:100%;
+}
+.fc{
+  background:var(--s2);border:1px solid var(--b);
+  border-radius:7px;color:var(--tx);
+  font-size:12px;font-family:'Inter',sans-serif;
+  padding:6px 10px;outline:none;
+  transition:border-color .15s;
+  min-width:0;
+}
+.fc::placeholder{color:var(--mu)}
+.fc:focus{border-color:var(--red-edge)}
+.fc-search{flex:1;min-width:80px;max-width:200px}
+select.fc{
+  padding-right:24px;cursor:pointer;
+  -webkit-appearance:none;appearance:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='9' height='5'%3E%3Cpath fill='%2352526a' d='M0 0l4.5 5L9 0z'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 8px center;
+  background-color:var(--s2);
+}
+
+/* ── TEAMS TABLE (match-history style) ── */
+.ht-wrap{
+  width:100%;background:var(--s1);border:1px solid var(--b);
+  border-radius:11px;overflow:hidden;position:relative;
+}
+.ht-wrap::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,var(--red-edge),transparent 50%);
+}
+
+/* teams table header */
+/* # | logo | team | players | salary | cap% | bar */
+.ht-hd{
+  display:grid;
+  grid-template-columns:30px 36px 1fr 60px 88px 68px 100px;
+  padding:8px 14px;
+  background:var(--s2);border-bottom:1px solid var(--b);
+  width:100%;
+}
+.ht-hd span{
+  font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--mu);
+}
+.ht-hd span:nth-child(1){text-align:center}
+.ht-hd span:nth-child(4),
+.ht-hd span:nth-child(5),
+.ht-hd span:nth-child(6){text-align:center}
+
+/* team row */
+.hr{
+  display:grid;
+  grid-template-columns:30px 36px 1fr 60px 88px 68px 100px;
+  padding:9px 14px;align-items:center;
+  border-bottom:1px solid var(--b2);
+  position:relative;transition:background .12s;
+  cursor:pointer;width:100%;
+}
+.hr:last-child{border-bottom:none}
+.hr:hover{background:rgba(255,255,255,.02)}
+
+/* left accent by cap status */
+.hr::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;}
+.hr.cs-safe::before{background:var(--gr)}
+.hr.cs-warn::before{background:var(--am)}
+.hr.cs-over::before{background:var(--red)}
+.hr.cs-max::before{background:var(--max)}
+
+/* row number */
+.hn{font-size:10px;color:var(--mu2);text-align:center;font-family:'JetBrains Mono',monospace;}
+
+/* free agents table (# / player / salary) — was hardcoded inline, which
+   overrode every mobile breakpoint below since inline > class specificity.
+   Moved into real classes so it can actually shrink on narrow screens. */
+.ht-3col,.hr-3col{grid-template-columns:30px 1fr 120px;min-width:0;}
+.ht-3col span,.hr-3col span{min-width:0;}
+
+/* player cap viewer table (# / player / team / salary) — same issue: the
+   160px+120px fixed columns left almost no room for the name on phones,
+   which is what caused the squished/overlapping look. */
+.ht-4col,.hr-4col{grid-template-columns:30px 1fr 160px 120px;min-width:0;}
+.ht-4col span,.hr-4col span{min-width:0;}
+
+/* logo cell */
+.hlogo{display:flex;align-items:center;justify-content:center;}
+.hlogo img{width:22px;height:22px;object-fit:contain;opacity:.85;}
+
+/* team name cell */
+.hname{min-width:0;overflow:hidden;}
+.hname-main{font-family:'Bebas Neue',sans-serif;font-size:15px;letter-spacing:.05em;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.hname-abbr{font-size:10px;color:var(--mu);font-family:'JetBrains Mono',monospace;letter-spacing:.04em;margin-top:1px;}
+
+/* players count */
+.hplayers{text-align:center;font-size:12px;color:var(--tx2);font-family:'JetBrains Mono',monospace;}
+.hplayers.low{color:var(--lose)}
+
+/* salary */
+.hsalary{
+  text-align:center;
+  font-family:'JetBrains Mono',monospace;
+  font-size:13px;font-weight:700;
+  font-variant-numeric:tabular-nums;
+  white-space:nowrap;
+}
+.hsalary.over{color:var(--lose)}
+.hsalary.warn{color:var(--am)}
+.hsalary.safe{color:var(--tx)}
+.hsalary.max{color:var(--max)}
+
+/* cap pct */
+.hpct{text-align:center;font-size:11px;color:var(--mu);font-family:'JetBrains Mono',monospace;}
+.hpct.over{color:var(--lose)}
+.hpct.warn{color:var(--am)}
+.hpct.max{color:var(--max)}
+
+/* cap bar cell */
+.hbar-cell{display:flex;align-items:center;gap:6px;}
+.hbar-track{flex:1;height:3px;background:var(--b2);border-radius:2px;overflow:hidden;}
+.hbar-fill{height:100%;border-radius:2px;transition:width .4s ease;}
+.hbar-fill.safe{background:var(--gr)}
+.hbar-fill.warn{background:var(--am)}
+.hbar-fill.over{background:var(--red)}
+.hbar-fill.max{background:var(--max)}
+
+/* expand arrow */
+.harrow{color:var(--red);font-size:10px;opacity:0;transform:translateX(-3px);transition:opacity .14s,transform .14s;margin-left:2px;}
+.hr:hover .harrow{opacity:1;transform:none}
+
+/* empty */
+.hist-empty{padding:40px 20px;text-align:center;font-size:13px;color:var(--mu);}
+
+/* ── PAGER ── */
+.pager{
+  display:flex;align-items:center;justify-content:space-between;
+  margin-top:12px;flex-wrap:wrap;gap:8px;width:100%;
+}
+.pg-info{font-size:11px;color:var(--mu);font-family:'JetBrains Mono',monospace}
+.pg-btns{display:flex;align-items:center;gap:3px;flex-wrap:wrap}
+.pb{
+  background:transparent;border:1px solid var(--b);
+  border-radius:5px;color:var(--tx2);
+  font-size:11px;font-family:'Inter',sans-serif;font-weight:500;
+  padding:4px 10px;cursor:pointer;
+  transition:background .1s,border-color .1s,color .1s;
+  touch-action:manipulation;
+}
+.pb:hover:not(:disabled){background:var(--s3);border-color:rgba(255,255,255,.11);color:#fff}
+.pb:disabled{opacity:.28;cursor:default}
+.pb.cur{background:var(--red);border-color:var(--red);color:#fff;font-weight:700}
+.pb-ellip{color:var(--mu);font-size:11px;padding:0 2px}
+.pg-jump{display:flex;align-items:center;gap:5px}
+.pg-jlbl{font-size:11px;color:var(--mu)}
+.pg-jin{
+  background:var(--s3);border:1px solid var(--b);
+  border-radius:5px;color:var(--tx);
+  font-size:11px;font-family:'JetBrains Mono',monospace;
+  width:40px;padding:4px 6px;text-align:center;outline:none;
+}
+.pg-jin:focus{border-color:var(--red-edge)}
+
+/* ── CONFERENCES / CAP SUMMARY ── */
+.conf-grid{
+  display:grid;grid-template-columns:1fr 1fr;gap:22px;
+  margin-top:28px;width:100%;
+}
+@media(max-width:860px){.conf-grid{grid-template-columns:1fr;gap:18px}}
+
+.conf-hd{display:flex;align-items:center;gap:9px;margin-bottom:10px}
+.conf-tag{
+  font-size:9px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;
+  padding:3px 9px;border-radius:4px;flex-shrink:0;
+}
+.conf-tag.safe{background:var(--gr-d);color:var(--gr);border:1px solid rgba(24,212,100,.18)}
+.conf-tag.warn{background:var(--am-d);color:var(--am);border:1px solid rgba(245,166,35,.18)}
+.conf-tag.over{background:var(--red-dim);color:var(--red);border:1px solid var(--red-mid)}
+.conf-tag.max{background:var(--max-dim);color:var(--max);border:1px solid var(--max-mid)}
+.conf-tag.fa{background:var(--bl-d);color:var(--bl);border:1px solid rgba(91,156,246,.18)}
+.conf-name{font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:.05em;color:#fff}
+
+/* ── STANDINGS-STYLE CAP TABLE ── */
+.std-wrap{
+  background:var(--s1);border:1px solid var(--b);
+  border-radius:11px;overflow:hidden;position:relative;width:100%;
+}
+.std-wrap::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,var(--red-edge),transparent 50%);z-index:1;
+}
+
+/* 6 cols: # logo team PLAYERS SALARY CAP% */
+.std-hd{
+  display:grid;
+  grid-template-columns:26px 28px 1fr 48px 70px 52px;
+  padding:8px 12px;
+  background:var(--s2);border-bottom:1px solid var(--b);
+}
+.std-hd span{
+  font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--mu);text-align:center;
+}
+.std-hd span:nth-child(3){text-align:left}
+
+.srow{
+  display:grid;
+  grid-template-columns:26px 28px 1fr 48px 70px 52px;
+  padding:8px 12px;align-items:center;
+  border-bottom:1px solid var(--b2);
+  position:relative;transition:background .11s;
+  cursor:pointer;width:100%;
+}
+.srow:last-child{border-bottom:none}
+.srow:hover{background:rgba(255,255,255,.016)}
+
+.srow::before{
+  content:'';position:absolute;
+  left:0;top:6px;bottom:6px;width:3px;border-radius:0 2px 2px 0;
+}
+.srow.s-safe::before{background:var(--gr)}
+.srow.s-warn::before{background:var(--am)}
+.srow.s-over::before{background:var(--red)}
+.srow.s-max::before{background:var(--max)}
+
+@keyframes rfl{0%{background:rgba(232,0,29,.08)}100%{background:transparent}}
+.srow.flash{animation:rfl 1.8s ease forwards}
+
+.rrank{
+  font-family:'JetBrains Mono',monospace;font-size:11px;
+  color:var(--mu);text-align:center;font-variant-numeric:tabular-nums;
+}
+
+.rlogo{display:flex;align-items:center;justify-content:center}
+.rlogo img{width:20px;height:20px;object-fit:contain;opacity:.82;transition:opacity .15s}
+.srow:hover .rlogo img{opacity:1}
+.rlogo .ph{width:20px;height:20px;border-radius:50%;background:var(--s4)}
+
+.rn{font-size:12px;font-weight:600;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rmeta{display:flex;align-items:center;gap:4px;margin-top:1px}
+.rabb{font-size:10px;color:var(--mu);font-family:'JetBrains Mono',monospace;letter-spacing:.04em}
+.rbadge{font-size:8px;font-weight:700;letter-spacing:.06em;padding:1px 4px;border-radius:3px}
+.rbadge.over{background:rgba(248,113,113,.1);color:var(--lose)}
+.rbadge.warn{background:rgba(245,166,35,.1);color:var(--am)}
+.rbadge.safe{background:rgba(24,212,100,.09);color:var(--gr)}
+.rbadge.max{background:rgba(167,139,250,.1);color:var(--max)}
+
+.rplayers{text-align:center;font-size:12px;color:var(--tx2);font-family:'JetBrains Mono',monospace;}
+.rplayers.low{color:var(--lose)}
+.rsal{text-align:center;font-size:12px;font-family:'JetBrains Mono',monospace;font-variant-numeric:tabular-nums;font-weight:600;color:var(--tx2)}
+.rsal.over{color:var(--lose)}.rsal.warn{color:var(--am)}.rsal.safe{color:var(--win)}.rsal.max{color:var(--max)}
+.rpct{text-align:center;font-size:11px;font-family:'JetBrains Mono',monospace;font-variant-numeric:tabular-nums;color:var(--tx2)}
+.rpct.over{color:var(--lose)}.rpct.warn{color:var(--am)}.rpct.safe{color:var(--win)}.rpct.max{color:var(--max)}
+
+/* cap tier colors — applied to salary text & dots regardless of over/warn/safe grouping */
+.tier-1{color:var(--t1)!important}.tier-2{color:var(--t2)!important}.tier-3{color:var(--t3)!important}
+.tier-4{color:var(--t4)!important}.tier-5{color:var(--t5)!important}.tier-6{color:var(--t6)!important}.tier-7{color:var(--t7)!important}
+.tier-dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:5px;flex-shrink:0;vertical-align:middle}
+.tier-dot.tier-1{background:var(--t1)}.tier-dot.tier-2{background:var(--t2)}.tier-dot.tier-3{background:var(--t3)}
+.tier-dot.tier-4{background:var(--t4)}.tier-dot.tier-5{background:var(--t5)}.tier-dot.tier-6{background:var(--t6)}.tier-dot.tier-7{background:var(--t7)}
+.rsal-wrap{display:flex;align-items:center;justify-content:center;gap:0}
+
+/* ── CAP SUMMARY: OVERVIEW STATS ── */
+.cs-section{grid-column:1/-1;margin-bottom:6px}
+.cs-section-title{
+  font-size:10px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--mu);margin-bottom:10px;display:flex;align-items:center;gap:8px;
+}
+.cs-section-title::after{content:'';flex:1;height:1px;background:var(--b)}
+
+.ov-grid{
+  display:grid;grid-template-columns:repeat(7,1fr);gap:10px;
+}
+@media(max-width:980px){.ov-grid{grid-template-columns:repeat(4,1fr)}}
+@media(max-width:560px){.ov-grid{grid-template-columns:repeat(2,1fr)}}
+.ov-card{
+  background:var(--s1);border:1px solid var(--b);border-radius:10px;
+  padding:12px 14px;position:relative;overflow:hidden;
+}
+.ov-card::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:var(--ov-accent,var(--b));
+}
+.ov-lbl{font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--mu);margin-bottom:6px}
+.ov-val{font-family:'JetBrains Mono',monospace;font-size:19px;font-weight:700;color:#fff;line-height:1}
+.ov-sub{font-size:10px;color:var(--tx2);margin-top:4px}
+
+/* ── CAP HEALTH DISTRIBUTION BAR ── */
+.tier-legend{
+  display:flex;flex-wrap:wrap;gap:8px;background:var(--s1);
+  border:1px solid var(--b);border-radius:10px;padding:12px 14px;
+}
+.tier-chip{
+  display:flex;align-items:center;gap:6px;
+  padding:5px 10px;border-radius:7px;background:var(--s2);
+  border:1px solid var(--b);font-size:11px;flex:1;min-width:120px;
+}
+.tier-chip .tc-name{color:var(--tx2);font-weight:500;flex:1}
+.tier-chip .tc-count{font-family:'JetBrains Mono',monospace;font-weight:700;color:#fff}
+.tier-chip.tc-1{border-color:rgba(140,233,154,.3);background:var(--t1-dim)}
+.tier-chip.tc-2{border-color:rgba(34,197,94,.3);background:var(--t2-dim)}
+.tier-chip.tc-3{border-color:rgba(234,179,8,.3);background:var(--t3-dim)}
+.tier-chip.tc-4{border-color:rgba(245,158,11,.3);background:var(--t4-dim)}
+.tier-chip.tc-5{border-color:rgba(249,115,22,.3);background:var(--t5-dim)}
+.tier-chip.tc-6{border-color:rgba(239,68,68,.3);background:var(--t6-dim)}
+.tier-chip.tc-7{border-color:rgba(127,29,29,.5);background:var(--t7-dim)}
+.tier-chip.tc-1 .tc-name,.tier-chip.tc-1 .tc-count{color:var(--t1)}
+.tier-chip.tc-2 .tc-name,.tier-chip.tc-2 .tc-count{color:var(--t2)}
+.tier-chip.tc-3 .tc-name,.tier-chip.tc-3 .tc-count{color:var(--t3)}
+.tier-chip.tc-4 .tc-name,.tier-chip.tc-4 .tc-count{color:var(--t4)}
+.tier-chip.tc-5 .tc-name,.tier-chip.tc-5 .tc-count{color:var(--t5)}
+.tier-chip.tc-6 .tc-name,.tier-chip.tc-6 .tc-count{color:var(--t6)}
+.tier-chip.tc-7 .tc-name,.tier-chip.tc-7 .tc-count{color:var(--t7)}
+
+.cs-badge-row{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:4px}
+.cs-mini-badge{
+  font-size:10px;font-weight:600;color:var(--tx2);
+  background:var(--s2);border:1px solid var(--b);border-radius:6px;
+  padding:4px 9px;display:flex;align-items:center;gap:5px;
+}
+.cs-mini-badge strong{color:#fff;font-family:'JetBrains Mono',monospace}
+
+/* FA section in conf-grid */
+.fa-mini-grid{display:flex;flex-direction:column;gap:4px;}
+.fa-mini-row{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:7px 12px;background:var(--s2);border:1px solid var(--b);
+  border-radius:7px;font-size:12px;transition:background .14s;
+}
+.fa-mini-row:hover{background:var(--s3);}
+.fa-mini-name{color:var(--tx);font-weight:500}
+.fa-mini-sal{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;color:var(--red)}
+
+/* ── TOASTS ── */
+#toasts{
+  position:fixed;bottom:20px;right:16px;
+  display:flex;flex-direction:column-reverse;gap:7px;
+  z-index:9999;pointer-events:none;
+  width:min(300px,calc(100vw - 32px));
+}
+.toast{
+  background:var(--s3);border:1px solid var(--b);
+  border-left:3px solid var(--red);border-radius:9px;
+  padding:10px 14px;font-size:13px;color:#fff;
+  box-shadow:0 10px 36px rgba(0,0,0,.6);
+  pointer-events:all;animation:tIn .2s ease;
+  word-break:break-word;
+}
+.toast.green{border-left-color:var(--gr)}
+.toast.amber{border-left-color:var(--am)}
+.toast.out{animation:tOut .2s ease forwards}
+@keyframes tIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@keyframes tOut{from{opacity:1}to{opacity:0;transform:translateY(-5px)}}
+
+/* ── MODAL (roster expand) ── */
+.mbg{
+  position:fixed;inset:0;z-index:2000;
+  background:rgba(0,0,0,.82);
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  display:flex;align-items:center;justify-content:center;
+  padding:12px;opacity:0;pointer-events:none;transition:opacity .2s;
+}
+.mbg.open{opacity:1;pointer-events:all}
+.modal{
+  background:var(--s1);border:1px solid var(--b);
+  border-radius:14px;overflow:hidden;
+  width:100%;max-width:700px;max-height:92vh;
+  display:flex;flex-direction:column;
+  transform:translateY(12px) scale(.97);transition:transform .2s;
+  box-shadow:0 28px 72px rgba(0,0,0,.8);position:relative;
+}
+.modal::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,var(--red),transparent 60%);z-index:2;
+}
+.mbg.open .modal{transform:none}
+
+.mhd{
+  padding:16px 20px;background:var(--s2);
+  border-bottom:1px solid var(--b);
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  flex-shrink:0;flex-wrap:wrap;
+}
+.mteam-info{display:flex;align-items:center;gap:12px;}
+.mteam-info img{width:36px;height:36px;object-fit:contain;}
+.mteam-name{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:.06em;color:#fff}
+.mteam-sub{font-size:11px;color:var(--mu);margin-top:2px;}
+.mmeta{display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0}
+.mbadge{
+  font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;
+  padding:3px 8px;border-radius:5px;
+}
+.mbadge.safe{background:var(--gr-d);color:var(--gr);border:1px solid rgba(24,212,100,.18)}
+.mbadge.warn{background:var(--am-d);color:var(--am);border:1px solid rgba(245,166,35,.18)}
+.mbadge.over{background:var(--red-dim);color:var(--red);border:1px solid var(--red-mid)}
+.mbadge.max{background:var(--max-dim);color:var(--max);border:1px solid var(--max-mid)}
+.msal-big{font-family:'JetBrains Mono',monospace;font-size:20px;font-weight:700;color:#fff;}
+.msal-big.over{color:var(--lose)}.msal-big.warn{color:var(--am)}.msal-big.safe{color:var(--win)}.msal-big.max{color:var(--max)}
+.mseason{font-size:10px;color:var(--mu);font-family:'JetBrains Mono',monospace}
+.mclose{
+  background:var(--s3);border:1px solid var(--b);cursor:pointer;
+  color:var(--mu);font-size:16px;line-height:1;
+  width:30px;height:30px;border-radius:7px;
+  display:flex;align-items:center;justify-content:center;
+  transition:all .13s;flex-shrink:0;
+}
+.mclose:hover{color:#fff;background:var(--s4);border-color:rgba(255,255,255,.12)}
+
+.mbody{overflow-y:auto;flex:1;padding:20px;display:flex;flex-direction:column;gap:18px}
+
+/* cap bar in modal */
+.mcap-section{}
+.mcap-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;}
+.mcap-label{font-size:11px;color:var(--mu);font-family:'JetBrains Mono',monospace;}
+.mcap-val{font-size:11px;font-weight:600;font-family:'JetBrains Mono',monospace;}
+.mcap-track{height:6px;background:var(--b2);border-radius:3px;overflow:hidden;width:100%;}
+.mcap-fill{height:100%;border-radius:3px;transition:width .4s ease;}
+.mcap-fill.safe{background:var(--gr)}.mcap-fill.warn{background:var(--am)}.mcap-fill.over{background:var(--red)}.mcap-fill.max{background:var(--max)}
+.mcap-fill.tier-1{background:var(--t1)}.mcap-fill.tier-2{background:var(--t2)}.mcap-fill.tier-3{background:var(--t3)}
+.mcap-fill.tier-4{background:var(--t4)}.mcap-fill.tier-5{background:var(--t5)}.mcap-fill.tier-6{background:var(--t6)}.mcap-fill.tier-7{background:var(--t7)}
+.mcap-tier-lbl{font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:2px 7px;border-radius:5px;margin-left:6px}
+
+/* staff rows in modal */
+.staff-section-title{font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--mu);margin-bottom:6px;}
+.staff-row-m{
+  display:flex;align-items:center;gap:10px;
+  padding:8px 12px;background:var(--s2);border:1px solid var(--b);
+  border-radius:8px;margin-bottom:4px;
+}
+.staff-pip{width:3px;height:24px;border-radius:2px;flex-shrink:0;}
+.staff-pip.owner{background:var(--am)}
+.staff-pip.coach{background:var(--bl)}
+.staff-role-chip{font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:2px 7px;border-radius:20px;flex-shrink:0;}
+.staff-role-chip.owner{background:rgba(245,158,11,.12);color:var(--am);border:1px solid rgba(245,158,11,.2);}
+.staff-role-chip.coach{background:rgba(96,165,250,.12);color:var(--blue);border:1px solid rgba(96,165,250,.2);}
+.staff-row-name-m{font-size:12px;color:var(--tx);font-weight:500;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+
+/* player table in modal */
+.bstbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.bstbl{
+  width:100%;min-width:320px;border-collapse:collapse;
+  background:var(--s2);border-radius:8px;overflow:hidden;
+  border:1px solid var(--b);
+}
+.bstbl thead tr{background:var(--s3)}
+.bstbl th{
+  font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--mu);padding:6px 10px;text-align:right;white-space:nowrap;
+}
+.bstbl th:first-child{text-align:left;min-width:120px}
+.bstbl td{
+  font-size:11px;color:var(--tx2);padding:7px 10px;text-align:right;
+  border-top:1px solid var(--b2);
+  font-family:'JetBrains Mono',monospace;font-variant-numeric:tabular-nums;
+}
+.bstbl td:first-child{text-align:left;color:#fff;font-weight:500;font-family:'Inter',sans-serif}
+.bstbl tbody tr:hover{background:rgba(255,255,255,.013)}
+.bstbl td.pts{font-weight:700;color:var(--win)}
+
+/* ══════════════════════════════════════════
+   ADMIN PANEL
+══════════════════════════════════════════ */
+.admin-overlay{
+  position:fixed;inset:0;z-index:200;
+  background:rgba(0,0,0,.6);
+  backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+  opacity:0;pointer-events:none;transition:opacity .25s;
+}
+.admin-overlay.open{opacity:1;pointer-events:all}
+
+.admin-panel{
+  position:fixed;z-index:201;
+  background:var(--s1);
+  display:flex;flex-direction:column;
+  bottom:0;left:0;right:0;
+  border-radius:20px 20px 0 0;
+  border:1px solid var(--b);border-bottom:none;
+  max-height:92dvh;
+  transform:translateY(100%);
+  transition:transform .3s cubic-bezier(.32,1,.56,1);
+}
+.admin-panel.open{transform:translateY(0);}
+@media(min-width:680px){
+  .admin-panel{
+    top:50%;left:50%;right:auto;bottom:auto;
+    transform:translate(-50%,-46%) scale(.97);
+    border-radius:16px;border-bottom:1px solid var(--b);
+    width:600px;max-width:calc(100vw - 40px);
+    max-height:88dvh;opacity:0;
+    transition:transform .25s cubic-bezier(.32,1,.56,1),opacity .2s;
+  }
+  .admin-panel.open{transform:translate(-50%,-50%) scale(1);opacity:1;}
+}
+.admin-handle{
+  width:36px;height:4px;border-radius:2px;
+  background:var(--mu2);margin:12px auto 0;flex-shrink:0;
+}
+@media(min-width:680px){.admin-handle{display:none}}
+.admin-header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:16px 20px 14px;border-bottom:1px solid var(--b);flex-shrink:0;
+}
+.admin-header-left{display:flex;flex-direction:column;gap:2px;}
+.admin-title{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:.06em;color:#fff;line-height:1;}
+.admin-sub{font-size:11px;color:var(--mu);}
+.admin-close{
+  width:32px;height:32px;border-radius:8px;
+  background:var(--s2);border:1px solid var(--b);
+  display:flex;align-items:center;justify-content:center;
+  color:var(--mu);cursor:pointer;
+  transition:background .15s,color .15s;flex-shrink:0;
+}
+.admin-close:hover{background:var(--s3);color:var(--tx);}
+.admin-lock{padding:24px 20px;flex-shrink:0;}
+.admin-lock-label{font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--mu);margin-bottom:8px;}
+.admin-lock-row{display:flex;gap:8px;}
+.admin-lock-input{
+  flex:1;background:var(--bg);border:1px solid var(--b);
+  border-radius:10px;padding:13px 14px;
+  color:var(--tx);font-family:'Inter',sans-serif;
+  font-size:16px;outline:none;transition:border-color .2s;
+}
+.admin-lock-input:focus{border-color:rgba(232,0,29,.4);}
+.admin-lock-btn{
+  background:var(--red);border:none;border-radius:10px;
+  padding:0 20px;color:#fff;
+  font-family:'Inter',sans-serif;font-size:13px;font-weight:700;
+  letter-spacing:.04em;cursor:pointer;
+  transition:opacity .15s;min-height:50px;white-space:nowrap;
+}
+.admin-lock-btn:hover{opacity:.85;}
+.admin-tabs{
+  display:flex;gap:0;border-bottom:1px solid var(--b);
+  flex-shrink:0;overflow-x:auto;scrollbar-width:none;
+}
+.admin-tabs::-webkit-scrollbar{display:none;}
+.admin-tab{
+  flex:1;padding:12px 0;
+  background:none;border:none;
+  font-family:'Inter',sans-serif;font-size:11px;font-weight:700;
+  letter-spacing:.06em;text-transform:uppercase;
+  color:var(--mu);cursor:pointer;
+  border-bottom:2px solid transparent;margin-bottom:-1px;
+  transition:color .15s,border-color .15s;
+  white-space:nowrap;min-width:80px;min-height:44px;
+}
+.admin-tab.active{color:#fff;border-bottom-color:var(--red);}
+.admin-tab:hover:not(.active){color:var(--tx);}
+.admin-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:0 0 env(safe-area-inset-bottom,0);}
+.admin-search-bar{padding:12px 16px;border-bottom:1px solid var(--b);position:sticky;top:0;background:var(--s1);z-index:1;}
+.admin-search-inner{position:relative;}
+.admin-search-inner svg{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--mu);pointer-events:none;}
+.admin-search-inner input{
+  width:100%;background:var(--bg);border:1px solid var(--b);
+  border-radius:8px;padding:9px 12px 9px 32px;
+  color:var(--tx);font-family:'Inter',sans-serif;
+  font-size:16px;outline:none;transition:border-color .2s;
+}
+.admin-search-inner input::placeholder{color:var(--mu);font-size:12px;}
+.admin-search-inner input:focus{border-color:rgba(232,0,29,.35);}
+
+.aroster-row{
+  display:grid;grid-template-columns:1fr auto auto;
+  align-items:center;gap:8px;padding:10px 16px;
+  border-bottom:1px solid var(--b2);transition:background .14s;
+}
+.aroster-row:last-child{border-bottom:none;}
+.aroster-row:hover{background:rgba(255,255,255,.025);}
+.aroster-info{min-width:0;}
+.aroster-name{font-size:13px;font-weight:600;color:var(--tx);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.aroster-team{font-size:10px;color:var(--mu);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.aroster-salary-wrap{display:flex;align-items:center;gap:6px;}
+.aroster-salary-stepper{
+  display:flex;align-items:center;gap:0;
+  background:var(--bg);border:1px solid var(--b);
+  border-radius:7px;overflow:hidden;transition:border-color .2s;
+}
+.aroster-salary-stepper:focus-within{border-color:rgba(232,0,29,.4);}
+.salary-step-btn{
+  width:28px;height:34px;border:none;
+  background:var(--s2);color:var(--mu);
+  font-size:16px;font-weight:700;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  transition:background .15s,color .15s;flex-shrink:0;line-height:1;
+}
+.salary-step-btn:hover{background:var(--s3);color:var(--tx);}
+.salary-step-btn:active{background:rgba(232,0,29,.15);color:var(--red);}
+.salary-step-btn:disabled{opacity:.3;cursor:not-allowed;}
+.aroster-salary-display{
+  font-family:'JetBrains Mono',monospace;font-size:13px;letter-spacing:.04em;
+  color:var(--tx);text-align:center;min-width:64px;padding:0 4px;
+  user-select:none;line-height:34px;
+}
+.aroster-save{
+  background:var(--red);border:none;border-radius:7px;
+  padding:7px 11px;color:#fff;
+  font-family:'Inter',sans-serif;font-size:11px;font-weight:700;
+  letter-spacing:.04em;cursor:pointer;
+  transition:opacity .15s;white-space:nowrap;min-height:34px;
+}
+.aroster-save:hover{opacity:.8;}
+.aroster-save:disabled{opacity:.35;cursor:not-allowed;}
+.aroster-actions{display:flex;gap:5px;align-items:center;}
+.aroster-btn{
+  width:30px;height:30px;border-radius:7px;
+  border:1px solid var(--b);background:var(--s2);
+  color:var(--mu);cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  transition:background .15s,border-color .15s,color .15s;flex-shrink:0;
+}
+.aroster-btn:hover{background:var(--s3);color:var(--tx);border-color:rgba(255,255,255,.15);}
+.aroster-btn.danger:hover{background:rgba(232,0,29,.15);border-color:rgba(232,0,29,.3);color:var(--red);}
+.aroster-move-select{
+  background:var(--bg);border:1px solid rgba(232,0,29,.4);
+  border-radius:7px;padding:6px 10px;
+  color:var(--tx);font-family:'Inter',sans-serif;
+  font-size:12px;outline:none;cursor:pointer;max-width:180px;
+}
+.add-form{padding:20px 16px;display:flex;flex-direction:column;gap:14px;}
+.add-field label{display:block;font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--mu);margin-bottom:7px;}
+.add-field input,.add-field select{
+  width:100%;background:var(--bg);border:1px solid var(--b);
+  border-radius:10px;padding:13px 14px;
+  color:var(--tx);font-family:'Inter',sans-serif;
+  font-size:16px;outline:none;transition:border-color .2s;-moz-appearance:textfield;
+}
+.add-field input::-webkit-inner-spin-button{display:none;}
+.add-field input:focus,.add-field select:focus{border-color:rgba(232,0,29,.4);}
+.add-field select option{background:#111;}
+.add-submit{
+  width:100%;background:var(--red);border:none;border-radius:10px;
+  padding:15px;color:#fff;font-family:'Inter',sans-serif;font-size:13px;font-weight:700;
+  letter-spacing:.06em;text-transform:uppercase;cursor:pointer;transition:opacity .15s;min-height:50px;
+}
+.add-submit:hover{opacity:.88;}
+.tools-section{padding:16px;display:flex;flex-direction:column;gap:10px;}
+.tool-card{background:var(--s2);border:1px solid var(--b);border-radius:10px;padding:14px 16px;display:flex;align-items:flex-start;gap:12px;}
+.tool-icon{width:36px;height:36px;border-radius:8px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:18px;}
+.tool-icon.amber{background:var(--am-d);}
+.tool-icon.red{background:var(--red-dim);}
+.tool-icon.blue{background:var(--bl-d);}
+.tool-info{flex:1;min-width:0;}
+.tool-name{font-size:13px;font-weight:600;color:#fff;margin-bottom:3px;}
+.tool-desc{font-size:11px;color:var(--mu);line-height:1.5;}
+.tool-btn{
+  margin-top:10px;width:100%;border:none;border-radius:8px;padding:10px;
+  font-family:'Inter',sans-serif;font-size:12px;font-weight:700;
+  letter-spacing:.04em;text-transform:uppercase;cursor:pointer;transition:opacity .15s;min-height:40px;
+}
+.tool-btn:hover{opacity:.85;}
+.tool-btn.amber{background:var(--am);color:#000;}
+.tool-btn.red{background:var(--red);color:#fff;}
+.tool-btn.blue{background:rgba(96,165,250,.25);color:var(--bl);border:1px solid rgba(96,165,250,.3);}
+.admin-result{margin:0;padding:12px 16px;font-size:12px;font-weight:500;display:none;border-top:1px solid var(--b);flex-shrink:0;}
+.admin-result.success{background:var(--gr-d);color:var(--gr);display:block;}
+.admin-result.error{background:var(--red-dim);color:var(--red);display:block;}
+
+/* ── PLAYER CAP LOOKUP ── */
+.cap-results{display:flex;flex-direction:column;gap:6px;margin-bottom:14px;}
+.cap-result-row{
+  display:flex;align-items:center;gap:12px;padding:10px 14px;
+  background:var(--s2);border:1px solid var(--b);border-radius:10px;
+  cursor:pointer;transition:border-color .12s,background .12s;
+}
+.cap-result-row:hover{border-color:rgba(232,0,29,.35);background:var(--s3);}
+.cap-result-name{font-size:13px;font-weight:600;color:var(--tx);flex:1;min-width:0;}
+.cap-result-id{font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--mu);white-space:nowrap;}
+.cap-result-team{font-size:10.5px;color:var(--mu);white-space:nowrap;padding:3px 8px;background:var(--s3);border:1px solid var(--b);border-radius:6px;}
+.cap-profile{
+  background:var(--s2);border:1px solid var(--b);border-radius:14px;
+  padding:22px 24px;margin-top:4px;
+}
+.cap-profile-top{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:6px;}
+.cap-profile-name{font-family:'Bebas Neue',sans-serif;font-size:26px;letter-spacing:.03em;color:#fff;}
+.cap-profile-id-row{display:flex;align-items:center;gap:8px;margin-bottom:18px;}
+.cap-profile-id-label{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--mu);}
+.cap-profile-id-val{font-family:'JetBrains Mono',monospace;font-size:12.5px;color:var(--tx2);background:var(--s3);border:1px solid var(--b);border-radius:6px;padding:2px 8px;}
+.cap-profile-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.cap-profile-stat{background:var(--s3);border:1px solid var(--b);border-radius:10px;padding:14px 16px;}
+.cap-profile-stat-label{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--mu);margin-bottom:6px;}
+.cap-profile-stat-val{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:.03em;color:#fff;}
+.mbadge.none{background:var(--s3);color:var(--mu);border:1px solid var(--b);}
+@media(max-width:640px){.cap-profile-grid{grid-template-columns:1fr;}}
+
+.hidden{display:none !important}
+
+/* ── TABS (view switcher like standings filter approach) ── */
+.view-tabs{
+  display:flex;gap:2px;padding:16px 0 0;
+  border-bottom:1px solid var(--b);margin-bottom:0;
+  overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;
+}
+.view-tabs::-webkit-scrollbar{display:none;}
+.view-tab{
+  background:none;border:none;border-bottom:2px solid transparent;
+  padding:9px 16px;margin-bottom:-1px;
+  font-family:'Inter',sans-serif;font-size:12px;font-weight:600;
+  letter-spacing:.06em;text-transform:uppercase;
+  color:var(--mu);cursor:pointer;
+  transition:color .2s,border-color .2s;white-space:nowrap;flex-shrink:0;
+  min-height:44px;display:flex;align-items:center;
+}
+.view-tab:hover{color:var(--tx);}
+.view-tab.active{color:#fff;border-bottom-color:var(--red);}
+
+/* ── RESPONSIVE ── */
+@media(max-width:640px){
+  .hero{padding:20px 16px 18px}
+  .hero-h1{font-size:34px}
+  .hero-top{gap:12px}
+  .kc-lbl{display:none}
+  .kc-pip{height:11px}
+  .kc{padding:5px 8px;gap:5px}
+  .sbar{padding:7px 16px}
+  .main{padding:16px 16px 60px}
+  .alert{margin:10px 16px 0}
+  .filters{gap:5px}
+  .fc-search{max-width:none;flex:1}
+  .sec-hd-top{margin-bottom:8px}
+
+  /* teams table compact */
+  .ht-hd{grid-template-columns:24px 28px 1fr 56px 76px;padding:7px 12px;}
+  .ht-hd span:nth-child(7){display:none}
+  .hr{grid-template-columns:24px 28px 1fr 56px 76px;padding:7px 12px;}
+  .hbar-cell{display:none}
+
+  /* standings compact */
+  .std-hd,.srow{grid-template-columns:22px 24px 1fr 40px 58px;}
+  .std-hd span:last-child,.rpct{display:none}
+  .std-hd{padding:7px 10px}
+  .srow{padding:7px 10px}
+  .rlogo img,.rlogo .ph{width:18px;height:18px}
+  .rn{font-size:11px}
+  .rsal{font-size:11px}
+
+  .pg-jump{display:none}
+  .pg-info{font-size:10px}
+  .conf-grid{margin-top:20px}
+  .conf-name{font-size:18px}
+  .mbg{padding:8px}
+  .mhd{padding:13px 15px}
+  .mbody{padding:14px}
+  .mteam-name{font-size:18px}
+  .msal-big{font-size:17px}
+
+  /* free agents / cap viewer tables — shrink fixed columns instead of
+     letting the name column get crushed to a few px wide */
+  .ht-3col,.hr-3col{grid-template-columns:20px 1fr 74px;padding:7px 10px;}
+  .ht-4col,.hr-4col{grid-template-columns:20px 1fr 84px 74px;padding:7px 10px;}
+  .hr-3col,.hr-4col{padding-top:9px;padding-bottom:9px;}
+
+}
+@media(max-width:400px){
+  /* even tighter: drop the Team column in the cap viewer entirely rather
+     than squeeze three text columns into ~340px */
+  .ht-4col,.hr-4col{grid-template-columns:20px 1fr 74px;}
+  .ht-4col span:nth-child(3),.hr-4col span:nth-child(3){display:none}
+}
+@media(max-width:360px){
+  .hero-h1{font-size:28px}
+  .hero-key .kc:nth-child(n+4){display:none}
+  .conf-name{font-size:16px}
+}
+@media(hover:none) and (pointer:coarse){
+  .hr:hover{background:transparent}
+  .hr:active{background:rgba(255,255,255,.03)}
+  .srow:hover{background:transparent}
+  .srow:active{background:rgba(255,255,255,.03)}
+  .admin-btn:hover{border-color:var(--b);color:var(--mu)}
+  .admin-btn:active{border-color:rgba(232,0,29,.4);color:var(--tx)}
+  .aroster-btn:hover{background:var(--s2);color:var(--mu);border-color:var(--b)}
+  .aroster-btn.danger:hover{background:var(--s2);border-color:var(--b);color:var(--mu)}
+  .aroster-btn:active{background:var(--s3);color:var(--tx)}
+  .aroster-btn.danger:active{background:rgba(232,0,29,.15);border-color:rgba(232,0,29,.3);color:var(--red)}
+}
+</style>
+</head>
+<body>
+
+<div class="loading-bar" id="loading-bar"></div>
+
+<!-- STATUS BAR (nav) -->
+<div class="sbar">
+  <div class="sbar-left">
+    <span class="sbar-sync" id="last-sync"></span>
+    <div class="live-chip" id="live-chip">
+      <div class="ldot"></div>
+      <span id="live-lbl">Loading</span>
+    </div>
+    <span class="nav-cap-pill">Cap <strong>$60M</strong></span>
+  </div>
+  <div class="sbar-right">
+    <button class="admin-btn" onclick="openRules()">Rules</button>
+    <button class="admin-btn" onclick="openAdmin()">Admin</button>
+  </div>
+</div>
+
+<!-- ALERT -->
+<div class="alert" id="alert"></div>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-top">
+    <div class="hero-left">
+      <div class="hero-eyebrow">Season 13 · Salary Cap Dashboard</div>
+      <div class="hero-h1"><em>RPL</em> Salary Caps</div>
+      <div class="hero-sub">
+        30 franchises
+        <span class="hdot"></span>
+        Min 10 players
+        <span class="hdot"></span>
+        Pure total roster value — no per-contract limits
+        <span class="hdot"></span>
+        All unlisted players $2M
+        <span class="hdot"></span>
+        <a href="javascript:void(0)" onclick="openRules()" style="color:var(--red);text-decoration:none;font-weight:600;">View full rules →</a>
+      </div>
+    </div>
+    <div class="hero-key">
+      <div class="kc"><div class="kc-pip safe"></div><span class="kc-code">OK</span><span class="kc-lbl">Under cap</span></div>
+      <div class="kc"><div class="kc-pip warn"></div><span class="kc-code">WARN</span><span class="kc-lbl">80–99% of cap</span></div>
+      <div class="kc"><div class="kc-pip max"></div><span class="kc-code">MAX</span><span class="kc-lbl">Exactly at cap</span></div>
+      <div class="kc"><div class="kc-pip over"></div><span class="kc-code">OVER</span><span class="kc-lbl">Over cap</span></div>
+      <div class="kc"><div class="kc-pip low"></div><span class="kc-code">&lt;10</span><span class="kc-lbl">Under min roster</span></div>
+    </div>
+  </div>
+</div>
+
+<div class="main">
+
+  <!-- VIEW TABS -->
+  <div class="view-tabs">
+    <button class="view-tab active" data-view="teams">All Teams</button>
+    <button class="view-tab" data-view="fa">Free Agents</button>
+    <button class="view-tab" data-view="summary">Cap Summary</button>
+    <button class="view-tab" data-view="cap">Player Cap Viewer</button>
+  </div>
+
+  <!-- ── TEAMS VIEW ── -->
+  <div id="view-teams" style="margin-top:0;">
+    <div class="sec-hd" style="padding-top:18px;">
+      <div class="sec-hd-top">
+        <span class="sec-title">Team Rosters</span>
+        <span class="sec-ct" id="teams-ct">30 teams</span>
+        <div class="sec-rule"></div>
+      </div>
+      <div class="filters">
+        <input class="fc fc-search" id="f-search" placeholder="Search player or team…" autocomplete="off" spellcheck="false">
+        <select class="fc" id="f-cap">
+          <option value="">All cap states</option>
+          <option value="over">Over cap</option>
+          <option value="max">At cap (exactly $60M)</option>
+          <option value="warn">Near cap (80%+)</option>
+          <option value="safe">Under cap</option>
+        </select>
+        <select class="fc" id="f-sort">
+          <option value="name">Sort: A–Z</option>
+          <option value="salary-desc">Sort: Salary ↓</option>
+          <option value="salary-asc">Sort: Salary ↑</option>
+          <option value="pct-desc">Sort: Cap% ↓</option>
+          <option value="players-desc">Sort: Players ↓</option>
+        </select>
+        <select class="fc" id="f-pp">
+          <option value="15">15 / page</option>
+          <option value="30" selected>30 / page</option>
+          <option value="60">60 / page</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="ht-wrap">
+      <div class="ht-hd">
+        <span>#</span><span></span><span>Team</span><span>Players</span><span>Salary</span><span>Cap%</span><span>Bar</span>
+      </div>
+      <div id="teams-rows"></div>
+    </div>
+    <div class="hist-empty" id="teams-empty" style="display:none">No teams match your filters.</div>
+
+    <div class="pager" id="teams-pager" style="display:none">
+      <div class="pg-info" id="teams-pg-info"></div>
+      <div class="pg-btns" id="teams-pg-btns"></div>
+      <div class="pg-jump">
+        <span class="pg-jlbl">Page</span>
+        <input class="pg-jin" id="teams-pg-jump" type="number" min="1" value="1">
+      </div>
+    </div>
+  </div>
+
+  <!-- ── FA VIEW ── -->
+  <div id="view-fa" class="hidden" style="margin-top:0;">
+    <div class="sec-hd" style="padding-top:18px;">
+      <div class="sec-hd-top">
+        <span class="sec-title">Free Agents</span>
+        <span class="sec-ct" id="fa-ct">0 players</span>
+        <div class="sec-rule"></div>
+      </div>
+      <div class="filters">
+        <input class="fc fc-search" id="f-fa-search" placeholder="Search free agent…" autocomplete="off" spellcheck="false">
+        <select class="fc" id="f-fa-sort">
+          <option value="name">Sort: A–Z</option>
+          <option value="salary-desc">Sort: Salary ↓</option>
+          <option value="salary-asc">Sort: Salary ↑</option>
+        </select>
+        <select class="fc" id="f-fa-pp">
+          <option value="25">25 / page</option>
+          <option value="50" selected>50 / page</option>
+          <option value="100">100 / page</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="ht-wrap">
+      <div class="ht-hd ht-3col" style="padding:8px 14px;">
+        <span>#</span><span>Player</span><span style="text-align:right;">Salary</span>
+      </div>
+      <div id="fa-rows"></div>
+    </div>
+    <div class="hist-empty" id="fa-empty" style="display:none">No free agents match your search.</div>
+
+    <div class="pager" id="fa-pager" style="display:none">
+      <div class="pg-info" id="fa-pg-info"></div>
+      <div class="pg-btns" id="fa-pg-btns"></div>
+      <div class="pg-jump">
+        <span class="pg-jlbl">Page</span>
+        <input class="pg-jin" id="fa-pg-jump" type="number" min="1" value="1">
+      </div>
+    </div>
+  </div>
+
+  <!-- ── CAP SUMMARY VIEW ── -->
+  <div id="view-summary" class="hidden" style="margin-top:0;">
+    <div class="conf-grid" id="cap-summary-grid" style="margin-top:20px;"></div>
+  </div>
+
+  <!-- ── PLAYER CAP VIEWER ── -->
+  <div id="view-cap" class="hidden" style="margin-top:0;">
+    <div class="sec-hd" style="padding-top:18px;">
+      <div class="sec-hd-top">
+        <span class="sec-title">Player Cap Viewer</span>
+        <span class="sec-ct" id="cap-ct">0 players</span>
+        <div class="sec-rule"></div>
+      </div>
+      <div class="filters">
+        <input class="fc fc-search" id="f-cap-search" placeholder="Search by username or permanent Discord User ID…" autocomplete="off" spellcheck="false">
+        <select class="fc" id="f-cap-sort">
+          <option value="name">Sort: A–Z</option>
+          <option value="salary-desc">Sort: Salary ↓</option>
+          <option value="salary-asc">Sort: Salary ↑</option>
+        </select>
+        <select class="fc" id="f-cap-pp">
+          <option value="25">25 / page</option>
+          <option value="50" selected>50 / page</option>
+          <option value="100">100 / page</option>
+        </select>
+      </div>
+      <div style="font-size:11px;color:var(--mu);margin-top:8px;line-height:1.5;">
+        Every player has an individual cap record tied to their permanent Discord User ID — this shows everyone,
+        whether they're currently rostered, a free agent, or on no team at all. Renaming a username never resets it.
+      </div>
+    </div>
+
+    <div class="ht-wrap">
+      <div class="ht-hd ht-4col" style="padding:8px 14px;">
+        <span>#</span><span>Player</span><span>Team</span><span style="text-align:right;">Salary Cap</span>
+      </div>
+      <div id="cap-rows"></div>
+    </div>
+    <div class="hist-empty" id="cap-empty" style="display:none">No players match your search.</div>
+
+    <div class="pager" id="cap-pager" style="display:none">
+      <div class="pg-info" id="cap-pg-info"></div>
+      <div class="pg-btns" id="cap-pg-btns"></div>
+      <div class="pg-jump">
+        <span class="pg-jlbl">Page</span>
+        <input class="pg-jin" id="cap-pg-jump" type="number" min="1" value="1">
+      </div>
+    </div>
+  </div>
+
+</div><!-- /main -->
+
+<!-- ROSTER MODAL -->
+<div class="mbg" id="modal-bg" role="dialog" aria-modal="true" aria-label="Team Roster">
+  <div class="modal">
+    <div class="mhd">
+      <div class="mteam-info" id="m-team-info"></div>
+      <div class="mmeta">
+        <span class="mbadge" id="m-badge"></span>
+        <span class="mseason" id="m-sal-display"></span>
+      </div>
+      <button class="mclose" id="m-close" aria-label="Close">✕</button>
+    </div>
+    <div class="mbody" id="m-body"></div>
+  </div>
+</div>
+
+<!-- RULES MODAL -->
+<div class="mbg" id="rules-mbg" role="dialog" aria-modal="true" aria-label="Salary Cap Rules">
+  <div class="modal" style="max-width:560px;">
+    <div class="mhd">
+      <div class="mteam-info">
+        <div>
+          <div class="mteam-name">💰 RPL Salary Cap Update</div>
+          <div class="mteam-sub">Season 13 roster rules</div>
+        </div>
+      </div>
+      <button class="mclose" id="rules-close" aria-label="Close">✕</button>
+    </div>
+    <div class="mbody" style="gap:16px;">
+      <div style="font-size:13px;color:var(--tx2);line-height:1.55;">
+        We've changed how roster rules work to make everything simpler and easier to understand.
+        Rules used to be based on <strong style="color:var(--tx)">specific contract combinations</strong>
+        (like limiting certain $18M or $20M pairings). That caused confusion and weird situations where
+        some lineups were banned even though they were actually weaker than allowed ones.
+      </div>
+
+      <div>
+        <div class="staff-section-title">💵 Available Contracts</div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;">
+          <span class="mbadge safe" style="font-size:12px;padding:5px 10px;">$2M</span>
+          <span class="mbadge safe" style="font-size:12px;padding:5px 10px;">$5M</span>
+          <span class="mbadge safe" style="font-size:12px;padding:5px 10px;">$10M</span>
+          <span class="mbadge safe" style="font-size:12px;padding:5px 10px;">$12M</span>
+          <span class="mbadge safe" style="font-size:12px;padding:5px 10px;">$15M</span>
+          <span class="mbadge safe" style="font-size:12px;padding:5px 10px;">$18M</span>
+          <span class="mbadge safe" style="font-size:12px;padding:5px 10px;">$20M</span>
+          <span class="mbadge safe" style="font-size:12px;padding:5px 10px;">$22M</span>
+        </div>
+      </div>
+
+      <div>
+        <div class="staff-section-title">✅ Examples</div>
+        <div class="bstbl-wrap">
+          <table class="bstbl">
+            <tbody>
+              <tr><td>$22M + $18M + $10M + $5M + $2M</td><td class="pts">$57M</td><td style="color:var(--win);">✔️</td></tr>
+              <tr><td>$20M + $18M + $15M + $5M</td><td class="pts">$58M</td><td style="color:var(--win);">✔️</td></tr>
+              <tr><td>$22M + $20M + $18M + $2M</td><td style="color:var(--lose);">$62M</td><td style="color:var(--lose);">❌ over cap</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div>
+        <div class="staff-section-title">⚠️ Important Change</div>
+        <div style="font-size:13px;color:var(--tx2);line-height:1.55;">
+          We are <strong style="color:var(--tx)">no longer using individual contract restrictions</strong>
+          (like "max 18M players" or "max 20M combinations"). It's now purely about
+          <strong style="color:var(--tx)">total roster value</strong>.
+        </div>
+      </div>
+
+      <div class="mcap-section" style="text-align:center;padding:12px;background:var(--s2);border:1px solid var(--b);border-radius:10px;">
+        <span style="font-size:11px;color:var(--mu);letter-spacing:.08em;text-transform:uppercase;">Salary cap still remains</span>
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:.04em;color:#fff;">$60M</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ADMIN PANEL -->
+<div class="admin-overlay" id="admin-overlay" onclick="closeAdmin()"></div>
+<div class="admin-panel" id="admin-panel">
+  <div class="admin-handle"></div>
+  <div class="admin-header">
+    <div class="admin-header-left">
+      <div class="admin-title">Admin Panel</div>
+      <div class="admin-sub" id="admin-sub-text">Enter password to unlock</div>
+    </div>
+    <button class="admin-close" onclick="closeAdmin()">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+        <path d="M1 1l12 12M13 1L1 13" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+      </svg>
+    </button>
+  </div>
+  <div id="admin-lock-screen" class="admin-lock">
+    <div class="admin-lock-label">Password</div>
+    <div class="admin-lock-row">
+      <input type="password" class="admin-lock-input" id="admin-pass" placeholder="Enter admin password" onkeydown="if(event.key==='Enter')unlockAdmin()">
+      <button class="admin-lock-btn" onclick="unlockAdmin()">Unlock</button>
+    </div>
+  </div>
+  <div id="admin-unlocked" class="hidden" style="display:none;flex-direction:column;flex:1;min-height:0;">
+    <div class="admin-tabs">
+      <button class="admin-tab active" data-atab="roster" onclick="switchAdminTab('roster',this)">Roster</button>
+      <button class="admin-tab" data-atab="add" onclick="switchAdminTab('add',this)">Add Player</button>
+      <button class="admin-tab" data-atab="caps" onclick="switchAdminTab('caps',this)">Player Caps</button>
+      <button class="admin-tab" data-atab="tools" onclick="switchAdminTab('tools',this)">Tools</button>
+    </div>
+    <!-- ROSTER TAB -->
+    <div id="atab-roster" class="admin-body">
+      <div class="admin-search-bar">
+        <div class="admin-search-inner">
+          <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><circle cx="6" cy="6" r="4.5" stroke="currentColor" stroke-width="1.3"/><path d="M9.5 9.5L12.5 12.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+          <input type="text" id="admin-search" placeholder="Filter by name or team…" oninput="renderAdminRoster()">
+        </div>
+      </div>
+      <div id="admin-roster-table"></div>
+    </div>
+    <!-- ADD PLAYER TAB -->
+    <div id="atab-add" class="admin-body hidden">
+      <div class="add-form">
+        <div class="add-field">
+          <label>Username</label>
+          <input type="text" id="add-name" placeholder="Exact Discord username" autocomplete="off">
+        </div>
+        <div class="add-field">
+          <label>Team</label>
+          <select id="add-team">
+            <option value="Free Agent">Free Agent</option>
+            <option value="Atlanta Hawks">Atlanta Hawks</option>
+            <option value="Boston Celtics">Boston Celtics</option>
+            <option value="Brooklyn Nets">Brooklyn Nets</option>
+            <option value="Charlotte Hornets">Charlotte Hornets</option>
+            <option value="Chicago Bulls">Chicago Bulls</option>
+            <option value="Cleveland Cavaliers">Cleveland Cavaliers</option>
+            <option value="Dallas Mavericks">Dallas Mavericks</option>
+            <option value="Denver Nuggets">Denver Nuggets</option>
+            <option value="Detroit Pistons">Detroit Pistons</option>
+            <option value="Golden State Warriors">Golden State Warriors</option>
+            <option value="Houston Rockets">Houston Rockets</option>
+            <option value="Indiana Pacers">Indiana Pacers</option>
+            <option value="LA Clippers">LA Clippers</option>
+            <option value="Los Angeles Lakers">Los Angeles Lakers</option>
+            <option value="Memphis Grizzlies">Memphis Grizzlies</option>
+            <option value="Miami Heat">Miami Heat</option>
+            <option value="Milwaukee Bucks">Milwaukee Bucks</option>
+            <option value="Minnesota Timberwolves">Minnesota Timberwolves</option>
+            <option value="New Orleans Pelicans">New Orleans Pelicans</option>
+            <option value="New York Knicks">New York Knicks</option>
+            <option value="Oklahoma City Thunder">Oklahoma City Thunder</option>
+            <option value="Orlando Magic">Orlando Magic</option>
+            <option value="Philadelphia 76ers">Philadelphia 76ers</option>
+            <option value="Phoenix Suns">Phoenix Suns</option>
+            <option value="Portland Trail Blazers">Portland Trail Blazers</option>
+            <option value="Sacramento Kings">Sacramento Kings</option>
+            <option value="San Antonio Spurs">San Antonio Spurs</option>
+            <option value="Toronto Raptors">Toronto Raptors</option>
+            <option value="Utah Jazz">Utah Jazz</option>
+            <option value="Washington Wizards">Washington Wizards</option>
+          </select>
+        </div>
+        <div class="add-field">
+          <label>Salary</label>
+          <div class="aroster-salary-stepper" style="border-radius:10px;">
+            <button class="salary-step-btn" style="width:36px;height:44px;font-size:18px;" onclick="stepAddSalary(-1)" title="Decrease">−</button>
+            <span class="aroster-salary-display" id="add-salary-display" data-salary="2000000" style="flex:1;line-height:44px;font-size:16px;">$2M</span>
+            <button class="salary-step-btn" style="width:36px;height:44px;font-size:18px;" onclick="stepAddSalary(1)" title="Increase">+</button>
+          </div>
+        </div>
+        <button class="add-submit" onclick="addPlayer()">Add Player</button>
+      </div>
+    </div>
+    <!-- TOOLS TAB -->
+    <div id="atab-tools" class="admin-body hidden">
+      <div class="tools-section">
+        <div class="tool-card">
+          <div class="tool-icon amber">🔄</div>
+          <div class="tool-info">
+            <div class="tool-name">Sync Discord Roles</div>
+            <div class="tool-desc">Pull latest team assignments from Discord roles. Updates all player teams and adds/removes members automatically.</div>
+            <button class="tool-btn amber" id="sync-btn" onclick="syncDiscord()">Run Sync Now</button>
+          </div>
+        </div>
+        <div class="tool-card">
+          <div class="tool-icon red">🧹</div>
+          <div class="tool-info">
+            <div class="tool-name">Purge Staff Entries</div>
+            <div class="tool-desc">Remove any coaches who appear in the salary cap roster. Runs a cross-check against Discord roles.</div>
+            <button class="tool-btn red" id="purge-btn" onclick="purgeStaff()">Purge Staff</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div id="admin-result" class="admin-result"></div>
+  </div>
+</div>
+
+<div id="toasts"></div>
+
+<script>
+/* ══════════════════════════════════════════
+   CONSTANTS & STATE
+══════════════════════════════════════════ */
+const CAP = 60000000;
+const MIN_ROSTER = 10;
+
+const teamList = [
+  "Atlanta Hawks","Boston Celtics","Brooklyn Nets","Charlotte Hornets","Chicago Bulls",
+  "Cleveland Cavaliers","Dallas Mavericks","Denver Nuggets","Detroit Pistons","Golden State Warriors",
+  "Houston Rockets","Indiana Pacers","LA Clippers","Los Angeles Lakers","Memphis Grizzlies",
+  "Miami Heat","Milwaukee Bucks","Minnesota Timberwolves","New Orleans Pelicans","New York Knicks",
+  "Oklahoma City Thunder","Orlando Magic","Philadelphia 76ers","Phoenix Suns","Portland Trail Blazers",
+  "Sacramento Kings","San Antonio Spurs","Toronto Raptors","Utah Jazz","Washington Wizards"
+];
+
+const logos = {
+  "Atlanta Hawks":"https://a.espncdn.com/i/teamlogos/nba/500/atl.png",
+  "Boston Celtics":"https://a.espncdn.com/i/teamlogos/nba/500/bos.png",
+  "Brooklyn Nets":"https://a.espncdn.com/i/teamlogos/nba/500/bkn.png",
+  "Charlotte Hornets":"https://a.espncdn.com/i/teamlogos/nba/500/cha.png",
+  "Chicago Bulls":"https://a.espncdn.com/i/teamlogos/nba/500/chi.png",
+  "Cleveland Cavaliers":"https://a.espncdn.com/i/teamlogos/nba/500/cle.png",
+  "Dallas Mavericks":"https://a.espncdn.com/i/teamlogos/nba/500/dal.png",
+  "Denver Nuggets":"https://a.espncdn.com/i/teamlogos/nba/500/den.png",
+  "Detroit Pistons":"https://a.espncdn.com/i/teamlogos/nba/500/det.png",
+  "Golden State Warriors":"https://a.espncdn.com/i/teamlogos/nba/500/gs.png",
+  "Houston Rockets":"https://a.espncdn.com/i/teamlogos/nba/500/hou.png",
+  "Indiana Pacers":"https://a.espncdn.com/i/teamlogos/nba/500/ind.png",
+  "LA Clippers":"https://a.espncdn.com/i/teamlogos/nba/500/lac.png",
+  "Los Angeles Lakers":"https://a.espncdn.com/i/teamlogos/nba/500/lal.png",
+  "Memphis Grizzlies":"https://a.espncdn.com/i/teamlogos/nba/500/mem.png",
+  "Miami Heat":"https://a.espncdn.com/i/teamlogos/nba/500/mia.png",
+  "Milwaukee Bucks":"https://a.espncdn.com/i/teamlogos/nba/500/mil.png",
+  "Minnesota Timberwolves":"https://a.espncdn.com/i/teamlogos/nba/500/min.png",
+  "New Orleans Pelicans":"https://a.espncdn.com/i/teamlogos/nba/500/no.png",
+  "New York Knicks":"https://a.espncdn.com/i/teamlogos/nba/500/ny.png",
+  "Oklahoma City Thunder":"https://a.espncdn.com/i/teamlogos/nba/500/okc.png",
+  "Orlando Magic":"https://a.espncdn.com/i/teamlogos/nba/500/orl.png",
+  "Philadelphia 76ers":"https://a.espncdn.com/i/teamlogos/nba/500/phi.png",
+  "Phoenix Suns":"https://a.espncdn.com/i/teamlogos/nba/500/phx.png",
+  "Portland Trail Blazers":"https://a.espncdn.com/i/teamlogos/nba/500/por.png",
+  "Sacramento Kings":"https://a.espncdn.com/i/teamlogos/nba/500/sac.png",
+  "San Antonio Spurs":"https://a.espncdn.com/i/teamlogos/nba/500/sa.png",
+  "Toronto Raptors":"https://a.espncdn.com/i/teamlogos/nba/500/tor.png",
+  "Utah Jazz":"https://a.espncdn.com/i/teamlogos/nba/500/utah.png",
+  "Washington Wizards":"https://a.espncdn.com/i/teamlogos/nba/500/wsh.png"
+};
+
+let allPlayers = [];
+let staffByTeam = {};
+let currentView = 'teams';
+let capPg = 1;
+let teamsPg = 1, faPg = 1;
+let adminUnlocked = false;
+let currentAdminTab = 'roster';
+let prevTeamData = null;
+
+/* ══════════════════════════════════════════
+   UTILITIES
+══════════════════════════════════════════ */
+function fmt(n) {
+  if (n >= 1000000) return '$' + (n / 1000000).toFixed(n % 1000000 === 0 ? 0 : 1) + 'M';
+  return '$' + n.toLocaleString();
+}
+
+function fmtSalaryShort(v) {
+  return '$' + (v / 1000000) + 'M';
+}
+
+// Single source of truth for a team's cap bucket. A team exactly at the cap
+// (pct === 100, i.e. total === CAP) is "max" — at the cap, not over it. Only
+// a team whose total salary exceeds the cap (pct > 100, total > CAP) is
+// "over". This must stay in sync with capLabel below.
+function capStatus(pct) {
+  if (pct > 100) return 'over';
+  if (pct === 100) return 'max';
+  if (pct >= 80) return 'warn';
+  return 'safe';
+}
+
+function capLabel(pct) {
+  if (pct > 100) return 'OVER CAP';
+  if (pct === 100) return 'MAX CAP';
+  if (pct >= 80) return 'NEAR CAP';
+  return 'OK';
+}
+
+// Kept as an alias for callers written against the old name — delegates
+// straight to capStatus so the two buckets can never drift apart again.
+function capVisualStatus(pct) {
+  return capStatus(pct);
+}
+
+/* ── CAP HEALTH TIER SCALE ──
+   Independent, finer-grained color scale layered on top of the existing
+   over/warn/safe grouping. Buckets are in millions of committed salary
+   (cap = $60M), so a team's raw spend maps directly onto 0–60+. */
+const CAP_TIERS = [
+  { id: 1, cls: 'tier-1', max: 10, label: 'Very Healthy', desc: '$0M – $10M committed' },
+  { id: 2, cls: 'tier-2', max: 20, label: 'Healthy',       desc: '$11M – $20M committed' },
+  { id: 3, cls: 'tier-3', max: 30, label: 'Moderate',      desc: '$21M – $30M committed' },
+  { id: 4, cls: 'tier-4', max: 40, label: 'Getting High',  desc: '$31M – $40M committed' },
+  { id: 5, cls: 'tier-5', max: 50, label: 'High',          desc: '$41M – $50M committed' },
+  { id: 6, cls: 'tier-6', max: 60, label: 'Very High',     desc: '$51M – $60M committed' },
+  { id: 7, cls: 'tier-7', max: Infinity, label: 'Critical', desc: '$61M+ committed' },
+];
+
+// totalDollars -> tier object. Buckets are evaluated against the salary
+// expressed in millions (matches the $60M cap scale 1:1).
+function capTier(totalDollars) {
+  const m = totalDollars / 1000000;
+  return CAP_TIERS.find(t => m <= t.max) || CAP_TIERS[CAP_TIERS.length - 1];
+}
+
+function timeAgo(iso) {
+  if (!iso) return '';
+  const s = Math.floor((Date.now() - new Date(iso)) / 1000);
+  if (s < 60) return `${s}s ago`;
+  if (s < 3600) return `${Math.floor(s / 60)}m ago`;
+  if (s < 86400) return `${Math.floor(s / 3600)}h ago`;
+  return `${Math.floor(s / 86400)}d ago`;
+}
+
+function setLoading(on) {
+  const bar = document.getElementById('loading-bar');
+  bar.style.width = on ? '70%' : '100%';
+  if (!on) setTimeout(() => bar.style.width = '0%', 300);
+}
+
+function setLive(v) {
+  const c = document.getElementById('live-chip'), l = document.getElementById('live-lbl');
+  c.classList.toggle('on', v);
+  l.textContent = v ? 'Live' : 'Offline';
+}
+
+function setSync(iso) {
+  document.getElementById('last-sync').textContent = iso ? `Synced ${timeAgo(iso)}` : '';
+}
+
+function toast(msg, c = 'red', dur = 5000) {
+  const t = Object.assign(document.createElement('div'), { className: `toast ${c}`, textContent: msg });
+  document.getElementById('toasts').prepend(t);
+  setTimeout(() => { t.classList.add('out'); setTimeout(() => t.remove(), 240); }, dur);
+}
+
+/* ══════════════════════════════════════════
+   DATA LOADING
+══════════════════════════════════════════ */
+async function loadPlayers() {
+  setLoading(true);
+  try {
+    const [playersRes, staffRes] = await Promise.all([
+      fetch('/api/players'),
+      fetch('/api/staff')
+    ]);
+    allPlayers = await playersRes.json();
+    const staffData = await staffRes.json();
+    staffByTeam = {};
+    (staffData.owners || []).forEach(p => {
+      if (!p.team) return;
+      if (!staffByTeam[p.team]) staffByTeam[p.team] = { owners: [], coaches: [] };
+      staffByTeam[p.team].owners.push(p);
+    });
+    (staffData.coaches || []).forEach(p => {
+      if (!p.team) return;
+      if (!staffByTeam[p.team]) staffByTeam[p.team] = { owners: [], coaches: [] };
+      staffByTeam[p.team].coaches.push(p);
+    });
+    setLive(true);
+    setSync(new Date().toISOString());
+    document.getElementById('alert').classList.remove('on');
+  } catch (e) {
+    setLive(false);
+    const a = document.getElementById('alert');
+    a.textContent = '⚠ Could not load roster data — check your connection.';
+    a.classList.add('on');
+    toast('Failed to load roster data', 'red');
+  }
+  setLoading(false);
+  render();
+}
+
+/* ══════════════════════════════════════════
+   DATA HELPERS
+══════════════════════════════════════════ */
+function groupByTeam(players) {
+  const map = {};
+  teamList.forEach(t => map[t] = []);
+  players.forEach(p => { if (map[p.team]) map[p.team].push(p); });
+  return map;
+}
+
+function buildTeamData() {
+  const grouped = groupByTeam(allPlayers);
+  return teamList.map(team => {
+    const players = grouped[team] || [];
+    const total = players.reduce((s, p) => s + p.salary, 0);
+    const pct = (total / CAP) * 100;
+    const status = capStatus(pct);
+    const tier = capTier(total);
+    return { team, players, total, pct, status, tier };
+  });
+}
+
+/* ══════════════════════════════════════════
+   FILTERING & SORTING — TEAMS
+══════════════════════════════════════════ */
+function getTeamsFiltered() {
+  const q = (document.getElementById('f-search')?.value || '').toLowerCase();
+  const capF = document.getElementById('f-cap')?.value || '';
+  const sortF = document.getElementById('f-sort')?.value || 'name';
+
+  let data = buildTeamData();
+
+  // filter
+  if (q) {
+    data = data.filter(d => {
+      const matchTeam = d.team.toLowerCase().includes(q);
+      const matchPlayer = d.players.some(p => p.name.toLowerCase().includes(q));
+      return matchTeam || matchPlayer;
+    });
+  }
+  if (capF) {
+    data = data.filter(d => d.status === capF);
+  }
+
+  // sort
+  if (sortF === 'salary-desc') data.sort((a, b) => b.total - a.total);
+  else if (sortF === 'salary-asc') data.sort((a, b) => a.total - b.total);
+  else if (sortF === 'pct-desc') data.sort((a, b) => b.pct - a.pct);
+  else if (sortF === 'players-desc') data.sort((a, b) => b.players.length - a.players.length);
+  else data.sort((a, b) => a.team.localeCompare(b.team));
+
+  return data;
+}
+
+/* ══════════════════════════════════════════
+   RENDER — TEAMS TABLE
+══════════════════════════════════════════ */
+function renderTeams() {
+  const filt = getTeamsFiltered();
+  const pp = parseInt(document.getElementById('f-pp')?.value || '30', 10);
+  const total = Math.max(1, Math.ceil(filt.length / pp));
+  if (teamsPg > total) teamsPg = total;
+
+  document.getElementById('teams-ct').textContent = `${filt.length} team${filt.length !== 1 ? 's' : ''}`;
+
+  const start = (teamsPg - 1) * pp;
+  const slice = filt.slice(start, start + pp);
+  const rowsEl = document.getElementById('teams-rows');
+  const emptyEl = document.getElementById('teams-empty');
+
+  if (!filt.length) {
+    rowsEl.innerHTML = '';
+    emptyEl.style.display = 'block';
+    document.getElementById('teams-pager').style.display = 'none';
+    return;
+  }
+  emptyEl.style.display = 'none';
+
+  // detect changes for flash
+  const changed = new Set();
+  if (prevTeamData) {
+    slice.forEach(d => {
+      const prev = prevTeamData.find(p => p.team === d.team);
+      if (!prev || prev.total !== d.total || prev.players.length !== d.players.length) changed.add(d.team);
+    });
+  }
+
+  rowsEl.innerHTML = slice.map((d, i) => {
+    const num = start + i + 1;
+    const pctCapped = Math.min(d.pct, 100);
+    const st = capVisualStatus(d.pct);
+    const fl = changed.has(d.team) ? ' flash-row' : '';
+    const logoUrl = logos[d.team] || '';
+    const lowRoster = d.players.length < MIN_ROSTER;
+    return `<div class="hr cs-${st}${fl}" role="button" tabindex="0" data-team="${encodeURIComponent(d.team)}">
+      <span class="hn">${num}</span>
+      <span class="hlogo">${logoUrl ? `<img src="${logoUrl}" alt="" loading="lazy">` : ''}</span>
+      <span class="hname">
+        <div class="hname-main">${d.team}</div>
+        <div class="hname-abbr">${d.players.length} player${d.players.length !== 1 ? 's' : ''}${lowRoster ? ' · ⚠ under min' : ''}</div>
+      </span>
+      <span class="hplayers${lowRoster ? ' low' : ''}">${d.players.length}</span>
+      <span class="hsalary ${st}">${fmt(d.total)}</span>
+      <span class="hpct ${st}">${d.pct.toFixed(1)}%</span>
+      <span class="hbar-cell">
+        <span class="hbar-track"><span class="hbar-fill ${st}" style="width:${pctCapped.toFixed(1)}%"></span></span>
+        <span class="harrow">↗</span>
+      </span>
+    </div>`;
+  }).join('');
+
+  // attach click
+  rowsEl.querySelectorAll('.hr').forEach(el => {
+    const team = decodeURIComponent(el.dataset.team);
+    el.addEventListener('click', () => openTeamModal(team));
+    el.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') openTeamModal(team); });
+  });
+
+  prevTeamData = filt.map(d => ({ team: d.team, total: d.total, players: [...d.players] }));
+
+  renderPager('teams', filt.length, pp, total);
+}
+
+/* ══════════════════════════════════════════
+   RENDER — FREE AGENTS
+══════════════════════════════════════════ */
+function getFAFiltered() {
+  const q = (document.getElementById('f-fa-search')?.value || '').toLowerCase();
+  const sortF = document.getElementById('f-fa-sort')?.value || 'name';
+  let data = allPlayers.filter(p => p.team === 'Free Agent');
+  if (q) data = data.filter(p => p.name.toLowerCase().includes(q));
+  if (sortF === 'salary-desc') data.sort((a, b) => b.salary - a.salary);
+  else if (sortF === 'salary-asc') data.sort((a, b) => a.salary - b.salary);
+  else data.sort((a, b) => a.name.localeCompare(b.name));
+  return data;
+}
+
+function renderFA() {
+  const filt = getFAFiltered();
+  const pp = parseInt(document.getElementById('f-fa-pp')?.value || '50', 10);
+  const total = Math.max(1, Math.ceil(filt.length / pp));
+  if (faPg > total) faPg = total;
+
+  document.getElementById('fa-ct').textContent = `${filt.length} player${filt.length !== 1 ? 's' : ''}`;
+
+  const start = (faPg - 1) * pp;
+  const slice = filt.slice(start, start + pp);
+  const rowsEl = document.getElementById('fa-rows');
+  const emptyEl = document.getElementById('fa-empty');
+
+  if (!filt.length) {
+    rowsEl.innerHTML = '';
+    emptyEl.style.display = 'block';
+    document.getElementById('fa-pager').style.display = 'none';
+    return;
+  }
+  emptyEl.style.display = 'none';
+
+  rowsEl.innerHTML = slice.map((p, i) => `
+    <div class="hr hr-3col" style="cursor:default;">
+      <span class="hn">${start + i + 1}</span>
+      <span style="font-size:13px;font-weight:500;color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${p.name}</span>
+      <span style="text-align:right;font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;color:var(--red);white-space:nowrap;">${fmt(p.salary)}</span>
+    </div>`).join('');
+
+  renderPager('fa', filt.length, pp, total);
+}
+
+/* ══════════════════════════════════════════
+   RENDER — CAP SUMMARY (standings-style)
+══════════════════════════════════════════ */
+/* ══════════════════════════════════════════
+   PLAYER CAP VIEWER
+   Lists EVERY player in the system — rostered, free agent, or on no
+   team at all — pulling from /api/player-cap, which reads the same
+   'players' store used everywhere else on the site and is keyed
+   permanently by Discord User ID, independent of live roster status.
+   Layout/behavior (search + sort + pagination) mirrors the Free Agents
+   tab for consistency.
+══════════════════════════════════════════ */
+let allCapPlayers = [];
+let capPlayersLoaded = false;
+let capLoadPromise = null;
+
+function capTeamLabel(team) {
+  if (team && team !== 'Free Agent') return team;
+  if (team === 'Free Agent') return 'Free Agent';
+  return 'No team';
+}
+
+async function loadCapPlayers() {
+  if (capLoadPromise) return capLoadPromise;
+  capLoadPromise = (async () => {
+    try {
+      const res = await fetch('/api/player-cap');
+      const data = await res.json();
+      allCapPlayers = data.results || [];
+      capPlayersLoaded = true;
+    } catch (e) {
+      allCapPlayers = [];
+      document.getElementById('cap-empty').style.display = 'block';
+      document.getElementById('cap-empty').textContent = 'Network error — could not load players right now.';
+    }
+  })();
+  return capLoadPromise;
+}
+
+function getCapFiltered() {
+  const q = (document.getElementById('f-cap-search')?.value || '').toLowerCase();
+  const sortF = document.getElementById('f-cap-sort')?.value || 'name';
+  let data = allCapPlayers.slice();
+  if (q) data = data.filter(p =>
+    p.name.toLowerCase().includes(q) ||
+    (p.discordId && p.discordId.includes(q))
+  );
+  if (sortF === 'salary-desc') data.sort((a, b) => (b.salary ?? -Infinity) - (a.salary ?? -Infinity));
+  else if (sortF === 'salary-asc') data.sort((a, b) => (a.salary ?? Infinity) - (b.salary ?? Infinity));
+  else data.sort((a, b) => a.name.localeCompare(b.name));
+  return data;
+}
+
+async function renderCapView() {
+  if (!capPlayersLoaded) {
+    document.getElementById('cap-rows').innerHTML = '';
+    document.getElementById('cap-ct').textContent = 'Loading…';
+    await loadCapPlayers();
+  }
+  renderCapRows();
+}
+
+function renderCapRows() {
+  const filt = getCapFiltered();
+  const pp = parseInt(document.getElementById('f-cap-pp')?.value || '50', 10);
+  const total = Math.max(1, Math.ceil(filt.length / pp));
+  if (capPg > total) capPg = total;
+
+  document.getElementById('cap-ct').textContent = `${filt.length} player${filt.length !== 1 ? 's' : ''}`;
+
+  const start = (capPg - 1) * pp;
+  const slice = filt.slice(start, start + pp);
+  const rowsEl = document.getElementById('cap-rows');
+  const emptyEl = document.getElementById('cap-empty');
+
+  if (!filt.length) {
+    rowsEl.innerHTML = '';
+    emptyEl.style.display = 'block';
+    emptyEl.textContent = capPlayersLoaded ? 'No players match your search.' : 'Loading players…';
+    document.getElementById('cap-pager').style.display = 'none';
+    return;
+  }
+  emptyEl.style.display = 'none';
+
+  rowsEl.innerHTML = slice.map((p, i) => `
+    <div class="hr hr-4col" style="cursor:default;">
+      <span class="hn">${start + i + 1}</span>
+      <span style="font-size:13px;font-weight:500;color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${p.name}</span>
+      <span style="font-size:12px;color:var(--mu);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${capTeamLabel(p.team)}</span>
+      <span style="text-align:right;font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;color:var(--red);white-space:nowrap;">${p.salary == null ? 'Not set' : fmt(p.salary)}</span>
+    </div>`).join('');
+
+  renderPager('cap', filt.length, pp, total);
+}
+
+document.getElementById('f-cap-search')?.addEventListener('input', () => { capPg = 1; renderCapRows(); });
+document.getElementById('f-cap-sort')?.addEventListener('change', () => { capPg = 1; renderCapRows(); });
+document.getElementById('f-cap-pp')?.addEventListener('change', () => { capPg = 1; renderCapRows(); });
+
+function renderSummary() {
+  const data = buildTeamData();
+  const over = data.filter(d => d.status === 'over').sort((a, b) => b.total - a.total);
+  const atCap = data.filter(d => d.status === 'max').sort((a, b) => b.total - a.total);
+  const warn = data.filter(d => d.status === 'warn').sort((a, b) => b.total - a.total);
+  const safe = data.filter(d => d.status === 'safe').sort((a, b) => b.total - a.total);
+  const fa = allPlayers.filter(p => p.team === 'Free Agent').sort((a, b) => b.salary - a.salary);
+
+  const grid = document.getElementById('cap-summary-grid');
+
+  /* ── overview stats ── */
+  const leagueTotal = data.reduce((s, d) => s + d.total, 0);
+  const leagueCapacity = CAP * data.length;
+  const avgPct = data.length ? data.reduce((s, d) => s + d.pct, 0) / data.length : 0;
+  const underMin = data.filter(d => d.players.length < MIN_ROSTER).length;
+  const faTotal = fa.reduce((s, p) => s + p.salary, 0);
+  const topSpender = data.length ? [...data].sort((a, b) => b.total - a.total)[0] : null;
+  const mostRoom = data.length ? [...data].sort((a, b) => a.total - b.total)[0] : null;
+
+  const ovCard = (lbl, val, sub, accentVar) => `
+    <div class="ov-card" style="--ov-accent:${accentVar}">
+      <div class="ov-lbl">${lbl}</div>
+      <div class="ov-val">${val}</div>
+      ${sub ? `<div class="ov-sub">${sub}</div>` : ''}
+    </div>`;
+
+  const overviewHtml = `
+    <div class="cs-section">
+      <div class="cs-section-title">League Overview</div>
+      <div class="ov-grid">
+        ${ovCard('League Spend', fmt(leagueTotal), `of ${fmt(leagueCapacity)} capacity`, 'var(--bl)')}
+        ${ovCard('Avg Cap Usage', avgPct.toFixed(1) + '%', `across ${data.length} teams`, 'var(--am)')}
+        ${ovCard('Over Cap', over.length, over.length ? over.map(d => d.team.split(' ').pop()).slice(0,2).join(', ') + (over.length > 2 ? '…' : '') : 'no teams over', 'var(--red)')}
+        ${ovCard('At Cap', atCap.length, atCap.length ? `exactly ${fmt(CAP)}` : 'no teams at exact cap', 'var(--max)')}
+        ${ovCard('Near Cap', warn.length, '80–99% of $60M', 'var(--am)')}
+        ${ovCard('Under Min Roster', underMin, `fewer than ${MIN_ROSTER} players`, 'var(--red)')}
+        ${ovCard('Free Agents', fa.length, fa.length ? `${fmt(faTotal)} in unsigned value` : 'no free agents', 'var(--bl)')}
+      </div>
+    </div>`;
+
+  /* ── cap health tier distribution ── */
+  const tierCounts = CAP_TIERS.map(t => ({
+    ...t,
+    count: data.filter(d => d.tier.id === t.id).length,
+  }));
+  const tierLegendHtml = `
+    <div class="cs-section">
+      <div class="cs-section-title">Cap Health Distribution</div>
+      <div class="tier-legend">
+        ${tierCounts.map(t => `
+          <div class="tier-chip tc-${t.id}" title="${t.desc}">
+            <span class="tier-dot ${t.cls}"></span>
+            <span class="tc-name">${t.label}</span>
+            <span class="tc-count">${t.count}</span>
+          </div>`).join('')}
+      </div>
+    </div>`;
+
+  /* ── quick highlights row ── */
+  const highlightsHtml = (topSpender || mostRoom) ? `
+    <div class="cs-section">
+      <div class="cs-badge-row">
+        ${topSpender ? `<span class="cs-mini-badge">🔺 Highest Spend: <strong>${topSpender.team}</strong> (${fmt(topSpender.total)})</span>` : ''}
+        ${mostRoom ? `<span class="cs-mini-badge">🔻 Most Cap Room: <strong>${mostRoom.team}</strong> (${fmt(CAP - mostRoom.total)} left)</span>` : ''}
+        <span class="cs-mini-badge">📋 Roster Compliance: <strong>${data.length - underMin}/${data.length}</strong> teams at min roster</span>
+      </div>
+    </div>`
+    : '';
+
+  const stdTable = (teams, label, tagCls) => {
+    if (!teams.length) return '';
+    const rows = teams.map((d, i) => {
+      const sc = capVisualStatus(d.pct);
+      const tier = d.tier;
+      const logoUrl = logos[d.team] || '';
+      const lowRoster = d.players.length < MIN_ROSTER;
+      return `<div class="srow s-${sc}" role="button" tabindex="0" data-team="${encodeURIComponent(d.team)}">
+        <span class="rrank">${i + 1}</span>
+        <span class="rlogo">${logoUrl ? `<img src="${logoUrl}" alt="" loading="lazy">` : '<div class="ph"></div>'}</span>
+        <span>
+          <div class="rn">${d.team}</div>
+          <div class="rmeta">
+            <span class="rabb">${d.players.length}P</span>
+            ${d.status !== 'safe' ? `<span class="rbadge ${sc}">${capLabel(d.pct)}</span>` : ''}
+            ${lowRoster ? `<span class="rbadge over">⚠MIN</span>` : ''}
+          </div>
+        </span>
+        <span class="rplayers${lowRoster ? ' low' : ''}">${d.players.length}</span>
+        <span class="rsal-wrap" title="${tier.label} · ${tier.desc}">
+          <span class="tier-dot ${tier.cls}"></span>
+          <span class="rsal ${tier.cls}">${fmt(d.total)}</span>
+        </span>
+        <span class="rpct ${sc}">${d.pct.toFixed(1)}%</span>
+      </div>`;
+    }).join('');
+
+    return `<div>
+      <div class="conf-hd">
+        <span class="conf-tag ${tagCls}">${label.toUpperCase()}</span>
+        <span class="conf-name">${label}</span>
+      </div>
+      <div class="std-wrap">
+        <div class="std-hd"><span>#</span><span></span><span>Team</span><span>PLY</span><span>Salary</span><span>Cap%</span></div>
+        ${rows}
+      </div>
+    </div>`;
+  };
+
+  let faHtml = '';
+  if (fa.length) {
+    faHtml = `<div style="grid-column:1/-1;">
+      <div class="conf-hd">
+        <span class="conf-tag fa">FA</span>
+        <span class="conf-name">Free Agents (${fa.length})</span>
+      </div>
+      <div class="std-wrap">
+        <div class="fa-mini-grid" style="padding:8px 12px;gap:4px;">
+          ${fa.map(p => `<div class="fa-mini-row">
+            <span class="fa-mini-name">${p.name}</span>
+            <span class="fa-mini-sal">${fmt(p.salary)}</span>
+          </div>`).join('')}
+        </div>
+      </div>
+    </div>`;
+  }
+
+  grid.innerHTML =
+    overviewHtml +
+    tierLegendHtml +
+    highlightsHtml +
+    stdTable(over, 'Over Cap', 'over') +
+    stdTable(atCap, 'At Cap', 'max') +
+    stdTable(warn, 'Near Cap', 'warn') +
+    stdTable(safe, 'Under Cap', 'safe') +
+    faHtml;
+
+  // flash detection
+  setTimeout(() => grid.querySelectorAll('.srow.flash').forEach(r => r.classList.remove('flash')), 1900);
+
+  // click handlers
+  grid.querySelectorAll('.srow[data-team]').forEach(el => {
+    const team = decodeURIComponent(el.dataset.team);
+    el.addEventListener('click', () => openTeamModal(team));
+    el.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') openTeamModal(team); });
+  });
+}
+
+/* ══════════════════════════════════════════
+   PAGER (shared)
+══════════════════════════════════════════ */
+function renderPager(id, total, pp, pages) {
+  const pagerEl = document.getElementById(`${id}-pager`);
+  const pg = id === 'teams' ? teamsPg : (id === 'cap' ? capPg : faPg);
+  const start = (pg - 1) * pp;
+
+  pagerEl.style.display = 'flex';
+  document.getElementById(`${id}-pg-info`).textContent =
+    `${start + 1}–${Math.min(start + pp, total)} of ${total}`;
+
+  const btnsEl = document.getElementById(`${id}-pg-btns`);
+  const W = 2; let h = '';
+  h += `<button class="pb" id="${id}-p-prev"${pg <= 1 ? ' disabled' : ''}>‹ Prev</button>`;
+  const pgNums = [1];
+  for (let i = Math.max(2, pg - W); i <= Math.min(pages - 1, pg + W); i++) pgNums.push(i);
+  if (pages > 1) pgNums.push(pages);
+  let last = 0;
+  for (const p of pgNums) {
+    if (p - last > 1) h += `<span class="pb-ellip">…</span>`;
+    h += `<button class="pb${p === pg ? ' cur' : ''}" data-pg="${p}">${p}</button>`;
+    last = p;
+  }
+  h += `<button class="pb" id="${id}-p-next"${pg >= pages ? ' disabled' : ''}>Next ›</button>`;
+  btnsEl.innerHTML = h;
+
+  btnsEl.querySelector(`#${id}-p-prev`)?.addEventListener('click', () => {
+    if (id === 'teams') { teamsPg--; renderTeams(); }
+    else if (id === 'cap') { capPg--; renderCapRows(); }
+    else { faPg--; renderFA(); }
+  });
+  btnsEl.querySelector(`#${id}-p-next`)?.addEventListener('click', () => {
+    if (id === 'teams') { teamsPg++; renderTeams(); }
+    else if (id === 'cap') { capPg++; renderCapRows(); }
+    else { faPg++; renderFA(); }
+  });
+  btnsEl.querySelectorAll('[data-pg]').forEach(b => b.addEventListener('click', () => {
+    const v = parseInt(b.dataset.pg, 10);
+    if (id === 'teams') { teamsPg = v; renderTeams(); }
+    else if (id === 'cap') { capPg = v; renderCapRows(); }
+    else { faPg = v; renderFA(); }
+  }));
+
+  const ji = document.getElementById(`${id}-pg-jump`);
+  if (ji) { ji.max = pages; ji.value = pg; }
+}
+
+/* ══════════════════════════════════════════
+   TEAM MODAL
+══════════════════════════════════════════ */
+function openTeamModal(team) {
+  const grouped = groupByTeam(allPlayers);
+  const players = grouped[team] || [];
+  const staff = staffByTeam[team] || { owners: [], coaches: [] };
+  const total = players.reduce((s, p) => s + p.salary, 0);
+  const pct = (total / CAP) * 100;
+  const st = capVisualStatus(pct);
+  const tier = capTier(total);
+  const pctCapped = Math.min(pct, 100);
+  const logoUrl = logos[team] || '';
+
+  document.getElementById('m-team-info').innerHTML = `
+    ${logoUrl ? `<img src="${logoUrl}" alt="">` : ''}
+    <div>
+      <div class="mteam-name">${team}</div>
+      <div class="mteam-sub">${players.length} player${players.length !== 1 ? 's' : ''} · Season 13</div>
+    </div>`;
+
+  const badge = document.getElementById('m-badge');
+  badge.textContent = capLabel(pct);
+  badge.className = `mbadge ${st}`;
+
+  const salEl = document.getElementById('m-sal-display');
+  salEl.textContent = `${fmt(total)} / ${fmt(CAP)}`;
+  salEl.className = 'mseason';
+
+  const staffHtml = [
+    ...(staff.owners.length ? [
+      `<div class="staff-section-title" style="margin-top:0;">Franchise Owners</div>`,
+      ...staff.owners.map(p => `
+    <div class="staff-row-m">
+      <div class="staff-pip owner"></div>
+      <span class="staff-row-name-m">${p.nick || p.name}</span>
+      <span class="staff-role-chip owner">Owner</span>
+    </div>`)
+    ] : []),
+    ...(staff.coaches.length ? [
+      `<div class="staff-section-title" style="margin-top:${staff.owners.length ? '10px' : '0'};">Team Coaches</div>`,
+      ...staff.coaches.map(p => `
+    <div class="staff-row-m">
+      <div class="staff-pip coach"></div>
+      <span class="staff-row-name-m">${p.nick || p.name}</span>
+      <span class="staff-role-chip coach">Coach</span>
+    </div>`)
+    ] : []),
+  ].join('');
+
+  const hasStaff = staff.owners.length || staff.coaches.length;
+
+  document.getElementById('m-body').innerHTML = `
+    <div class="mcap-section">
+      <div class="mcap-row">
+        <span class="mcap-label">Total Salary</span>
+        <span>
+          <span class="mcap-val ${tier.cls}">${fmt(total)}</span>
+          <span class="mcap-tier-lbl ${tier.cls}" style="background:var(--t${tier.id}-dim,transparent)">${tier.label}</span>
+        </span>
+      </div>
+      <div class="mcap-row" style="margin-bottom:8px;">
+        <span class="mcap-label">Cap: ${fmt(CAP)}</span>
+        <span class="mcap-val">${pct.toFixed(1)}%</span>
+      </div>
+      <div class="mcap-track"><div class="mcap-fill ${tier.cls}" style="width:${pctCapped.toFixed(1)}%"></div></div>
+    </div>
+    ${hasStaff ? `<div>${staffHtml}</div>` : ''}
+    <div>
+      <div class="staff-section-title">Roster (${players.length} players)</div>
+      <div class="bstbl-wrap">
+        <table class="bstbl">
+          <thead><tr><th>Player</th><th style="text-align:right;">Salary</th><th style="text-align:right;">Cap%</th></tr></thead>
+          <tbody>
+            ${players.length
+              ? [...players].sort((a, b) => b.salary - a.salary).map(p => {
+                  const pp = (p.salary / CAP * 100).toFixed(1);
+                  return `<tr>
+                    <td>${p.name}</td>
+                    <td class="pts">${fmt(p.salary)}</td>
+                    <td>${pp}%</td>
+                  </tr>`;
+                }).join('')
+              : `<tr><td colspan="3" style="color:var(--mu);font-style:italic;text-align:center;">No players on roster</td></tr>`
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>`;
+
+  document.getElementById('modal-bg').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeModal() {
+  document.getElementById('modal-bg').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+document.getElementById('m-close').addEventListener('click', closeModal);
+document.getElementById('modal-bg').addEventListener('click', e => { if (e.target.id === 'modal-bg') closeModal(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeModal(); closeRules(); } });
+
+function openRules() {
+  document.getElementById('rules-mbg').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeRules() {
+  document.getElementById('rules-mbg').classList.remove('open');
+  document.body.style.overflow = '';
+}
+document.getElementById('rules-close').addEventListener('click', closeRules);
+document.getElementById('rules-mbg').addEventListener('click', e => { if (e.target.id === 'rules-mbg') closeRules(); });
+
+/* ══════════════════════════════════════════
+   MAIN RENDER
+══════════════════════════════════════════ */
+function render() {
+  document.getElementById('view-teams').classList.toggle('hidden', currentView !== 'teams');
+  document.getElementById('view-fa').classList.toggle('hidden', currentView !== 'fa');
+  document.getElementById('view-summary').classList.toggle('hidden', currentView !== 'summary');
+  document.getElementById('view-cap').classList.toggle('hidden', currentView !== 'cap');
+
+  if (currentView === 'teams') renderTeams();
+  else if (currentView === 'fa') renderFA();
+  else if (currentView === 'cap') renderCapView();
+  else renderSummary();
+}
+
+/* ══════════════════════════════════════════
+   VIEW TABS
+══════════════════════════════════════════ */
+document.querySelectorAll('.view-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.view-tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    currentView = tab.dataset.view;
+    render();
+  });
+});
+
+/* ══════════════════════════════════════════
+   FILTER LISTENERS
+══════════════════════════════════════════ */
+['f-search', 'f-cap', 'f-sort', 'f-pp'].forEach(id => {
+  document.getElementById(id)?.addEventListener('input', () => { teamsPg = 1; renderTeams(); });
+});
+['f-fa-search', 'f-fa-sort', 'f-fa-pp'].forEach(id => {
+  document.getElementById(id)?.addEventListener('input', () => { faPg = 1; renderFA(); });
+});
+
+document.getElementById('teams-pg-jump')?.addEventListener('change', e => {
+  const filt = getTeamsFiltered();
+  const pp = parseInt(document.getElementById('f-pp').value, 10);
+  const tot = Math.max(1, Math.ceil(filt.length / pp));
+  const v = parseInt(e.target.value, 10);
+  if (v >= 1 && v <= tot) { teamsPg = v; renderTeams(); } else e.target.value = teamsPg;
+});
+document.getElementById('fa-pg-jump')?.addEventListener('change', e => {
+  const filt = getFAFiltered();
+  const pp = parseInt(document.getElementById('f-fa-pp').value, 10);
+  const tot = Math.max(1, Math.ceil(filt.length / pp));
+  const v = parseInt(e.target.value, 10);
+  if (v >= 1 && v <= tot) { faPg = v; renderFA(); } else e.target.value = faPg;
+});
+document.getElementById('cap-pg-jump')?.addEventListener('change', e => {
+  const filt = getCapFiltered();
+  const pp = parseInt(document.getElementById('f-cap-pp').value, 10);
+  const tot = Math.max(1, Math.ceil(filt.length / pp));
+  const v = parseInt(e.target.value, 10);
+  if (v >= 1 && v <= tot) { capPg = v; renderCapRows(); } else e.target.value = capPg;
+});
+
+/* ══════════════════════════════════════════
+   ADMIN PANEL
+══════════════════════════════════════════ */
+function openAdmin() {
+  document.getElementById('admin-overlay').classList.add('open');
+  document.getElementById('admin-panel').classList.add('open');
+  clearAdminResult();
+  if (adminUnlocked) renderAdminRoster();
+}
+function closeAdmin() {
+  document.getElementById('admin-overlay').classList.remove('open');
+  document.getElementById('admin-panel').classList.remove('open');
+}
+
+async function unlockAdmin() {
+  const password = document.getElementById('admin-pass').value;
+  if (!password) return;
+  const btn = document.querySelector('.admin-lock-btn');
+  btn.textContent = '…'; btn.disabled = true;
+  try {
+    const res = await fetch('/api/admin', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password, action: 'setSalary', name: '__auth_check__', salary: 0 })
+    });
+    if (res.status === 401) {
+      document.getElementById('admin-pass').style.borderColor = 'rgba(232,0,29,.6)';
+      toast('Wrong password', 'red', 3000);
+      return;
+    }
+    document.getElementById('admin-pass').style.borderColor = '';
+    adminUnlocked = true;
+    document.getElementById('admin-lock-screen').classList.add('hidden');
+    const ul = document.getElementById('admin-unlocked');
+    ul.classList.remove('hidden');
+    ul.style.display = 'flex';
+    document.getElementById('admin-sub-text').textContent = 'Changes apply instantly to the live site.';
+    renderAdminRoster();
+  } catch (e) {
+    toast('Network error — could not verify password', 'red', 3000);
+  } finally {
+    btn.textContent = 'Unlock'; btn.disabled = false;
+  }
+}
+
+function switchAdminTab(tab, btn) {
+  currentAdminTab = tab;
+  document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('atab-roster').classList.toggle('hidden', tab !== 'roster');
+  document.getElementById('atab-add').classList.toggle('hidden', tab !== 'add');
+  document.getElementById('atab-tools').classList.toggle('hidden', tab !== 'tools');
+  clearAdminResult();
+}
+
+/* ── ADMIN ROSTER ── */
+function renderAdminRoster() {
+  const q = (document.getElementById('admin-search')?.value || '').toLowerCase();
+  const sorted = [...allPlayers].sort((a, b) => a.team.localeCompare(b.team) || a.name.localeCompare(b.name));
+  const filtered = q ? sorted.filter(p => p.name.toLowerCase().includes(q) || p.team.toLowerCase().includes(q)) : sorted;
+  const container = document.getElementById('admin-roster-table');
+
+  if (!filtered.length) {
+    container.innerHTML = '<div style="padding:28px;text-align:center;color:var(--mu);font-size:12px;">No players match your search.</div>';
+    return;
+  }
+
+  const teamOptions = ['Free Agent', ...teamList].map(t => `<option value="${t}">${t}</option>`).join('');
+
+  container.innerHTML = filtered.map(p => `
+    <div class="aroster-row" id="arow-${encodeURIComponent(p.id || p.name)}">
+      <div class="aroster-info">
+        <div class="aroster-name">${p.name}</div>
+        <div class="aroster-team" id="ateam-${encodeURIComponent(p.id || p.name)}">${p.team}</div>
+      </div>
+      <div class="aroster-salary-wrap">
+        <div class="aroster-salary-stepper">
+          <button class="salary-step-btn" onclick="stepSalary('${encodeURIComponent(p.id || p.name)}',-1)" title="Decrease salary">−</button>
+          <span class="aroster-salary-display" id="saldisplay-${encodeURIComponent(p.id || p.name)}" data-salary="${p.salary}" data-id="${encodeURIComponent(p.id || '')}" data-player="${encodeURIComponent(p.name)}">${fmtSalaryShort(p.salary)}</span>
+          <button class="salary-step-btn" onclick="stepSalary('${encodeURIComponent(p.id || p.name)}',1)" title="Increase salary">+</button>
+        </div>
+        <button class="aroster-save" onclick="saveSalaryById('${encodeURIComponent(p.id || p.name)}')">Save</button>
+      </div>
+      <div class="aroster-actions">
+        <button class="aroster-btn" title="Move to team" onclick="toggleMoveRow('${encodeURIComponent(p.id || p.name)}','${encodeURIComponent(p.id || '')}','${encodeURIComponent(p.name)}','${encodeURIComponent(p.team)}')">
+          <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
+            <path d="M2 7h10M8 3l4 4-4 4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+        <button class="aroster-btn danger" title="Remove player" onclick="removePlayer('${encodeURIComponent(p.id || '')}','${encodeURIComponent(p.name)}',this)">
+          <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
+            <path d="M1 1l12 12M13 1L1 13" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+    <div id="movepicker-${encodeURIComponent(p.id || p.name)}" class="hidden" style="padding:8px 16px 10px;border-bottom:1px solid var(--b2);background:var(--s2);">
+      <div style="font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--mu);margin-bottom:6px;">Move ${p.name} to…</div>
+      <div style="display:flex;gap:6px;align-items:center;">
+        <select class="aroster-move-select" id="movesel-${encodeURIComponent(p.id || p.name)}">${teamOptions}</select>
+        <button class="aroster-save" style="font-size:11px;" onclick="confirmMove('${encodeURIComponent(p.id || p.name)}','${encodeURIComponent(p.id || '')}','${encodeURIComponent(p.name)}')">Move</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function toggleMoveRow(rowKey, encodedId, encodedName, encodedTeam) {
+  const picker = document.getElementById(`movepicker-${rowKey}`);
+  const sel = document.getElementById(`movesel-${rowKey}`);
+  const isHidden = picker.classList.contains('hidden');
+  document.querySelectorAll('[id^="movepicker-"]').forEach(el => el.classList.add('hidden'));
+  if (isHidden) {
+    picker.classList.remove('hidden');
+    if (sel) sel.value = decodeURIComponent(encodedTeam);
+  }
+}
+
+async function confirmMove(rowKey, encodedId, encodedName) {
+  const sel = document.getElementById(`movesel-${rowKey}`);
+  if (!sel) return;
+  const team = sel.value;
+  const name = decodeURIComponent(encodedName);
+  const id = decodeURIComponent(encodedId || '');
+  const password = document.getElementById('admin-pass').value;
+  const btn = sel.nextElementSibling;
+  const origText = btn.textContent;
+  btn.textContent = '…'; btn.disabled = true;
+  try {
+    const res = await fetch('/api/admin', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password, action: 'setTeam', id, name, team })
+    });
+    const data = await res.json();
+    if (data.ok) {
+      showAdminResult(data.message, 'success');
+      toast(`${name} → ${team}`, 'green');
+      await loadPlayers();
+      renderAdminRoster();
+    } else { showAdminResult(data.error || 'Failed.', 'error'); }
+  } catch (e) { showAdminResult('Network error.', 'error'); }
+  finally { btn.textContent = origText; btn.disabled = false; }
+}
+
+const SALARY_STEPS = [2000000, 5000000, 8000000, 10000000, 12000000, 15000000, 18000000, 20000000, 22000000];
+
+function nearestStepIndex(salary) {
+  let best = 0, bestDist = Infinity;
+  SALARY_STEPS.forEach((s, i) => { const d = Math.abs(s - salary); if (d < bestDist) { bestDist = d; best = i; } });
+  return best;
+}
+
+function stepSalary(rowKey, dir) {
+  const el = document.getElementById(`saldisplay-${rowKey}`);
+  if (!el) return;
+  const cur = Number(el.dataset.salary);
+  const idx = nearestStepIndex(cur);
+  const next = Math.max(0, Math.min(SALARY_STEPS.length - 1, idx + dir));
+  el.dataset.salary = SALARY_STEPS[next];
+  el.textContent = fmtSalaryShort(SALARY_STEPS[next]);
+  const wrap = el.parentElement;
+  const [minusBtn, plusBtn] = wrap.querySelectorAll('.salary-step-btn');
+  if (minusBtn) minusBtn.disabled = next === 0;
+  if (plusBtn) plusBtn.disabled = next === SALARY_STEPS.length - 1;
+}
+
+function stepAddSalary(dir) {
+  const el = document.getElementById('add-salary-display');
+  if (!el) return;
+  const cur = Number(el.dataset.salary);
+  const idx = nearestStepIndex(cur);
+  const next = Math.max(0, Math.min(SALARY_STEPS.length - 1, idx + dir));
+  el.dataset.salary = SALARY_STEPS[next];
+  el.textContent = fmtSalaryShort(SALARY_STEPS[next]);
+}
+
+async function saveSalaryById(rowKey) {
+  const el = document.getElementById(`saldisplay-${rowKey}`);
+  if (!el) return;
+  const name = decodeURIComponent(el.dataset.player);
+  const id = decodeURIComponent(el.dataset.id || '');
+  const salary = Number(el.dataset.salary);
+  const password = document.getElementById('admin-pass').value;
+  if (!salary || salary < 0) { showAdminResult('Invalid salary.', 'error'); return; }
+  const btn = el.closest('.aroster-salary-wrap')?.querySelector('.aroster-save');
+  if (btn) { btn.textContent = '…'; btn.disabled = true; }
+  try {
+    const res = await fetch('/api/admin', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password, action: 'setSalary', id, name, salary })
+    });
+    const data = await res.json();
+    if (data.ok) {
+      showAdminResult(data.message, 'success');
+      toast(`${name} → ${fmtSalaryShort(salary)}`, 'green');
+      await loadPlayers(); renderAdminRoster();
+    } else { showAdminResult(data.error || 'Something went wrong.', 'error'); }
+  } catch (e) { showAdminResult('Network error.', 'error'); }
+  finally { if (btn) { btn.textContent = 'Save'; btn.disabled = false; } }
+}
+
+async function removePlayer(encodedId, encodedName, btn) {
+  const name = decodeURIComponent(encodedName);
+  const id = decodeURIComponent(encodedId || '');
+  if (!confirm(`Remove ${name} from the roster?`)) return;
+  const password = document.getElementById('admin-pass').value;
+  const origText = btn.innerHTML;
+  btn.innerHTML = '…'; btn.disabled = true;
+  try {
+    const res = await fetch('/api/admin', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password, action: 'removePlayer', id, name })
+    });
+    const data = await res.json();
+    if (data.ok) {
+      showAdminResult(data.message, 'success');
+      toast(`${name} removed`, 'red');
+      await loadPlayers(); renderAdminRoster();
+    } else { showAdminResult(data.error || 'Failed.', 'error'); }
+  } catch (e) { showAdminResult('Network error.', 'error'); }
+  finally { btn.innerHTML = origText; btn.disabled = false; }
+}
+
+async function addPlayer() {
+  const name = document.getElementById('add-name').value.trim();
+  const team = document.getElementById('add-team').value;
+  const salary = Number(document.getElementById('add-salary-display')?.dataset?.salary) || 2000000;
+  const password = document.getElementById('admin-pass').value;
+  if (!name) { showAdminResult('Enter a player username.', 'error'); return; }
+  const btn = document.querySelector('.add-submit');
+  btn.textContent = 'Adding…'; btn.disabled = true;
+  try {
+    const res = await fetch('/api/admin', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password, action: 'addPlayer', name, team, salary })
+    });
+    const data = await res.json();
+    if (data.ok) {
+      showAdminResult(data.message, 'success');
+      toast(`${name} added`, 'green');
+      document.getElementById('add-name').value = '';
+      const addSalEl = document.getElementById('add-salary-display');
+      if (addSalEl) { addSalEl.dataset.salary = '2000000'; addSalEl.textContent = '$2M'; }
+      await loadPlayers();
+    } else { showAdminResult(data.error || 'Failed.', 'error'); }
+  } catch (e) { showAdminResult('Network error.', 'error'); }
+  finally { btn.textContent = 'Add Player'; btn.disabled = false; }
+}
+
+async function syncDiscord() {
+  const password = document.getElementById('admin-pass').value;
+  const btn = document.getElementById('sync-btn');
+  btn.textContent = 'Syncing…'; btn.disabled = true;
+  try {
+    const res = await fetch('/api/sync', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password })
+    });
+    const data = await res.json();
+    if (data.ok) {
+      showAdminResult(data.message, 'success');
+      toast(data.message, 'green');
+      await loadPlayers();
+      if (currentAdminTab === 'roster') renderAdminRoster();
+    } else { showAdminResult(data.error || 'Sync failed.', 'error'); }
+  } catch (e) { showAdminResult('Network error.', 'error'); }
+  finally { btn.textContent = 'Run Sync Now'; btn.disabled = false; }
+}
+
+async function purgeStaff() {
+  const password = document.getElementById('admin-pass').value;
+  const btn = document.getElementById('purge-btn');
+  btn.textContent = 'Purging…'; btn.disabled = true;
+  try {
+    const res = await fetch('/api/admin', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password, action: 'purgeStaff' })
+    });
+    const data = await res.json();
+    if (data.ok) {
+      showAdminResult(data.message, 'success');
+      toast(data.message, 'green');
+      await loadPlayers();
+      if (currentAdminTab === 'roster') renderAdminRoster();
+    } else { showAdminResult(data.error || 'Purge failed.', 'error'); }
+  } catch (e) { showAdminResult('Network error.', 'error'); }
+  finally { btn.textContent = 'Purge Staff'; btn.disabled = false; }
+}
+
+function showAdminResult(msg, type) {
+  const el = document.getElementById('admin-result');
+  el.textContent = msg; el.className = `admin-result ${type}`;
+}
+function clearAdminResult() {
+  const el = document.getElementById('admin-result');
+  el.textContent = ''; el.className = 'admin-result';
+}
+
+/* ══════════════════════════════════════════
+   INIT
+══════════════════════════════════════════ */
+loadPlayers();
+
+// auto-refresh every 30s (matches standings page poll interval)
+setInterval(async () => {
+  await loadPlayers();
+  setSync(new Date().toISOString());
+}, 30000);
+</script>
+</body>
+</html>
