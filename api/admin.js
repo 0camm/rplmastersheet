@@ -1,9 +1,84 @@
 import { Redis } from '@upstash/redis';
+import { ROLE_TO_TEAM, TEAM_TO_TAG } from './_lib/discord-teams.js';
 
 const redis = new Redis({
   url: process.env.KV_REST_API_URL,
   token: process.env.KV_REST_API_TOKEN,
 });
+
+// Shared Discord fetch helper with 429 (rate limit) retry handling, same
+// pattern as sync.js. Supports non-GET methods since role add/remove need
+// PUT/DELETE, unlike sync.js which only ever reads.
+async function discordFetch(path, options = {}, retries = 3) {
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    const r = await fetch(`https://discord.com/api/v10${path}`, {
+      method: options.method || 'GET',
+      headers: { Authorization: `Bot ${process.env.DISCORD_BOT_TOKEN}` }
+    });
+    if (r.status === 429 && attempt < retries) {
+      const body = await r.json().catch(() => ({}));
+      const waitMs = Math.ceil((body.retry_after ?? 1) * 1000) + 50;
+      await new Promise(resolve => setTimeout(resolve, waitMs));
+      continue;
+    }
+    if (r.status === 204) return null; // Discord returns 204 No Content on role add/remove
+    if (!r.ok) throw new Error(`Discord ${r.status} on ${path}: ${await r.text()}`);
+    const text = await r.text();
+    return text ? JSON.parse(text) : null;
+  }
+  throw new Error(`Discord rate limit exceeded retries on ${path}`);
+}
+
+// REVERSE SYNC: push a team change made on the website back onto the
+// member's actual Discord roles. Removes whatever team-tag role (or Free
+// Agents) they currently hold and adds the role for their new team, so a
+// member never ends up double-tagged. Team roles must be named like
+// "[ATL] Atlanta Hawks" (same convention sync.js reads) for this to find them.
+async function syncDiscordRole(discordUserId, newTeam) {
+  if (!process.env.DISCORD_BOT_TOKEN || !process.env.DISCORD_GUILD_ID) {
+    return { skipped: true, reason: 'Discord bot not configured' };
+  }
+  const guildId = process.env.DISCORD_GUILD_ID;
+
+  const allRoles = await discordFetch(`/guilds/${guildId}/roles`);
+  const member = await discordFetch(`/guilds/${guildId}/members/${discordUserId}`).catch(() => null);
+  if (!member) return { skipped: true, reason: 'member not found in Discord server (may have left)' };
+
+  const roleMap = {};
+  allRoles.forEach(r => { roleMap[r.id] = r.name; });
+
+  // Every role this member holds that represents a team tag or Free Agents.
+  const currentTeamRoleIds = (member.roles || []).filter(id => {
+    const rName = roleMap[id] || '';
+    const tagMatch = rName.match(/^\[([A-Z]+)\]/);
+    return (tagMatch && ROLE_TO_TEAM[tagMatch[1]]) || rName === 'Free Agents';
+  });
+
+  // Which role (if any) corresponds to the new team.
+  let targetRoleId = null;
+  if (newTeam === 'Free Agent') {
+    const faRole = allRoles.find(r => r.name === 'Free Agents');
+    targetRoleId = faRole ? faRole.id : null;
+  } else {
+    const tag = TEAM_TO_TAG[newTeam];
+    if (tag) {
+      const teamRole = allRoles.find(r => r.name.startsWith(`[${tag}]`));
+      targetRoleId = teamRole ? teamRole.id : null;
+    }
+  }
+
+  const toRemove = currentTeamRoleIds.filter(id => id !== targetRoleId);
+  const toAdd = targetRoleId && !currentTeamRoleIds.includes(targetRoleId) ? [targetRoleId] : [];
+
+  for (const roleId of toRemove) {
+    await discordFetch(`/guilds/${guildId}/members/${discordUserId}/roles/${roleId}`, { method: 'DELETE' });
+  }
+  for (const roleId of toAdd) {
+    await discordFetch(`/guilds/${guildId}/members/${discordUserId}/roles/${roleId}`, { method: 'PUT' });
+  }
+
+  return { ok: true, removed: toRemove.length, added: toAdd.length, targetRoleFound: !!targetRoleId };
+}
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -81,7 +156,25 @@ export default async function handler(req, res) {
     if (!entry) return res.status(404).json({ error: `Player "${name}" not found` });
     const [id, player] = entry;
     await redis.hset('players', { [id]: { ...player, team } });
-    return res.json({ ok: true, message: `${player.name} moved to ${team}` });
+
+    // REVERSE SYNC: only meaningful for real Discord accounts — manually
+    // added / legacy entries are keyed by a "manual_..." string, not a
+    // Discord snowflake, so there's no Discord member to update.
+    let discordNote = '';
+    if (/^\d{15,20}$/.test(id)) {
+      try {
+        const result = await syncDiscordRole(id, team);
+        if (result.skipped) {
+          discordNote = ` (Discord not updated: ${result.reason})`;
+        } else if (!result.targetRoleFound) {
+          discordNote = ` (Discord role for "${team}" not found — team roles must be named like "[TAG] Team Name")`;
+        }
+      } catch (err) {
+        discordNote = ` (Discord role update failed: ${err.message})`;
+      }
+    }
+
+    return res.json({ ok: true, message: `${player.name} moved to ${team}${discordNote}` });
   }
 
   if (action === 'removePlayer') {
