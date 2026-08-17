@@ -146,9 +146,13 @@ async function bulkSyncSalaryRoles(playerEntries) {
   const memberById = {};
   members.forEach(m => { memberById[m.user.id] = m; });
 
-  let updated = 0, skipped = 0, failed = 0;
+  let skipped = 0;
   const skipReasons = { notDiscordAccount: 0, leftServer: 0, roleNotFound: 0 };
 
+  // First pass (no network calls): figure out which players actually need a
+  // change, and what that change is. Keeping this separate from the network
+  // work below is what makes the concurrency-limited loop possible.
+  const workItems = [];
   for (const [id, player] of playerEntries) {
     if (!/^\d{15,20}$/.test(id)) { skipped++; skipReasons.notDiscordAccount++; continue; }
     const member = memberById[id];
@@ -166,18 +170,36 @@ async function bulkSyncSalaryRoles(playerEntries) {
 
     if (toRemove.length === 0 && alreadyHasTarget) continue; // already correct, nothing to send
 
-    try {
-      for (const roleId of toRemove) {
-        await discordFetch(`/guilds/${guildId}/members/${id}/roles/${roleId}`, { method: 'DELETE' });
+    workItems.push({ id, toRemove, toAdd: alreadyHasTarget ? [] : [targetRoleId] });
+  }
+
+  // PERF FIX: the old version awaited each player's Discord calls one at a
+  // time, so total run time scaled linearly with roster size and blew past
+  // Vercel's 60s function limit on larger rosters (confirmed via
+  // "Task timed out after 60 seconds" in prod logs). Running a bounded
+  // number of players concurrently instead cuts wall-clock time roughly by
+  // the concurrency factor. discordFetch already retries on 429, so this
+  // stays safe with respect to Discord's rate limits.
+  const CONCURRENCY = 8;
+  let updated = 0, failed = 0;
+  let cursor = 0;
+  async function worker() {
+    while (cursor < workItems.length) {
+      const item = workItems[cursor++];
+      try {
+        for (const roleId of item.toRemove) {
+          await discordFetch(`/guilds/${guildId}/members/${item.id}/roles/${roleId}`, { method: 'DELETE' });
+        }
+        for (const roleId of item.toAdd) {
+          await discordFetch(`/guilds/${guildId}/members/${item.id}/roles/${roleId}`, { method: 'PUT' });
+        }
+        updated++;
+      } catch (err) {
+        failed++;
       }
-      if (!alreadyHasTarget) {
-        await discordFetch(`/guilds/${guildId}/members/${id}/roles/${targetRoleId}`, { method: 'PUT' });
-      }
-      updated++;
-    } catch (err) {
-      failed++;
     }
   }
+  await Promise.all(Array.from({ length: Math.min(CONCURRENCY, workItems.length) }, worker));
 
   return { ok: true, updated, skipped, failed, skipReasons, knownRoleNames: Object.keys(roleIdByName) };
 }
