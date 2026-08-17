@@ -814,6 +814,33 @@ select.fc{
 .admin-result.success{background:var(--gr-d);color:var(--gr);display:block;}
 .admin-result.error{background:var(--red-dim);color:var(--red);display:block;}
 
+/* ── PLAYER CAP LOOKUP ── */
+.cap-results{display:flex;flex-direction:column;gap:6px;margin-bottom:14px;}
+.cap-result-row{
+  display:flex;align-items:center;gap:12px;padding:10px 14px;
+  background:var(--s2);border:1px solid var(--b);border-radius:10px;
+  cursor:pointer;transition:border-color .12s,background .12s;
+}
+.cap-result-row:hover{border-color:rgba(232,0,29,.35);background:var(--s3);}
+.cap-result-name{font-size:13px;font-weight:600;color:var(--tx);flex:1;min-width:0;}
+.cap-result-id{font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--mu);white-space:nowrap;}
+.cap-result-team{font-size:10.5px;color:var(--mu);white-space:nowrap;padding:3px 8px;background:var(--s3);border:1px solid var(--b);border-radius:6px;}
+.cap-profile{
+  background:var(--s2);border:1px solid var(--b);border-radius:14px;
+  padding:22px 24px;margin-top:4px;
+}
+.cap-profile-top{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:6px;}
+.cap-profile-name{font-family:'Bebas Neue',sans-serif;font-size:26px;letter-spacing:.03em;color:#fff;}
+.cap-profile-id-row{display:flex;align-items:center;gap:8px;margin-bottom:18px;}
+.cap-profile-id-label{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--mu);}
+.cap-profile-id-val{font-family:'JetBrains Mono',monospace;font-size:12.5px;color:var(--tx2);background:var(--s3);border:1px solid var(--b);border-radius:6px;padding:2px 8px;}
+.cap-profile-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.cap-profile-stat{background:var(--s3);border:1px solid var(--b);border-radius:10px;padding:14px 16px;}
+.cap-profile-stat-label{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--mu);margin-bottom:6px;}
+.cap-profile-stat-val{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:.03em;color:#fff;}
+.mbadge.none{background:var(--s3);color:var(--mu);border:1px solid var(--b);}
+@media(max-width:640px){.cap-profile-grid{grid-template-columns:1fr;}}
+
 .hidden{display:none !important}
 
 /* ── TABS (view switcher like standings filter approach) ── */
@@ -953,6 +980,7 @@ select.fc{
     <button class="view-tab active" data-view="teams">All Teams</button>
     <button class="view-tab" data-view="fa">Free Agents</button>
     <button class="view-tab" data-view="summary">Cap Summary</button>
+    <button class="view-tab" data-view="cap">Player Cap Lookup</button>
   </div>
 
   <!-- ── TEAMS VIEW ── -->
@@ -1049,6 +1077,27 @@ select.fc{
   <!-- ── CAP SUMMARY VIEW ── -->
   <div id="view-summary" class="hidden" style="margin-top:0;">
     <div class="conf-grid" id="cap-summary-grid" style="margin-top:20px;"></div>
+  </div>
+
+  <!-- ── PLAYER CAP LOOKUP VIEW ── -->
+  <div id="view-cap" class="hidden" style="margin-top:0;">
+    <div class="sec-hd" style="padding-top:18px;">
+      <div class="sec-hd-top">
+        <span class="sec-title">Player Cap Lookup</span>
+        <div class="sec-rule"></div>
+      </div>
+      <div class="filters">
+        <input class="fc fc-search" id="cap-search" placeholder="Search by username or permanent Roblox User ID…" autocomplete="off" spellcheck="false" style="max-width:360px;">
+      </div>
+      <div style="font-size:11px;color:var(--mu);margin-top:8px;line-height:1.5;">
+        Every player has an individual cap record tied to their permanent Roblox User ID — it works whether they're
+        rostered, a free agent, off every roster, or previously rostered. Renaming a username never resets it.
+      </div>
+    </div>
+
+    <div id="cap-results" class="cap-results"></div>
+    <div class="hist-empty" id="cap-empty">Start typing a username or Roblox User ID above to find a player.</div>
+    <div id="cap-profile" class="cap-profile hidden"></div>
   </div>
 
 </div><!-- /main -->
@@ -1158,6 +1207,7 @@ select.fc{
     <div class="admin-tabs">
       <button class="admin-tab active" data-atab="roster" onclick="switchAdminTab('roster',this)">Roster</button>
       <button class="admin-tab" data-atab="add" onclick="switchAdminTab('add',this)">Add Player</button>
+      <button class="admin-tab" data-atab="caps" onclick="switchAdminTab('caps',this)">Player Caps</button>
       <button class="admin-tab" data-atab="tools" onclick="switchAdminTab('tools',this)">Tools</button>
     </div>
     <!-- ROSTER TAB -->
@@ -1604,6 +1654,123 @@ function renderFA() {
 /* ══════════════════════════════════════════
    RENDER — CAP SUMMARY (standings-style)
 ══════════════════════════════════════════ */
+/* ══════════════════════════════════════════
+   PLAYER CAP LOOKUP
+   Searches the /api/player-cap store, which is keyed permanently by
+   Roblox User ID and independent of live roster status — so a player
+   shows up here whether they're rostered, a free agent, on no team at
+   all, or previously rostered and since removed.
+══════════════════════════════════════════ */
+let capSearchTimer = null;
+let capLastQuery = '';
+
+function renderCapView() {
+  // Nothing to fetch on tab switch — search is driven by the input itself.
+  // Just make sure the empty/results state matches whatever's in the box.
+  const q = document.getElementById('cap-search').value.trim();
+  if (!q) {
+    document.getElementById('cap-results').innerHTML = '';
+    document.getElementById('cap-empty').style.display = '';
+    document.getElementById('cap-empty').textContent = 'Start typing a username or Roblox User ID above to find a player.';
+  }
+}
+
+document.getElementById('cap-search')?.addEventListener('input', () => {
+  clearTimeout(capSearchTimer);
+  capSearchTimer = setTimeout(doCapSearch, 250);
+});
+
+async function doCapSearch() {
+  const q = document.getElementById('cap-search').value.trim();
+  capLastQuery = q;
+  document.getElementById('cap-profile').classList.add('hidden');
+
+  if (!q) {
+    document.getElementById('cap-results').innerHTML = '';
+    document.getElementById('cap-empty').style.display = '';
+    document.getElementById('cap-empty').textContent = 'Start typing a username or Roblox User ID above to find a player.';
+    return;
+  }
+
+  try {
+    const res = await fetch(`/api/player-cap?q=${encodeURIComponent(q)}`);
+    const data = await res.json();
+    if (capLastQuery !== q) return; // stale response from an earlier keystroke
+    renderCapResults(data.results || []);
+  } catch (e) {
+    document.getElementById('cap-results').innerHTML = '';
+    document.getElementById('cap-empty').style.display = '';
+    document.getElementById('cap-empty').textContent = 'Network error — could not search right now.';
+  }
+}
+
+function capTeamBadge(team) {
+  if (team && teamList.includes(team)) {
+    const logo = logos[team] ? `<img src="${logos[team]}" style="width:13px;height:13px;object-fit:contain;" alt="">` : '';
+    return `<span class="mbadge safe" style="display:inline-flex;align-items:center;gap:6px;">${logo}${team}</span>`;
+  }
+  if (team === 'Free Agent') return `<span class="mbadge warn">Free Agent</span>`;
+  return `<span class="mbadge none">Not currently on a team</span>`;
+}
+
+function renderCapResults(results) {
+  const container = document.getElementById('cap-results');
+  const empty = document.getElementById('cap-empty');
+
+  if (!results.length) {
+    container.innerHTML = '';
+    empty.style.display = '';
+    empty.textContent = 'No players match that search.';
+    return;
+  }
+
+  empty.style.display = 'none';
+  container.innerHTML = results.map(p => `
+    <div class="cap-result-row" onclick="selectCapPlayer('${encodeURIComponent(p.robloxId)}')">
+      <span class="cap-result-name">${p.username}</span>
+      <span class="cap-result-team">${p.team && p.team !== 'Free Agent' ? p.team : (p.team === 'Free Agent' ? 'Free Agent' : 'No team')}</span>
+      <span class="cap-result-id">ID ${p.robloxId}</span>
+    </div>
+  `).join('');
+}
+
+async function selectCapPlayer(encodedRobloxId) {
+  const robloxId = decodeURIComponent(encodedRobloxId);
+  try {
+    const res = await fetch(`/api/player-cap?robloxId=${encodeURIComponent(robloxId)}`);
+    const data = await res.json();
+    if (!data.found) { toast('That player record could not be found.', 'red'); return; }
+    renderCapProfile(data.player);
+  } catch (e) {
+    toast('Network error — could not load that player.', 'red');
+  }
+}
+
+function renderCapProfile(player) {
+  const el = document.getElementById('cap-profile');
+  el.innerHTML = `
+    <div class="cap-profile-top">
+      <div class="cap-profile-name">${player.username}</div>
+      ${capTeamBadge(player.team)}
+    </div>
+    <div class="cap-profile-id-row">
+      <span class="cap-profile-id-label">Permanent Roblox User ID</span>
+      <span class="cap-profile-id-val">${player.robloxId}</span>
+    </div>
+    <div class="cap-profile-grid">
+      <div class="cap-profile-stat">
+        <div class="cap-profile-stat-label">Individual Salary Cap</div>
+        <div class="cap-profile-stat-val">${fmt(player.salary)}</div>
+      </div>
+      <div class="cap-profile-stat">
+        <div class="cap-profile-stat-label">Current Team</div>
+        <div class="cap-profile-stat-val" style="font-size:16px;">${player.team && player.team !== 'Free Agent' ? player.team : (player.team === 'Free Agent' ? 'Free Agent' : 'None')}</div>
+      </div>
+    </div>
+  `;
+  el.classList.remove('hidden');
+}
+
 function renderSummary() {
   const data = buildTeamData();
   const over = data.filter(d => d.status === 'over').sort((a, b) => b.total - a.total);
@@ -1911,22 +2078,15 @@ document.getElementById('rules-mbg').addEventListener('click', e => { if (e.targ
    MAIN RENDER
 ══════════════════════════════════════════ */
 function render() {
-  if (currentView === 'teams') {
-    document.getElementById('view-teams').classList.remove('hidden');
-    document.getElementById('view-fa').classList.add('hidden');
-    document.getElementById('view-summary').classList.add('hidden');
-    renderTeams();
-  } else if (currentView === 'fa') {
-    document.getElementById('view-teams').classList.add('hidden');
-    document.getElementById('view-fa').classList.remove('hidden');
-    document.getElementById('view-summary').classList.add('hidden');
-    renderFA();
-  } else {
-    document.getElementById('view-teams').classList.add('hidden');
-    document.getElementById('view-fa').classList.add('hidden');
-    document.getElementById('view-summary').classList.remove('hidden');
-    renderSummary();
-  }
+  document.getElementById('view-teams').classList.toggle('hidden', currentView !== 'teams');
+  document.getElementById('view-fa').classList.toggle('hidden', currentView !== 'fa');
+  document.getElementById('view-summary').classList.toggle('hidden', currentView !== 'summary');
+  document.getElementById('view-cap').classList.toggle('hidden', currentView !== 'cap');
+
+  if (currentView === 'teams') renderTeams();
+  else if (currentView === 'fa') renderFA();
+  else if (currentView === 'cap') renderCapView();
+  else renderSummary();
 }
 
 /* ══════════════════════════════════════════
