@@ -119,6 +119,68 @@ async function syncDiscordSalaryRole(discordUserId, salary) {
   return { ok: true, removed: toRemove.length, added: toAdd.length, targetRoleFound: !!targetRole };
 }
 
+// BULK REVERSE SYNC: push every current player's salary bracket onto
+// Discord in one pass. Fetches the role list and full member list ONCE
+// (same pagination pattern as sync.js) instead of re-fetching per player,
+// and only makes add/remove calls for players whose bracket actually
+// needs to change — keeps this well under the function's time limit even
+// on larger rosters. Skips manual/legacy (non-snowflake) entries.
+async function bulkSyncSalaryRoles(playerEntries) {
+  if (!process.env.DISCORD_BOT_TOKEN || !process.env.DISCORD_GUILD_ID) {
+    return { skipped: true, reason: 'Discord bot not configured' };
+  }
+  const guildId = process.env.DISCORD_GUILD_ID;
+
+  const allRoles = await discordFetch(`/guilds/${guildId}/roles`);
+  const roleNameById = {};
+  const roleIdByName = {};
+  allRoles.forEach(r => { roleNameById[r.id] = r.name; roleIdByName[r.name] = r.id; });
+
+  let members = [], after = '0';
+  while (true) {
+    const batch = await discordFetch(`/guilds/${guildId}/members?limit=1000&after=${after}`);
+    members = members.concat(batch);
+    if (batch.length < 1000) break;
+    after = batch[batch.length - 1].user.id;
+  }
+  const memberById = {};
+  members.forEach(m => { memberById[m.user.id] = m; });
+
+  let updated = 0, skipped = 0, failed = 0;
+
+  for (const [id, player] of playerEntries) {
+    if (!/^\d{15,20}$/.test(id)) { skipped++; continue; }
+    const member = memberById[id];
+    if (!member) { skipped++; continue; } // left the server
+
+    const targetRoleName = salaryToRoleName(player.salary);
+    const targetRoleId = roleIdByName[targetRoleName];
+    if (!targetRoleId) { skipped++; continue; } // that bracket role doesn't exist in Discord
+
+    const currentBracketRoleIds = (member.roles || []).filter(rid =>
+      ALL_SALARY_ROLE_NAMES.includes(roleNameById[rid])
+    );
+    const toRemove = currentBracketRoleIds.filter(rid => rid !== targetRoleId);
+    const alreadyHasTarget = currentBracketRoleIds.includes(targetRoleId);
+
+    if (toRemove.length === 0 && alreadyHasTarget) continue; // already correct, nothing to send
+
+    try {
+      for (const roleId of toRemove) {
+        await discordFetch(`/guilds/${guildId}/members/${id}/roles/${roleId}`, { method: 'DELETE' });
+      }
+      if (!alreadyHasTarget) {
+        await discordFetch(`/guilds/${guildId}/members/${id}/roles/${targetRoleId}`, { method: 'PUT' });
+      }
+      updated++;
+    } catch (err) {
+      failed++;
+    }
+  }
+
+  return { ok: true, updated, skipped, failed };
+}
+
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -216,21 +278,19 @@ export default async function handler(req, res) {
   // and afterwards as a manual "fix drift" button if roles are ever hand-
   // edited in Discord. Skips manual/legacy (non-snowflake) entries.
   if (action === 'syncSalaryRoles') {
-    let updated = 0, skipped = 0, failed = 0;
-    for (const [id, player] of players) {
-      if (!/^\d{15,20}$/.test(id)) { skipped++; continue; }
-      try {
-        const result = await syncDiscordSalaryRole(id, player.salary);
-        if (result.skipped || !result.targetRoleFound) skipped++;
-        else updated++;
-      } catch (err) {
-        failed++;
+    try {
+      const result = await bulkSyncSalaryRoles(players);
+      if (result.skipped) {
+        return res.json({ ok: true, message: `Salary role sync skipped: ${result.reason}` });
       }
+      return res.json({
+        ok: true,
+        message: `Salary role sync complete — ${result.updated} updated, ${result.skipped} skipped, ${result.failed} failed`
+      });
+    } catch (err) {
+      console.error('Bulk salary role sync error:', err);
+      return res.status(500).json({ error: `Salary role sync failed: ${err.message}` });
     }
-    return res.json({
-      ok: true,
-      message: `Salary role sync complete — ${updated} updated, ${skipped} skipped, ${failed} failed`
-    });
   }
 
   if (action === 'setTeam') {
