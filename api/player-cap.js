@@ -78,7 +78,11 @@ export default async function handler(req, res) {
       return res.json({ results });
     }
 
-    return res.status(400).json({ error: 'Provide a "q" search query or an "id".' });
+    // No "q" or "id" provided — return every player in the store (used by
+    // the Player Cap Viewer, which lists all players rather than searching
+    // for one). Sorted A–Z; the frontend re-sorts/paginates as needed.
+    const all = players.slice().sort((a, b) => a.name.localeCompare(b.name));
+    return res.json({ results: all });
   } catch (err) {
     console.error('player-cap error:', err);
     return res.status(500).json({ error: err.message });

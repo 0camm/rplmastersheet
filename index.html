@@ -980,7 +980,7 @@ select.fc{
     <button class="view-tab active" data-view="teams">All Teams</button>
     <button class="view-tab" data-view="fa">Free Agents</button>
     <button class="view-tab" data-view="summary">Cap Summary</button>
-    <button class="view-tab" data-view="cap">Player Cap Lookup</button>
+    <button class="view-tab" data-view="cap">Player Cap Viewer</button>
   </div>
 
   <!-- ── TEAMS VIEW ── -->
@@ -1079,25 +1079,49 @@ select.fc{
     <div class="conf-grid" id="cap-summary-grid" style="margin-top:20px;"></div>
   </div>
 
-  <!-- ── PLAYER CAP LOOKUP VIEW ── -->
+  <!-- ── PLAYER CAP VIEWER ── -->
   <div id="view-cap" class="hidden" style="margin-top:0;">
     <div class="sec-hd" style="padding-top:18px;">
       <div class="sec-hd-top">
-        <span class="sec-title">Player Cap Lookup</span>
+        <span class="sec-title">Player Cap Viewer</span>
+        <span class="sec-ct" id="cap-ct">0 players</span>
         <div class="sec-rule"></div>
       </div>
       <div class="filters">
-        <input class="fc fc-search" id="cap-search" placeholder="Search by username or permanent Discord User ID…" autocomplete="off" spellcheck="false" style="max-width:360px;">
+        <input class="fc fc-search" id="f-cap-search" placeholder="Search by username or permanent Discord User ID…" autocomplete="off" spellcheck="false">
+        <select class="fc" id="f-cap-sort">
+          <option value="name">Sort: A–Z</option>
+          <option value="salary-desc">Sort: Salary ↓</option>
+          <option value="salary-asc">Sort: Salary ↑</option>
+        </select>
+        <select class="fc" id="f-cap-pp">
+          <option value="25">25 / page</option>
+          <option value="50" selected>50 / page</option>
+          <option value="100">100 / page</option>
+        </select>
       </div>
       <div style="font-size:11px;color:var(--mu);margin-top:8px;line-height:1.5;">
-        Every player has an individual cap record tied to their permanent Discord User ID — it works whether they're
-        rostered, a free agent, off every roster, or previously rostered. Renaming a username never resets it.
+        Every player has an individual cap record tied to their permanent Discord User ID — this shows everyone,
+        whether they're currently rostered, a free agent, or on no team at all. Renaming a username never resets it.
       </div>
     </div>
 
-    <div id="cap-results" class="cap-results"></div>
-    <div class="hist-empty" id="cap-empty">Start typing a username or Discord User ID above to find a player.</div>
-    <div id="cap-profile" class="cap-profile hidden"></div>
+    <div class="ht-wrap">
+      <div class="ht-hd" style="grid-template-columns:30px 1fr 160px 120px;padding:8px 14px;">
+        <span>#</span><span>Player</span><span>Team</span><span style="text-align:right;">Salary Cap</span>
+      </div>
+      <div id="cap-rows"></div>
+    </div>
+    <div class="hist-empty" id="cap-empty" style="display:none">No players match your search.</div>
+
+    <div class="pager" id="cap-pager" style="display:none">
+      <div class="pg-info" id="cap-pg-info"></div>
+      <div class="pg-btns" id="cap-pg-btns"></div>
+      <div class="pg-jump">
+        <span class="pg-jlbl">Page</span>
+        <input class="pg-jin" id="cap-pg-jump" type="number" min="1" value="1">
+      </div>
+    </div>
   </div>
 
 </div><!-- /main -->
@@ -1353,6 +1377,7 @@ const logos = {
 let allPlayers = [];
 let staffByTeam = {};
 let currentView = 'teams';
+let capPg = 1;
 let teamsPg = 1, faPg = 1;
 let adminUnlocked = false;
 let currentAdminTab = 'roster';
@@ -1655,122 +1680,100 @@ function renderFA() {
    RENDER — CAP SUMMARY (standings-style)
 ══════════════════════════════════════════ */
 /* ══════════════════════════════════════════
-   PLAYER CAP LOOKUP
-   Searches the /api/player-cap endpoint, which reads the same players
-   store used everywhere else on the site and is keyed permanently by
-   Discord User ID, independent of live roster status — so a player
-   shows up here whether they're rostered, a free agent, on no team at
-   all, or previously rostered and since removed.
+   PLAYER CAP VIEWER
+   Lists EVERY player in the system — rostered, free agent, or on no
+   team at all — pulling from /api/player-cap, which reads the same
+   'players' store used everywhere else on the site and is keyed
+   permanently by Discord User ID, independent of live roster status.
+   Layout/behavior (search + sort + pagination) mirrors the Free Agents
+   tab for consistency.
 ══════════════════════════════════════════ */
-let capSearchTimer = null;
-let capLastQuery = '';
+let allCapPlayers = [];
+let capPlayersLoaded = false;
+let capLoadPromise = null;
 
-function renderCapView() {
-  // Nothing to fetch on tab switch — search is driven by the input itself.
-  // Just make sure the empty/results state matches whatever's in the box.
-  const q = document.getElementById('cap-search').value.trim();
-  if (!q) {
-    document.getElementById('cap-results').innerHTML = '';
-    document.getElementById('cap-empty').style.display = '';
-    document.getElementById('cap-empty').textContent = 'Start typing a username or Discord User ID above to find a player.';
-  }
+function capTeamLabel(team) {
+  if (team && team !== 'Free Agent') return team;
+  if (team === 'Free Agent') return 'Free Agent';
+  return 'No team';
 }
 
-document.getElementById('cap-search')?.addEventListener('input', () => {
-  clearTimeout(capSearchTimer);
-  capSearchTimer = setTimeout(doCapSearch, 250);
-});
+async function loadCapPlayers() {
+  if (capLoadPromise) return capLoadPromise;
+  capLoadPromise = (async () => {
+    try {
+      const res = await fetch('/api/player-cap');
+      const data = await res.json();
+      allCapPlayers = data.results || [];
+      capPlayersLoaded = true;
+    } catch (e) {
+      allCapPlayers = [];
+      document.getElementById('cap-empty').style.display = 'block';
+      document.getElementById('cap-empty').textContent = 'Network error — could not load players right now.';
+    }
+  })();
+  return capLoadPromise;
+}
 
-async function doCapSearch() {
-  const q = document.getElementById('cap-search').value.trim();
-  capLastQuery = q;
-  document.getElementById('cap-profile').classList.add('hidden');
+function getCapFiltered() {
+  const q = (document.getElementById('f-cap-search')?.value || '').toLowerCase();
+  const sortF = document.getElementById('f-cap-sort')?.value || 'name';
+  let data = allCapPlayers.slice();
+  if (q) data = data.filter(p =>
+    p.name.toLowerCase().includes(q) ||
+    (p.discordId && p.discordId.includes(q))
+  );
+  if (sortF === 'salary-desc') data.sort((a, b) => (b.salary ?? -Infinity) - (a.salary ?? -Infinity));
+  else if (sortF === 'salary-asc') data.sort((a, b) => (a.salary ?? Infinity) - (b.salary ?? Infinity));
+  else data.sort((a, b) => a.name.localeCompare(b.name));
+  return data;
+}
 
-  if (!q) {
-    document.getElementById('cap-results').innerHTML = '';
-    document.getElementById('cap-empty').style.display = '';
-    document.getElementById('cap-empty').textContent = 'Start typing a username or Discord User ID above to find a player.';
+async function renderCapView() {
+  if (!capPlayersLoaded) {
+    document.getElementById('cap-rows').innerHTML = '';
+    document.getElementById('cap-ct').textContent = 'Loading…';
+    await loadCapPlayers();
+  }
+  renderCapRows();
+}
+
+function renderCapRows() {
+  const filt = getCapFiltered();
+  const pp = parseInt(document.getElementById('f-cap-pp')?.value || '50', 10);
+  const total = Math.max(1, Math.ceil(filt.length / pp));
+  if (capPg > total) capPg = total;
+
+  document.getElementById('cap-ct').textContent = `${filt.length} player${filt.length !== 1 ? 's' : ''}`;
+
+  const start = (capPg - 1) * pp;
+  const slice = filt.slice(start, start + pp);
+  const rowsEl = document.getElementById('cap-rows');
+  const emptyEl = document.getElementById('cap-empty');
+
+  if (!filt.length) {
+    rowsEl.innerHTML = '';
+    emptyEl.style.display = 'block';
+    emptyEl.textContent = capPlayersLoaded ? 'No players match your search.' : 'Loading players…';
+    document.getElementById('cap-pager').style.display = 'none';
     return;
   }
+  emptyEl.style.display = 'none';
 
-  try {
-    const res = await fetch(`/api/player-cap?q=${encodeURIComponent(q)}`);
-    const data = await res.json();
-    if (capLastQuery !== q) return; // stale response from an earlier keystroke
-    renderCapResults(data.results || []);
-  } catch (e) {
-    document.getElementById('cap-results').innerHTML = '';
-    document.getElementById('cap-empty').style.display = '';
-    document.getElementById('cap-empty').textContent = 'Network error — could not search right now.';
-  }
+  rowsEl.innerHTML = slice.map((p, i) => `
+    <div class="hr" style="grid-template-columns:30px 1fr 160px 120px;cursor:default;">
+      <span class="hn">${start + i + 1}</span>
+      <span style="font-size:13px;font-weight:500;color:#fff;">${p.name}</span>
+      <span style="font-size:12px;color:var(--mu);">${capTeamLabel(p.team)}</span>
+      <span style="text-align:right;font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;color:var(--red);">${p.salary == null ? 'Not set' : fmt(p.salary)}</span>
+    </div>`).join('');
+
+  renderPager('cap', filt.length, pp, total);
 }
 
-function capTeamBadge(team) {
-  if (team && teamList.includes(team)) {
-    const logo = logos[team] ? `<img src="${logos[team]}" style="width:13px;height:13px;object-fit:contain;" alt="">` : '';
-    return `<span class="mbadge safe" style="display:inline-flex;align-items:center;gap:6px;">${logo}${team}</span>`;
-  }
-  if (team === 'Free Agent') return `<span class="mbadge warn">Free Agent</span>`;
-  return `<span class="mbadge none">Not currently on a team</span>`;
-}
-
-function renderCapResults(results) {
-  const container = document.getElementById('cap-results');
-  const empty = document.getElementById('cap-empty');
-
-  if (!results.length) {
-    container.innerHTML = '';
-    empty.style.display = '';
-    empty.textContent = 'No players match that search.';
-    return;
-  }
-
-  empty.style.display = 'none';
-  container.innerHTML = results.map(p => `
-    <div class="cap-result-row" onclick="selectCapPlayer('${encodeURIComponent(p.id)}')">
-      <span class="cap-result-name">${p.name}</span>
-      <span class="cap-result-team">${p.team && p.team !== 'Free Agent' ? p.team : (p.team === 'Free Agent' ? 'Free Agent' : 'No team')}</span>
-      <span class="cap-result-id">${p.discordId ? 'Discord ID ' + p.discordId : 'Manual entry'}</span>
-    </div>
-  `).join('');
-}
-
-async function selectCapPlayer(encodedId) {
-  const id = decodeURIComponent(encodedId);
-  try {
-    const res = await fetch(`/api/player-cap?id=${encodeURIComponent(id)}`);
-    const data = await res.json();
-    if (!data.found) { toast('That player record could not be found.', 'red'); return; }
-    renderCapProfile(data.player);
-  } catch (e) {
-    toast('Network error — could not load that player.', 'red');
-  }
-}
-
-function renderCapProfile(player) {
-  const el = document.getElementById('cap-profile');
-  el.innerHTML = `
-    <div class="cap-profile-top">
-      <div class="cap-profile-name">${player.name}</div>
-      ${capTeamBadge(player.team)}
-    </div>
-    <div class="cap-profile-id-row">
-      <span class="cap-profile-id-label">${player.discordId ? 'Permanent Discord User ID' : 'Record ID (manually added)'}</span>
-      <span class="cap-profile-id-val">${player.discordId || player.id}</span>
-    </div>
-    <div class="cap-profile-grid">
-      <div class="cap-profile-stat">
-        <div class="cap-profile-stat-label">Individual Salary Cap</div>
-        <div class="cap-profile-stat-val">${player.salary == null ? 'Not set' : fmt(player.salary)}</div>
-      </div>
-      <div class="cap-profile-stat">
-        <div class="cap-profile-stat-label">Current Team</div>
-        <div class="cap-profile-stat-val" style="font-size:16px;">${player.team && player.team !== 'Free Agent' ? player.team : (player.team === 'Free Agent' ? 'Free Agent' : 'None')}</div>
-      </div>
-    </div>
-  `;
-  el.classList.remove('hidden');
-}
+document.getElementById('f-cap-search')?.addEventListener('input', () => { capPg = 1; renderCapRows(); });
+document.getElementById('f-cap-sort')?.addEventListener('change', () => { capPg = 1; renderCapRows(); });
+document.getElementById('f-cap-pp')?.addEventListener('change', () => { capPg = 1; renderCapRows(); });
 
 function renderSummary() {
   const data = buildTeamData();
@@ -1924,7 +1927,7 @@ function renderSummary() {
 ══════════════════════════════════════════ */
 function renderPager(id, total, pp, pages) {
   const pagerEl = document.getElementById(`${id}-pager`);
-  const pg = id === 'teams' ? teamsPg : faPg;
+  const pg = id === 'teams' ? teamsPg : (id === 'cap' ? capPg : faPg);
   const start = (pg - 1) * pp;
 
   pagerEl.style.display = 'flex';
@@ -1947,14 +1950,20 @@ function renderPager(id, total, pp, pages) {
   btnsEl.innerHTML = h;
 
   btnsEl.querySelector(`#${id}-p-prev`)?.addEventListener('click', () => {
-    if (id === 'teams') { teamsPg--; renderTeams(); } else { faPg--; renderFA(); }
+    if (id === 'teams') { teamsPg--; renderTeams(); }
+    else if (id === 'cap') { capPg--; renderCapRows(); }
+    else { faPg--; renderFA(); }
   });
   btnsEl.querySelector(`#${id}-p-next`)?.addEventListener('click', () => {
-    if (id === 'teams') { teamsPg++; renderTeams(); } else { faPg++; renderFA(); }
+    if (id === 'teams') { teamsPg++; renderTeams(); }
+    else if (id === 'cap') { capPg++; renderCapRows(); }
+    else { faPg++; renderFA(); }
   });
   btnsEl.querySelectorAll('[data-pg]').forEach(b => b.addEventListener('click', () => {
     const v = parseInt(b.dataset.pg, 10);
-    if (id === 'teams') { teamsPg = v; renderTeams(); } else { faPg = v; renderFA(); }
+    if (id === 'teams') { teamsPg = v; renderTeams(); }
+    else if (id === 'cap') { capPg = v; renderCapRows(); }
+    else { faPg = v; renderFA(); }
   }));
 
   const ji = document.getElementById(`${id}-pg-jump`);
@@ -2125,6 +2134,13 @@ document.getElementById('fa-pg-jump')?.addEventListener('change', e => {
   const tot = Math.max(1, Math.ceil(filt.length / pp));
   const v = parseInt(e.target.value, 10);
   if (v >= 1 && v <= tot) { faPg = v; renderFA(); } else e.target.value = faPg;
+});
+document.getElementById('cap-pg-jump')?.addEventListener('change', e => {
+  const filt = getCapFiltered();
+  const pp = parseInt(document.getElementById('f-cap-pp').value, 10);
+  const tot = Math.max(1, Math.ceil(filt.length / pp));
+  const v = parseInt(e.target.value, 10);
+  if (v >= 1 && v <= tot) { capPg = v; renderCapRows(); } else e.target.value = capPg;
 });
 
 /* ══════════════════════════════════════════
