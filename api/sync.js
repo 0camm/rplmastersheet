@@ -16,12 +16,24 @@ const ROLE_TO_TEAM = {
   'POR': 'Portland Trail Blazers','SAC': 'Sacramento Kings','SAN': 'San Antonio Spurs',
   'TOR': 'Toronto Raptors','UTA': 'Utah Jazz','WAS': 'Washington Wizards',
 };
-async function discordFetch(path) {
-  const res = await fetch(`https://discord.com/api/v10${path}`, {
-    headers: { Authorization: `Bot ${process.env.DISCORD_BOT_TOKEN}` }
-  });
-  if (!res.ok) throw new Error(`Discord ${res.status} on ${path}: ${await res.text()}`);
-  return res.json();
+async function discordFetch(path, retries = 3) {
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    const res = await fetch(`https://discord.com/api/v10${path}`, {
+      headers: { Authorization: `Bot ${process.env.DISCORD_BOT_TOKEN}` }
+    });
+    if (res.status === 429 && attempt < retries) {
+      // Discord rate limit — respect Retry-After (seconds) and try again
+      // instead of aborting the whole sync. With ~1300 members this hits
+      // fairly often during pagination.
+      const body = await res.json().catch(() => ({}));
+      const waitMs = Math.ceil((body.retry_after ?? 1) * 1000) + 50;
+      await new Promise(r => setTimeout(r, waitMs));
+      continue;
+    }
+    if (!res.ok) throw new Error(`Discord ${res.status} on ${path}: ${await res.text()}`);
+    return res.json();
+  }
+  throw new Error(`Discord rate limit exceeded retries on ${path}`);
 }
 export default async function handler(req, res) {
   if (req.method !== 'GET' && req.method !== 'POST') return res.status(405).end();
@@ -37,6 +49,10 @@ export default async function handler(req, res) {
       return res.status(401).json({ error: 'Invalid password' });
     }
   }
+
+  // FIX: declared outside the try block so the catch handler can still
+  // report accurate partial-progress counts if something throws mid-run.
+  let totalWritten = 0;
 
   try {
     const guildId = process.env.DISCORD_GUILD_ID;
@@ -72,6 +88,7 @@ export default async function handler(req, res) {
     let updated = 0, added = 0, removed = 0;
     const entries = {};
     const toDelete = [];
+    const CHUNK_SIZE = 200; // flush to Redis every N processed members
 
     for (const member of members) {
       if (member.user?.bot) continue;
@@ -123,6 +140,22 @@ export default async function handler(req, res) {
       }
 
       entries[userId] = { id: userId, name: username, team: assignedTeam, salary };
+      totalWritten++;
+
+      // FIX: flush to Redis every CHUNK_SIZE members instead of holding
+      // everything in memory for one giant write at the very end. With
+      // ~1300 members, any single failure late in the run (Discord rate
+      // limit, a Vercel timeout, a network blip) used to throw away every
+      // successful match from the entire run because nothing was saved
+      // until the last line. Now already-processed members survive even
+      // if a later batch fails.
+      if (Object.keys(entries).length >= CHUNK_SIZE) {
+        await redis.hset('players', entries);
+        for (const k of Object.keys(entries)) delete entries[k];
+      }
+      if (toDelete.length >= CHUNK_SIZE) {
+        await redis.hdel('players', ...toDelete.splice(0, toDelete.length));
+      }
     }
 
     // BUGFIX: previously, anyone who left the Discord server entirely was
@@ -144,16 +177,21 @@ export default async function handler(req, res) {
     if (Object.keys(entries).length > 0) {
       await redis.hset('players', entries);
     }
-    if (toDelete.length > 0) {
-      await redis.hdel('players', ...toDelete);
+    // FIX: hdel with a huge spread of args (1000+) can hit request-size
+    // limits — delete in chunks instead of one call.
+    while (toDelete.length > 0) {
+      await redis.hdel('players', ...toDelete.splice(0, CHUNK_SIZE));
     }
 
     return res.json({
       ok: true,
-      message: `Sync complete — ${added} added, ${updated} updated, ${removed} staff removed, ${left} left-server entries removed, ${Object.keys(entries).length} total`
+      message: `Sync complete — ${added} added, ${updated} updated, ${removed} staff removed, ${left} left-server entries removed, ${totalWritten} total`
     });
   } catch (err) {
     console.error('Sync error:', err);
-    return res.status(500).json({ error: err.message });
+    // FIX: report partial progress instead of just dying silently — if this
+    // fires mid-run, everything up through the last CHUNK_SIZE flush is
+    // already safely saved in Redis, so the next sync run picks up from there.
+    return res.status(500).json({ error: `${err.message} (partial progress saved: ${totalWritten} players written before failure)` });
   }
 }
