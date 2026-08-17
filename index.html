@@ -2467,19 +2467,28 @@ async function syncSalaryRoles() {
   const btn = document.getElementById('salary-sync-btn');
   btn.textContent = 'Syncing…'; btn.disabled = true;
   try {
-    const res = await fetch('/api/admin', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ password, action: 'syncSalaryRoles' })
-    });
-    const data = await res.json();
-    if (data.ok) {
-      let msg = data.message;
-      if (data.knownSalaryRoleNamesInDiscord) {
-        msg += `\nRoles the bot found in Discord: ${data.knownSalaryRoleNamesInDiscord.join(', ') || '(none)'}`;
-      }
-      showAdminResult(msg, 'success');
-      toast(data.message, 'green');
-    } else { showAdminResult(data.error || 'Salary role sync failed.', 'error'); }
+    // Sync runs in timed chunks server-side (Discord's own rate limit on
+    // role changes means one request often can't finish a whole roster).
+    // Keep calling /api/admin with the same syncId until it reports done.
+    let syncId = null;
+    let data;
+    while (true) {
+      const res = await fetch('/api/admin', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password, action: 'syncSalaryRoles', syncId })
+      });
+      data = await res.json();
+      if (!data.ok) { showAdminResult(data.error || 'Salary role sync failed.', 'error'); return; }
+      if (data.done) break;
+      syncId = data.syncId;
+      btn.textContent = `Syncing… (${data.progress.processed}/${data.progress.total})`;
+    }
+    let msg = data.message;
+    if (data.knownSalaryRoleNamesInDiscord) {
+      msg += `\nRoles the bot found in Discord: ${data.knownSalaryRoleNamesInDiscord.join(', ') || '(none)'}`;
+    }
+    showAdminResult(msg, 'success');
+    toast(data.message, 'green');
   } catch (e) { showAdminResult('Network error.', 'error'); }
   finally { btn.textContent = 'Sync Salary Roles'; btn.disabled = false; }
 }

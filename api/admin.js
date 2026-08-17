@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import { Redis } from '@upstash/redis';
 import { ROLE_TO_TEAM, TEAM_TO_TAG } from './_lib/discord-teams.js';
 import { salaryToRoleName, ALL_SALARY_ROLE_NAMES } from './_lib/salary-roles.js';
@@ -119,16 +120,33 @@ async function syncDiscordSalaryRole(discordUserId, salary) {
   return { ok: true, removed: toRemove.length, added: toAdd.length, targetRoleFound: !!targetRole };
 }
 
-// BULK REVERSE SYNC: push every current player's salary bracket onto
-// Discord in one pass. Fetches the role list and full member list ONCE
-// (same pagination pattern as sync.js) instead of re-fetching per player,
-// and only makes add/remove calls for players whose bracket actually
-// needs to change — keeps this well under the function's time limit even
-// on larger rosters. Skips manual/legacy (non-snowflake) entries.
-async function bulkSyncSalaryRoles(playerEntries) {
-  if (!process.env.DISCORD_BOT_TOKEN || !process.env.DISCORD_GUILD_ID) {
-    return { notConfigured: true, reason: 'Discord bot not configured' };
-  }
+// SYNC SESSION STORAGE: bulk salary-role sync no longer runs to completion
+// in one request (see notes below on why). Instead the in-progress state —
+// remaining work items, cursor position, running counters — lives in Redis
+// under a short-lived session key, keyed by a syncId the client hands back
+// on each follow-up call. TTL just needs to outlast a full sync's worth of
+// chunked requests; it's not meant to survive between separate sync runs.
+const SYNC_SESSION_TTL_SECONDS = 600; // 10 minutes
+
+async function getSyncSession(syncId) {
+  const raw = await redis.get(`salsync:${syncId}`);
+  if (!raw) return null;
+  return typeof raw === 'string' ? JSON.parse(raw) : raw;
+}
+async function saveSyncSession(syncId, session) {
+  await redis.set(`salsync:${syncId}`, JSON.stringify(session), { ex: SYNC_SESSION_TTL_SECONDS });
+}
+async function deleteSyncSession(syncId) {
+  await redis.del(`salsync:${syncId}`);
+}
+
+// BULK REVERSE SYNC, PART 1 (read-only, always fast): fetch the role list
+// and full member list ONCE (same pagination pattern as sync.js), then
+// diff every player against Discord to build the list of add/remove work
+// items. No role-modification calls happen here, so this step isn't
+// subject to Discord's role-mutation rate limit and comfortably finishes
+// in a single request even for a large guild.
+async function prepareSalarySync(playerEntries) {
   const guildId = process.env.DISCORD_GUILD_ID;
 
   const allRoles = await discordFetch(`/guilds/${guildId}/roles`);
@@ -149,9 +167,6 @@ async function bulkSyncSalaryRoles(playerEntries) {
   let skipped = 0;
   const skipReasons = { notDiscordAccount: 0, leftServer: 0, roleNotFound: 0 };
 
-  // First pass (no network calls): figure out which players actually need a
-  // change, and what that change is. Keeping this separate from the network
-  // work below is what makes the concurrency-limited loop possible.
   const workItems = [];
   for (const [id, player] of playerEntries) {
     if (!/^\d{15,20}$/.test(id)) { skipped++; skipReasons.notDiscordAccount++; continue; }
@@ -173,35 +188,54 @@ async function bulkSyncSalaryRoles(playerEntries) {
     workItems.push({ id, toRemove, toAdd: alreadyHasTarget ? [] : [targetRoleId] });
   }
 
-  // PERF FIX: the old version awaited each player's Discord calls one at a
-  // time, so total run time scaled linearly with roster size and blew past
-  // Vercel's 60s function limit on larger rosters (confirmed via
-  // "Task timed out after 60 seconds" in prod logs). Running a bounded
-  // number of players concurrently instead cuts wall-clock time roughly by
-  // the concurrency factor. discordFetch already retries on 429, so this
-  // stays safe with respect to Discord's rate limits.
-  const CONCURRENCY = 8;
-  let updated = 0, failed = 0;
-  let cursor = 0;
-  async function worker() {
-    while (cursor < workItems.length) {
-      const item = workItems[cursor++];
-      try {
-        for (const roleId of item.toRemove) {
-          await discordFetch(`/guilds/${guildId}/members/${item.id}/roles/${roleId}`, { method: 'DELETE' });
-        }
-        for (const roleId of item.toAdd) {
-          await discordFetch(`/guilds/${guildId}/members/${item.id}/roles/${roleId}`, { method: 'PUT' });
-        }
-        updated++;
-      } catch (err) {
-        failed++;
-      }
-    }
-  }
-  await Promise.all(Array.from({ length: Math.min(CONCURRENCY, workItems.length) }, worker));
+  return { workItems, skipped, skipReasons, knownRoleNames: Object.keys(roleIdByName) };
+}
 
-  return { ok: true, updated, skipped, failed, skipReasons, knownRoleNames: Object.keys(roleIdByName) };
+// BULK REVERSE SYNC, PART 2 (the actual rate-limited work): process work
+// items sequentially — NOT concurrently — starting from session.cursor,
+// until either everything is done or a time budget is used up.
+//
+// Why sequential: a previous fix bumped this loop to 8-way concurrency to
+// cut wall-clock time, on the assumption the bottleneck was our own code
+// running requests one at a time. It wasn't — Discord enforces a
+// guild-wide rate limit on role-modification calls specifically, so firing
+// requests in parallel just means more of them arrive back-to-back and get
+// 429'd; discordFetch's retry/backoff then eats the time "saved" by
+// concurrency anyway. Total throughput is capped by Discord regardless of
+// how many requests we have in flight, so there's no wall-clock win to be
+// had — running sequentially is just as fast in practice and far simpler
+// to reason about and resume.
+//
+// Why chunked: for a roster with many role changes (e.g. the first time
+// salary-bracket roles are being applied), the total work can legitimately
+// take longer than Vercel's 60s function limit no matter how it's
+// scheduled. So instead of trying to finish in one request, each
+// invocation works for a bounded time budget, persists exactly where it
+// left off, and reports back "not done yet" so the caller can invoke again
+// to continue. This finishes correctly regardless of roster size or how
+// strict Discord's rate limit turns out to be — it just takes as many
+// follow-up requests as needed.
+const SYNC_TIME_BUDGET_MS = 45000; // leaves headroom under the 60s function limit for setup/response overhead
+
+async function processSalarySyncChunk(session) {
+  const deadline = Date.now() + SYNC_TIME_BUDGET_MS;
+  const { workItems, guildId } = session;
+  while (session.cursor < workItems.length && Date.now() < deadline) {
+    const item = workItems[session.cursor];
+    try {
+      for (const roleId of item.toRemove) {
+        await discordFetch(`/guilds/${guildId}/members/${item.id}/roles/${roleId}`, { method: 'DELETE' });
+      }
+      for (const roleId of item.toAdd) {
+        await discordFetch(`/guilds/${guildId}/members/${item.id}/roles/${roleId}`, { method: 'PUT' });
+      }
+      session.updated++;
+    } catch (err) {
+      session.failed++;
+    }
+    session.cursor++;
+  }
+  return session.cursor >= workItems.length; // true = done
 }
 
 export default async function handler(req, res) {
@@ -296,20 +330,60 @@ export default async function handler(req, res) {
   }
 
   // BULK REVERSE SYNC: push every current player's salary bracket onto
-  // Discord in one pass. Meant to be run once when the salary-role feature
-  // is first turned on (so existing players get tagged for the first time),
-  // and afterwards as a manual "fix drift" button if roles are ever hand-
-  // edited in Discord. Skips manual/legacy (non-snowflake) entries.
+  // Discord. Meant to be run once when the salary-role feature is first
+  // turned on (so existing players get tagged for the first time), and
+  // afterwards as a manual "fix drift" button if roles are ever hand-edited
+  // in Discord. Skips manual/legacy (non-snowflake) entries.
+  //
+  // Runs in timed chunks (see processSalarySyncChunk above) rather than to
+  // completion in one request. First call omits syncId and gets one back
+  // along with done:false; the client keeps calling with that same syncId
+  // until it gets done:true. Progress lives in Redis between calls.
   if (action === 'syncSalaryRoles') {
+    if (!process.env.DISCORD_BOT_TOKEN || !process.env.DISCORD_GUILD_ID) {
+      return res.json({ ok: true, done: true, message: 'Salary role sync skipped: Discord bot not configured' });
+    }
     try {
-      const result = await bulkSyncSalaryRoles(players);
-      if (result.notConfigured) {
-        return res.json({ ok: true, message: `Salary role sync skipped: ${result.reason}` });
+      let syncId = req.body.syncId;
+      let session;
+      if (syncId) {
+        session = await getSyncSession(syncId);
+        if (!session) {
+          return res.status(410).json({ error: 'Sync session expired or not found — please restart the sync.' });
+        }
+      } else {
+        syncId = randomUUID();
+        const prep = await prepareSalarySync(players);
+        session = {
+          guildId: process.env.DISCORD_GUILD_ID,
+          workItems: prep.workItems,
+          cursor: 0,
+          updated: 0,
+          failed: 0,
+          skipped: prep.skipped,
+          skipReasons: prep.skipReasons,
+          knownRoleNames: prep.knownRoleNames,
+        };
       }
+
+      const done = await processSalarySyncChunk(session);
+
+      if (done) {
+        await deleteSyncSession(syncId);
+        return res.json({
+          ok: true,
+          done: true,
+          message: `Salary role sync complete — ${session.updated} updated, ${session.skipped} skipped (${session.skipReasons.notDiscordAccount} manual, ${session.skipReasons.leftServer} left server, ${session.skipReasons.roleNotFound} missing role), ${session.failed} failed`,
+          knownSalaryRoleNamesInDiscord: session.knownRoleNames
+        });
+      }
+
+      await saveSyncSession(syncId, session);
       return res.json({
         ok: true,
-        message: `Salary role sync complete — ${result.updated} updated, ${result.skipped} skipped (${result.skipReasons.notDiscordAccount} manual, ${result.skipReasons.leftServer} left server, ${result.skipReasons.roleNotFound} missing role), ${result.failed} failed`,
-        knownSalaryRoleNamesInDiscord: result.knownRoleNames
+        done: false,
+        syncId,
+        progress: { processed: session.cursor, total: session.workItems.length, updated: session.updated, failed: session.failed }
       });
     } catch (err) {
       console.error('Bulk salary role sync error:', err);
