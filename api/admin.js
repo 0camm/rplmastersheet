@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { Redis } from '@upstash/redis';
 import { ROLE_TO_TEAM, TEAM_TO_TAG } from './_lib/discord-teams.js';
 import { salaryToRoleName, ALL_SALARY_ROLE_NAMES } from './_lib/salary-roles.js';
+import { logAudit } from './_lib/audit-log.js';
 
 const redis = new Redis({
   url: process.env.KV_REST_API_URL,
@@ -245,7 +246,7 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).send('Method not allowed');
 
-  const { password, action, name, salary, team, newName } = req.body;
+  const { password, action, name, salary, team, newName, actor } = req.body;
 
   if (password !== process.env.ADMIN_PASSWORD) {
     return res.status(401).json({ error: 'Invalid password' });
@@ -300,7 +301,12 @@ export default async function handler(req, res) {
       .filter(([id, p]) => coachIds.has(id) || coachNames.has(p.name?.toLowerCase()))
       .map(([id]) => id);
     if (toDelete.length > 0) await redis.hdel('players', ...toDelete);
-    return res.json({ ok: true, message: `Purged ${toDelete.length} coach entr${toDelete.length===1?'y':'ies'} from players` });
+    const purgeMsg = `Purged ${toDelete.length} coach entr${toDelete.length===1?'y':'ies'} from players`;
+    await logAudit({
+      actor, action: 'Purge Staff', target: `${toDelete.length} entr${toDelete.length===1?'y':'ies'}`,
+      details: toDelete.length ? purgeMsg : 'No coach entries found to remove'
+    });
+    return res.json({ ok: true, message: purgeMsg });
   }
 
   if (action === 'setSalary') {
@@ -326,6 +332,10 @@ export default async function handler(req, res) {
       }
     }
 
+    await logAudit({
+      actor, action: 'Set Salary', target: player.name,
+      details: `$${(player.salary ?? 0).toLocaleString()} → $${newSalary.toLocaleString()}${discordNote}`
+    });
     return res.json({ ok: true, message: `${player.name} salary set to $${newSalary.toLocaleString()}${discordNote}` });
   }
 
@@ -370,10 +380,15 @@ export default async function handler(req, res) {
 
       if (done) {
         await deleteSyncSession(syncId);
+        const doneMsg = `Salary role sync complete — ${session.updated} updated, ${session.skipped} skipped (${session.skipReasons.notDiscordAccount} manual, ${session.skipReasons.leftServer} left server, ${session.skipReasons.roleNotFound} missing role), ${session.failed} failed`;
+        await logAudit({
+          actor, action: 'Sync Salary Roles', target: 'All players',
+          details: doneMsg
+        });
         return res.json({
           ok: true,
           done: true,
-          message: `Salary role sync complete — ${session.updated} updated, ${session.skipped} skipped (${session.skipReasons.notDiscordAccount} manual, ${session.skipReasons.leftServer} left server, ${session.skipReasons.roleNotFound} missing role), ${session.failed} failed`,
+          message: doneMsg,
           knownSalaryRoleNamesInDiscord: session.knownRoleNames
         });
       }
@@ -413,6 +428,10 @@ export default async function handler(req, res) {
       }
     }
 
+    await logAudit({
+      actor, action: 'Set Team', target: player.name,
+      details: `${player.team || 'Free Agent'} → ${team}${discordNote}`
+    });
     return res.json({ ok: true, message: `${player.name} moved to ${team}${discordNote}` });
   }
 
@@ -423,21 +442,34 @@ export default async function handler(req, res) {
       : players.filter(([, p]) => p.name.toLowerCase() === name?.toLowerCase());
     if (!allMatches.length) return res.status(404).json({ error: `Player "${name}" not found` });
     await redis.hdel('players', ...allMatches.map(([id]) => id));
+    await logAudit({
+      actor, action: 'Remove Player', target: name,
+      details: `Removed ${allMatches.length} entr${allMatches.length===1?'y':'ies'}`
+    });
     return res.json({ ok: true, message: `${name} removed (${allMatches.length} entr${allMatches.length===1?'y':'ies'})` });
   }
 
   if (action === 'addPlayer') {
     const id = `manual_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+    const finalSalary = Number(salary) || 2000000;
     await redis.hset('players', {
-      [id]: { id, name, team: team || 'Free Agent', salary: Number(salary) || 2000000 }
+      [id]: { id, name, team: team || 'Free Agent', salary: finalSalary }
     });
-    return res.json({ ok: true, message: `${name} added to ${team || 'Free Agent'} at $${(Number(salary)||2000000).toLocaleString()}` });
+    await logAudit({
+      actor, action: 'Add Player', target: name,
+      details: `Added to ${team || 'Free Agent'} at $${finalSalary.toLocaleString()}`
+    });
+    return res.json({ ok: true, message: `${name} added to ${team || 'Free Agent'} at $${finalSalary.toLocaleString()}` });
   }
 
   if (action === 'renamePlayer') {
     if (!entry) return res.status(404).json({ error: `Player "${name}" not found` });
     const [id, player] = entry;
     await redis.hset('players', { [id]: { ...player, name: newName } });
+    await logAudit({
+      actor, action: 'Rename Player', target: name,
+      details: `${name} → ${newName}`
+    });
     return res.json({ ok: true, message: `${name} renamed to ${newName}` });
   }
 

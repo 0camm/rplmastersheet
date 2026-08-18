@@ -718,8 +718,33 @@ select.fc{
 .admin-tab.active{color:#fff;border-bottom-color:var(--red);}
 .admin-tab:hover:not(.active){color:var(--tx);}
 .admin-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:0 0 env(safe-area-inset-bottom,0);}
-.admin-search-bar{padding:12px 16px;border-bottom:1px solid var(--b);position:sticky;top:0;background:var(--s1);z-index:1;}
-.admin-search-inner{position:relative;}
+.admin-search-bar{padding:12px 16px;border-bottom:1px solid var(--b);position:sticky;top:0;background:var(--s1);z-index:1;display:flex;gap:8px;align-items:center;}
+.admin-search-inner{position:relative;flex:1;min-width:0;}
+.audit-refresh-btn{
+  flex-shrink:0;width:32px;height:32px;
+  display:flex;align-items:center;justify-content:center;
+  background:var(--s2);border:1px solid var(--b);border-radius:6px;
+  color:var(--mu);cursor:pointer;transition:border-color .15s,color .15s,transform .15s;
+}
+.audit-refresh-btn:hover{border-color:rgba(232,0,29,.35);color:var(--tx);}
+.audit-refresh-btn:active{transform:rotate(80deg);}
+.admin-lock-hint{font-size:10.5px;color:var(--mu);margin-top:10px;line-height:1.5;}
+
+/* ── AUDIT LOG ── */
+.audit-empty{padding:32px 16px;text-align:center;color:var(--mu);font-size:12px;}
+.audit-row{padding:11px 16px;border-bottom:1px solid var(--b2);}
+.audit-row:last-child{border-bottom:none;}
+.audit-row-top{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:4px;}
+.audit-action{
+  font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
+  color:var(--red);flex-shrink:0;
+}
+.audit-when{font-size:10.5px;color:var(--mu);font-family:'JetBrains Mono',monospace;white-space:nowrap;}
+.audit-row-mid{display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--tx);flex-wrap:wrap;}
+.audit-actor strong{color:#fff;font-weight:600;}
+.audit-arrow{color:var(--mu2);font-size:11px;}
+.audit-target{color:var(--tx2);}
+.audit-details{margin-top:4px;font-size:11.5px;color:var(--mu);line-height:1.5;font-family:'JetBrains Mono',monospace;word-break:break-word;}
 .admin-search-inner svg{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--mu);pointer-events:none;}
 .admin-search-inner input{
   width:100%;background:var(--bg);border:1px solid var(--b);
@@ -1245,17 +1270,22 @@ select.fc{
     </button>
   </div>
   <div id="admin-lock-screen" class="admin-lock">
+    <div class="admin-lock-label">Your name</div>
+    <div class="admin-lock-row" style="margin-bottom:12px;">
+      <input type="text" class="admin-lock-input" id="admin-actor" placeholder="e.g. your Discord username" onkeydown="if(event.key==='Enter')document.getElementById('admin-pass').focus()">
+    </div>
     <div class="admin-lock-label">Password</div>
     <div class="admin-lock-row">
       <input type="password" class="admin-lock-input" id="admin-pass" placeholder="Enter admin password" onkeydown="if(event.key==='Enter')unlockAdmin()">
       <button class="admin-lock-btn" onclick="unlockAdmin()">Unlock</button>
     </div>
+    <div class="admin-lock-hint">Recorded in the audit log alongside anything you change.</div>
   </div>
   <div id="admin-unlocked" class="hidden" style="display:none;flex-direction:column;flex:1;min-height:0;">
     <div class="admin-tabs">
       <button class="admin-tab active" data-atab="roster" onclick="switchAdminTab('roster',this)">Roster</button>
       <button class="admin-tab" data-atab="add" onclick="switchAdminTab('add',this)">Add Player</button>
-      <button class="admin-tab" data-atab="caps" onclick="switchAdminTab('caps',this)">Player Caps</button>
+      <button class="admin-tab" data-atab="audit" onclick="switchAdminTab('audit',this)">Audit Log</button>
       <button class="admin-tab" data-atab="tools" onclick="switchAdminTab('tools',this)">Tools</button>
     </div>
     <!-- ROSTER TAB -->
@@ -1321,6 +1351,19 @@ select.fc{
         </div>
         <button class="add-submit" onclick="addPlayer()">Add Player</button>
       </div>
+    </div>
+    <!-- AUDIT LOG TAB -->
+    <div id="atab-audit" class="admin-body hidden">
+      <div class="admin-search-bar">
+        <div class="admin-search-inner">
+          <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><circle cx="6" cy="6" r="4.5" stroke="currentColor" stroke-width="1.3"/><path d="M9.5 9.5L12.5 12.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+          <input type="text" id="audit-search" placeholder="Filter by admin, action, or player…" oninput="renderAuditLog()">
+        </div>
+        <button class="audit-refresh-btn" onclick="loadAuditLog()" title="Refresh">
+          <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><path d="M12.5 7A5.5 5.5 0 1 1 10.9 3M12.5 1.5V4.5H9.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+      </div>
+      <div id="audit-log-list"></div>
     </div>
     <!-- TOOLS TAB -->
     <div id="atab-tools" class="admin-body hidden">
@@ -1414,6 +1457,8 @@ let teamsPg = 1, faPg = 1;
 let adminUnlocked = false;
 let currentAdminTab = 'roster';
 let prevTeamData = null;
+let adminActor = localStorage.getItem('rpl_admin_actor') || '';
+let auditEntries = [];
 
 /* ══════════════════════════════════════════
    UTILITIES
@@ -2182,7 +2227,12 @@ function openAdmin() {
   document.getElementById('admin-overlay').classList.add('open');
   document.getElementById('admin-panel').classList.add('open');
   clearAdminResult();
-  if (adminUnlocked) renderAdminRoster();
+  const actorEl = document.getElementById('admin-actor');
+  if (actorEl && !actorEl.value) actorEl.value = adminActor;
+  if (adminUnlocked) {
+    if (currentAdminTab === 'audit') loadAuditLog();
+    else renderAdminRoster();
+  }
 }
 function closeAdmin() {
   document.getElementById('admin-overlay').classList.remove('open');
@@ -2192,6 +2242,9 @@ function closeAdmin() {
 async function unlockAdmin() {
   const password = document.getElementById('admin-pass').value;
   if (!password) return;
+  const actorInput = (document.getElementById('admin-actor').value || '').trim();
+  adminActor = actorInput || 'Unknown admin';
+  localStorage.setItem('rpl_admin_actor', adminActor);
   const btn = document.querySelector('.admin-lock-btn');
   btn.textContent = '…'; btn.disabled = true;
   try {
@@ -2225,8 +2278,10 @@ function switchAdminTab(tab, btn) {
   btn.classList.add('active');
   document.getElementById('atab-roster').classList.toggle('hidden', tab !== 'roster');
   document.getElementById('atab-add').classList.toggle('hidden', tab !== 'add');
+  document.getElementById('atab-audit').classList.toggle('hidden', tab !== 'audit');
   document.getElementById('atab-tools').classList.toggle('hidden', tab !== 'tools');
   clearAdminResult();
+  if (tab === 'audit') loadAuditLog();
 }
 
 /* ── ADMIN ROSTER ── */
@@ -2304,7 +2359,7 @@ async function confirmMove(rowKey, encodedId, encodedName) {
   try {
     const res = await fetch('/api/admin', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ password, action: 'setTeam', id, name, team })
+      body: JSON.stringify({ password, action: 'setTeam', id, name, team, actor: adminActor })
     });
     const data = await res.json();
     if (data.ok) {
@@ -2362,7 +2417,7 @@ async function saveSalaryById(rowKey) {
   try {
     const res = await fetch('/api/admin', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ password, action: 'setSalary', id, name, salary })
+      body: JSON.stringify({ password, action: 'setSalary', id, name, salary, actor: adminActor })
     });
     const data = await res.json();
     if (data.ok) {
@@ -2384,7 +2439,7 @@ async function removePlayer(encodedId, encodedName, btn) {
   try {
     const res = await fetch('/api/admin', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ password, action: 'removePlayer', id, name })
+      body: JSON.stringify({ password, action: 'removePlayer', id, name, actor: adminActor })
     });
     const data = await res.json();
     if (data.ok) {
@@ -2407,7 +2462,7 @@ async function addPlayer() {
   try {
     const res = await fetch('/api/admin', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ password, action: 'addPlayer', name, team, salary })
+      body: JSON.stringify({ password, action: 'addPlayer', name, team, salary, actor: adminActor })
     });
     const data = await res.json();
     if (data.ok) {
@@ -2449,7 +2504,7 @@ async function purgeStaff() {
   try {
     const res = await fetch('/api/admin', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ password, action: 'purgeStaff' })
+      body: JSON.stringify({ password, action: 'purgeStaff', actor: adminActor })
     });
     const data = await res.json();
     if (data.ok) {
@@ -2475,7 +2530,7 @@ async function syncSalaryRoles() {
     while (true) {
       const res = await fetch('/api/admin', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ password, action: 'syncSalaryRoles', syncId })
+        body: JSON.stringify({ password, action: 'syncSalaryRoles', syncId, actor: adminActor })
       });
       data = await res.json();
       if (!data.ok) { showAdminResult(data.error || 'Salary role sync failed.', 'error'); return; }
@@ -2491,6 +2546,71 @@ async function syncSalaryRoles() {
     toast(data.message, 'green');
   } catch (e) { showAdminResult('Network error.', 'error'); }
   finally { btn.textContent = 'Sync Salary Roles'; btn.disabled = false; }
+}
+
+/* ── AUDIT LOG ── */
+function escapeHtml(str) {
+  return String(str ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function auditTimeParts(iso) {
+  const d = new Date(iso);
+  if (isNaN(d)) return { date: '—', time: '—' };
+  return {
+    date: d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }),
+    time: d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })
+  };
+}
+async function loadAuditLog() {
+  const container = document.getElementById('audit-log-list');
+  if (!container) return;
+  container.innerHTML = '<div class="audit-empty">Loading…</div>';
+  const password = document.getElementById('admin-pass').value;
+  try {
+    const res = await fetch('/api/audit-log', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password, limit: 300 })
+    });
+    const data = await res.json();
+    if (!data.ok) { container.innerHTML = `<div class="audit-empty">${escapeHtml(data.error || 'Could not load audit log.')}</div>`; return; }
+    auditEntries = data.entries || [];
+    renderAuditLog();
+  } catch (e) {
+    container.innerHTML = '<div class="audit-empty">Network error loading audit log.</div>';
+  }
+}
+function renderAuditLog() {
+  const container = document.getElementById('audit-log-list');
+  if (!container) return;
+  const q = (document.getElementById('audit-search')?.value || '').toLowerCase().trim();
+  const filtered = q
+    ? auditEntries.filter(e =>
+        (e.actor || '').toLowerCase().includes(q) ||
+        (e.action || '').toLowerCase().includes(q) ||
+        (e.target || '').toLowerCase().includes(q) ||
+        (e.details || '').toLowerCase().includes(q))
+    : auditEntries;
+
+  if (!filtered.length) {
+    container.innerHTML = `<div class="audit-empty">${auditEntries.length ? 'No matching entries.' : 'No admin actions recorded yet.'}</div>`;
+    return;
+  }
+
+  container.innerHTML = filtered.map(e => {
+    const { date, time } = auditTimeParts(e.ts);
+    return `
+    <div class="audit-row">
+      <div class="audit-row-top">
+        <span class="audit-action">${escapeHtml(e.action)}</span>
+        <span class="audit-when">${date} · ${time}</span>
+      </div>
+      <div class="audit-row-mid">
+        <span class="audit-actor"><strong>${escapeHtml(e.actor)}</strong></span>
+        <span class="audit-arrow">→</span>
+        <span class="audit-target">${escapeHtml(e.target)}</span>
+      </div>
+      ${e.details ? `<div class="audit-details">${escapeHtml(e.details)}</div>` : ''}
+    </div>`;
+  }).join('');
 }
 
 function showAdminResult(msg, type) {
