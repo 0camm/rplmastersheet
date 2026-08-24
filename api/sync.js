@@ -57,6 +57,15 @@ export default async function handler(req, res) {
     }
     const existing = await redis.hgetall('players') || {};
 
+    // COACH CAP: separate Redis hash that holds preserved cap values for
+    // members who are (or have been) Team Coaches. A coach's cap is never
+    // reset when they leave the 'players' hash — it's carried over here
+    // once, on the transition, and left untouched after that. This hash is
+    // read by /api/staff (merged into each coach's entry) and totalled
+    // per-team on the frontend against the separate $30M Coach Salary Cap.
+    // Entirely independent of the player salary cap system.
+    const existingCoaches = await redis.hgetall('coaches') || {};
+
     // FIX: Build name→entry index for all non-snowflake keys using lowercase for reliable matching.
     // The old code stored { key, salary } but lookups used p.name?.toLowerCase() — consistent now.
     const legacyByName = {}; // lowercase username → { key, salary }
@@ -74,8 +83,9 @@ export default async function handler(req, res) {
       }
     }
 
-    let updated = 0, added = 0, removed = 0;
+    let updated = 0, added = 0, removed = 0, coachesPreserved = 0;
     const entries = {};
+    const coachEntries = {};
     const toDelete = [];
     const CHUNK_SIZE = 200; // flush to Redis every N processed members
 
@@ -87,11 +97,49 @@ export default async function handler(req, res) {
       const userId = member.user.id;
 
       if (isCoach) {
-        if (existing[userId]) { toDelete.push(userId); removed++; }
         // FIX: use toLowerCase() consistently — the index is keyed by lowercase
         const usernameLower = member.user.username.toLowerCase();
+
+        // Team tag, resolved the same way as for players, so coach cap can
+        // be grouped/totaled per team just like player salary is.
+        let coachTeam = null;
+        for (const roleId of (member.roles || [])) {
+          const match = (roleMap[roleId] || '').match(/^\[([A-Z]+)\]/);
+          if (match && ROLE_TO_TEAM[match[1]]) { coachTeam = ROLE_TO_TEAM[match[1]]; break; }
+        }
+
+        const existingCoachRaw = existingCoaches[userId];
+        const existingCoach = existingCoachRaw
+          ? (typeof existingCoachRaw === 'string' ? JSON.parse(existingCoachRaw) : existingCoachRaw)
+          : null;
+
+        if (existingCoach) {
+          // Already a tracked coach — their cap was preserved once already;
+          // never touch it again. Only refresh name/team if they've changed.
+          if (existingCoach.team !== coachTeam || existingCoach.name !== member.user.username) {
+            coachEntries[userId] = { ...existingCoach, name: member.user.username, team: coachTeam };
+          }
+        } else {
+          // First time we see this member as a coach: carry over their
+          // existing player cap unchanged instead of resetting/dropping it.
+          // Falls back to the standard default only if they never had a
+          // player cap record at all (e.g. joined straight into coaching).
+          const prevByIdRaw = existing[userId];
+          const prevById = prevByIdRaw ? (typeof prevByIdRaw === 'string' ? JSON.parse(prevByIdRaw) : prevByIdRaw) : null;
+          const prevByName = legacyByName[usernameLower];
+          const preservedCap = prevById?.salary ?? prevByName?.salary ?? 2000000;
+          coachEntries[userId] = { id: userId, name: member.user.username, team: coachTeam, cap: preservedCap };
+          coachesPreserved++;
+        }
+
+        if (existing[userId]) { toDelete.push(userId); removed++; }
         const leg = legacyByName[usernameLower];
         if (leg && !toDelete.includes(leg.key)) { toDelete.push(leg.key); }
+
+        if (Object.keys(coachEntries).length >= CHUNK_SIZE) {
+          await redis.hset('coaches', coachEntries);
+          for (const k of Object.keys(coachEntries)) delete coachEntries[k];
+        }
         continue;
       }
 
@@ -166,6 +214,9 @@ export default async function handler(req, res) {
     if (Object.keys(entries).length > 0) {
       await redis.hset('players', entries);
     }
+    if (Object.keys(coachEntries).length > 0) {
+      await redis.hset('coaches', coachEntries);
+    }
     // FIX: hdel with a huge spread of args (1000+) can hit request-size
     // limits — delete in chunks instead of one call.
     while (toDelete.length > 0) {
@@ -174,7 +225,7 @@ export default async function handler(req, res) {
 
     return res.json({
       ok: true,
-      message: `Sync complete — ${added} added, ${updated} updated, ${removed} staff removed, ${left} left-server entries removed, ${totalWritten} total`
+      message: `Sync complete — ${added} added, ${updated} updated, ${removed} staff removed (${coachesPreserved} new coach cap${coachesPreserved === 1 ? '' : 's'} preserved), ${left} left-server entries removed, ${totalWritten} total`
     });
   } catch (err) {
     console.error('Sync error:', err);

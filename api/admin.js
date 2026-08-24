@@ -287,6 +287,7 @@ export default async function handler(req, res) {
     }
     const coachIds = new Set();
     const coachNames = new Set();
+    const coachTeamById = {};
     for (const m of members) {
       if (m.user?.bot) continue;
       const roleNames = (m.roles || []).map(id => roleMap[id]).filter(Boolean);
@@ -294,14 +295,47 @@ export default async function handler(req, res) {
       if (roleNames.includes('Team Coaches')) {
         coachIds.add(m.user.id);
         coachNames.add(m.user.username.toLowerCase());
+        let team = null;
+        for (const rn of roleNames) {
+          const tagMatch = rn.match(/^\[([A-Z]+)\]/);
+          if (tagMatch && ROLE_TO_TEAM[tagMatch[1]]) { team = ROLE_TO_TEAM[tagMatch[1]]; break; }
+        }
+        coachTeamById[m.user.id] = team;
       }
     }
-    // Delete any KV entry whose key OR name matches a coach
+
+    // Any KV entry whose key OR name matches a coach gets removed from the
+    // player salary cap system — but their cap is NOT discarded. It's
+    // carried over into the separate 'coaches' hash (unless already tracked
+    // there, in which case that preserved value is left untouched) so it
+    // keeps contributing to the team's $30M Coach Salary Cap instead of
+    // resetting to zero. This never touches the player cap system otherwise.
     const toDelete = players
       .filter(([id, p]) => coachIds.has(id) || coachNames.has(p.name?.toLowerCase()))
-      .map(([id]) => id);
-    if (toDelete.length > 0) await redis.hdel('players', ...toDelete);
-    const purgeMsg = `Purged ${toDelete.length} coach entr${toDelete.length===1?'y':'ies'} from players`;
+      .map(([id, p]) => [id, p]);
+
+    const existingCoachesRaw = await redis.hgetall('coaches') || {};
+    const existingCoaches = {};
+    for (const [k, v] of Object.entries(existingCoachesRaw)) {
+      existingCoaches[k] = typeof v === 'string' ? JSON.parse(v) : v;
+    }
+
+    const coachEntries = {};
+    let preserved = 0;
+    for (const [id, p] of toDelete) {
+      if (existingCoaches[id]) continue; // already tracked — cap already preserved, don't touch it
+      coachEntries[id] = {
+        id,
+        name: p.name,
+        team: coachTeamById[id] ?? p.team ?? null,
+        cap: typeof p.salary === 'number' ? p.salary : 2000000,
+      };
+      preserved++;
+    }
+    if (Object.keys(coachEntries).length > 0) await redis.hset('coaches', coachEntries);
+    if (toDelete.length > 0) await redis.hdel('players', ...toDelete.map(([id]) => id));
+
+    const purgeMsg = `Purged ${toDelete.length} coach entr${toDelete.length===1?'y':'ies'} from players (${preserved} coach cap${preserved===1?'':'s'} preserved into Coach Salary Cap)`;
     await logAudit({
       actor, action: 'Purge Staff', target: `${toDelete.length} entr${toDelete.length===1?'y':'ies'}`,
       details: toDelete.length ? purgeMsg : 'No coach entries found to remove'

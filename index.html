@@ -1406,6 +1406,10 @@ select.fc{
 ══════════════════════════════════════════ */
 const CAP = 60000000;
 const MIN_ROSTER = 10;
+// Coach Salary Cap — completely separate from the $60M player CAP above.
+// A player's cap is preserved (not reset) when they become a coach, and
+// instead counts toward this $30M-per-team ceiling.
+const COACH_CAP = 30000000;
 
 const teamList = [
   "Atlanta Hawks","Boston Celtics","Brooklyn Nets","Charlotte Hornets","Chicago Bulls",
@@ -1593,6 +1597,14 @@ function groupByTeam(players) {
   teamList.forEach(t => map[t] = []);
   players.forEach(p => { if (map[p.team]) map[p.team].push(p); });
   return map;
+}
+
+// Sums each team's coaches' preserved caps toward the separate $30M Coach
+// Salary Cap. Entirely independent from buildTeamData()/CAP above — this
+// never touches player salary figures.
+function coachCapTotal(team) {
+  const coaches = (staffByTeam[team] || {}).coaches || [];
+  return coaches.reduce((s, c) => s + (typeof c.cap === 'number' ? c.cap : 0), 0);
 }
 
 function buildTeamData() {
@@ -2093,11 +2105,28 @@ function openTeamModal(team) {
       <div class="staff-pip coach"></div>
       <span class="staff-row-name-m">${p.nick || p.name}</span>
       <span class="staff-role-chip coach">Coach</span>
+      <span class="mcap-val" style="margin-left:8px;">${typeof p.cap === 'number' ? fmt(p.cap) : '—'}</span>
     </div>`)
     ] : []),
   ].join('');
 
   const hasStaff = staff.owners.length || staff.coaches.length;
+
+  // Coach Salary Cap — a coach's cap is preserved from their player cap
+  // and counts toward this separate $30M ceiling. Independent of the
+  // player salary cap section above.
+  const coachTotal = coachCapTotal(team);
+  const coachPct = (coachTotal / COACH_CAP) * 100;
+  const coachSt = capStatus(coachPct);
+  const coachPctCapped = Math.min(coachPct, 100);
+  const coachCapHtml = staff.coaches.length ? `
+    <div class="mcap-section" style="margin-top:14px;">
+      <div class="mcap-row">
+        <span class="mcap-label">Coach Salary Cap: ${fmt(COACH_CAP)}</span>
+        <span class="mcap-val">${fmt(coachTotal)} (${coachPct.toFixed(1)}%)</span>
+      </div>
+      <div class="mcap-track"><div class="mcap-fill ${coachSt}" style="width:${coachPctCapped.toFixed(1)}%"></div></div>
+    </div>` : '';
 
   document.getElementById('m-body').innerHTML = `
     <div class="mcap-section">
@@ -2114,7 +2143,7 @@ function openTeamModal(team) {
       </div>
       <div class="mcap-track"><div class="mcap-fill ${tier.cls}" style="width:${pctCapped.toFixed(1)}%"></div></div>
     </div>
-    ${hasStaff ? `<div>${staffHtml}</div>` : ''}
+    ${hasStaff ? `<div>${staffHtml}${coachCapHtml}</div>` : ''}
     <div>
       <div class="staff-section-title">Roster (${players.length} players)</div>
       <div class="bstbl-wrap">

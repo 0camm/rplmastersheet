@@ -1,5 +1,11 @@
 // api/staff.js — returns Franchise Owners and Team Coaches from Discord
+import { Redis } from '@upstash/redis';
 import { ROLE_TO_TEAM } from './_lib/discord-teams.js';
+
+const redis = new Redis({
+  url: process.env.KV_REST_API_URL,
+  token: process.env.KV_REST_API_TOKEN,
+});
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -29,6 +35,17 @@ export default async function handler(req, res) {
       after = batch[batch.length - 1].user.id;
     }
 
+    // COACH CAP: each coach's preserved cap value lives in the separate
+    // 'coaches' Redis hash (see sync.js/admin.js) so it survives the
+    // player→coach transition unchanged. Merge it in here by Discord ID —
+    // entirely independent of the player salary cap system.
+    const coachCapRaw = await redis.hgetall('coaches') || {};
+    const coachCapById = {};
+    for (const [k, v] of Object.entries(coachCapRaw)) {
+      const val = typeof v === 'string' ? JSON.parse(v) : v;
+      if (val && typeof val.cap === 'number') coachCapById[k] = val.cap;
+    }
+
     const owners  = [];
     const coaches = [];
 
@@ -55,7 +72,12 @@ export default async function handler(req, res) {
       };
 
       if (isOwner) owners.push(entry);
-      if (isCoach) coaches.push(entry);
+      if (isCoach) {
+        // cap is null if this coach hasn't synced into the 'coaches' hash
+        // yet (e.g. Discord roles changed but /api/sync hasn't run since).
+        const cap = coachCapById[member.user.id];
+        coaches.push({ ...entry, cap: typeof cap === 'number' ? cap : null });
+      }
     }
 
     owners.sort( (a,b) => (a.team||'zzz').localeCompare(b.team||'zzz') || a.name.localeCompare(b.name));
