@@ -64,7 +64,10 @@ export default async function handler(req, res) {
       }
 
       // Only expose display name and team — no Discord IDs or avatar URLs
-      // Always use the Discord username (not the server nickname)
+      // for OWNERS (public display). Coaches additionally carry their
+      // Discord ID so the admin panel can reliably target the right
+      // 'coaches' hash entry when an admin edits their cap (name alone can
+      // collide/change; the ID never does).
       const entry = {
         name: member.user.username,
         nick: member.user.username,
@@ -76,7 +79,7 @@ export default async function handler(req, res) {
         // cap is null if this coach hasn't synced into the 'coaches' hash
         // yet (e.g. Discord roles changed but /api/sync hasn't run since).
         const cap = coachCapById[member.user.id];
-        coaches.push({ ...entry, cap: typeof cap === 'number' ? cap : null });
+        coaches.push({ ...entry, id: member.user.id, cap: typeof cap === 'number' ? cap : null });
       }
     }
 

@@ -649,8 +649,13 @@ select.fc{
   max-height:92dvh;
   transform:translateY(100%);
   transition:transform .3s cubic-bezier(.32,1,.56,1);
+  /* FIX: without this, the panel — while merely translated/scaled off-view
+     or at opacity:0 (desktop) — was still hit-testable, so its buttons
+     (including admin actions) could be clicked/tabbed to even while the
+     panel was visually "closed" and the admin session locked. */
+  pointer-events:none;
 }
-.admin-panel.open{transform:translateY(0);}
+.admin-panel.open{transform:translateY(0);pointer-events:all;}
 @media(min-width:680px){
   .admin-panel{
     top:50%;left:50%;right:auto;bottom:auto;
@@ -1454,6 +1459,7 @@ const logos = {
 };
 
 let allPlayers = [];
+let allCoaches = [];
 let staffByTeam = {};
 let currentView = 'teams';
 let capPg = 1;
@@ -1564,6 +1570,7 @@ async function loadPlayers() {
     ]);
     allPlayers = await playersRes.json();
     const staffData = await staffRes.json();
+    allCoaches = staffData.coaches || [];
     staffByTeam = {};
     (staffData.owners || []).forEach(p => {
       if (!p.team) return;
@@ -1578,6 +1585,9 @@ async function loadPlayers() {
     setLive(true);
     setSync(new Date().toISOString());
     document.getElementById('alert').classList.remove('on');
+    // Keep an open team modal's cap bars/coach caps live instead of going
+    // stale until the user closes and reopens it.
+    if (currentModalTeam) openTeamModal(currentModalTeam);
   } catch (e) {
     setLive(false);
     const a = document.getElementById('alert');
@@ -2062,7 +2072,9 @@ function renderPager(id, total, pp, pages) {
 /* ══════════════════════════════════════════
    TEAM MODAL
 ══════════════════════════════════════════ */
+let currentModalTeam = null;
 function openTeamModal(team) {
+  currentModalTeam = team;
   const grouped = groupByTeam(allPlayers);
   const players = grouped[team] || [];
   const staff = staffByTeam[team] || { owners: [], coaches: [] };
@@ -2173,6 +2185,7 @@ function openTeamModal(team) {
 function closeModal() {
   document.getElementById('modal-bg').classList.remove('open');
   document.body.style.overflow = '';
+  currentModalTeam = null;
 }
 
 document.getElementById('m-close').addEventListener('click', closeModal);
@@ -2316,8 +2329,17 @@ function switchAdminTab(tab, btn) {
 /* ── ADMIN ROSTER ── */
 function renderAdminRoster() {
   const q = (document.getElementById('admin-search')?.value || '').toLowerCase();
-  const sorted = [...allPlayers].sort((a, b) => a.team.localeCompare(b.team) || a.name.localeCompare(b.name));
-  const filtered = q ? sorted.filter(p => p.name.toLowerCase().includes(q) || p.team.toLowerCase().includes(q)) : sorted;
+  // Coaches are pulled from a separate store (their cap moved out of
+  // 'players' when they became a coach — see api/sync.js) but admins still
+  // need to be able to adjust it here, so merge them into the same rows,
+  // flagged so we know not to offer team-move/remove for them (those act
+  // on the player roster system, which coaches are no longer part of).
+  const combined = [
+    ...allPlayers.map(p => ({ ...p, isCoach: false })),
+    ...allCoaches.map(c => ({ id: c.id, name: c.name, team: c.team || 'Free Agent', salary: typeof c.cap === 'number' ? c.cap : 0, isCoach: true })),
+  ];
+  const sorted = [...combined].sort((a, b) => (a.team || '').localeCompare(b.team || '') || a.name.localeCompare(b.name));
+  const filtered = q ? sorted.filter(p => p.name.toLowerCase().includes(q) || (p.team || '').toLowerCase().includes(q)) : sorted;
   const container = document.getElementById('admin-roster-table');
 
   if (!filtered.length) {
@@ -2330,18 +2352,19 @@ function renderAdminRoster() {
   container.innerHTML = filtered.map(p => `
     <div class="aroster-row" id="arow-${encodeURIComponent(p.id || p.name)}">
       <div class="aroster-info">
-        <div class="aroster-name">${p.name}</div>
+        <div class="aroster-name">${p.name}${p.isCoach ? ' <span class="staff-role-chip coach" style="margin-left:4px;">Coach</span>' : ''}</div>
         <div class="aroster-team" id="ateam-${encodeURIComponent(p.id || p.name)}">${p.team}</div>
       </div>
       <div class="aroster-salary-wrap">
         <div class="aroster-salary-stepper">
-          <button class="salary-step-btn" onclick="stepSalary('${encodeURIComponent(p.id || p.name)}',-1)" title="Decrease salary">−</button>
+          <button class="salary-step-btn" onclick="stepSalary('${encodeURIComponent(p.id || p.name)}',-1)" title="Decrease ${p.isCoach ? 'cap' : 'salary'}">−</button>
           <span class="aroster-salary-display" id="saldisplay-${encodeURIComponent(p.id || p.name)}" data-salary="${p.salary}" data-id="${encodeURIComponent(p.id || '')}" data-player="${encodeURIComponent(p.name)}">${fmtSalaryShort(p.salary)}</span>
-          <button class="salary-step-btn" onclick="stepSalary('${encodeURIComponent(p.id || p.name)}',1)" title="Increase salary">+</button>
+          <button class="salary-step-btn" onclick="stepSalary('${encodeURIComponent(p.id || p.name)}',1)" title="Increase ${p.isCoach ? 'cap' : 'salary'}">+</button>
         </div>
         <button class="aroster-save" onclick="saveSalaryById('${encodeURIComponent(p.id || p.name)}')">Save</button>
       </div>
       <div class="aroster-actions">
+        ${p.isCoach ? '' : `
         <button class="aroster-btn" title="Move to team" onclick="toggleMoveRow('${encodeURIComponent(p.id || p.name)}','${encodeURIComponent(p.id || '')}','${encodeURIComponent(p.name)}','${encodeURIComponent(p.team)}')">
           <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
             <path d="M2 7h10M8 3l4 4-4 4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
@@ -2351,7 +2374,7 @@ function renderAdminRoster() {
           <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
             <path d="M1 1l12 12M13 1L1 13" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
           </svg>
-        </button>
+        </button>`}
       </div>
     </div>
     <div id="movepicker-${encodeURIComponent(p.id || p.name)}" class="hidden" style="padding:8px 16px 10px;border-bottom:1px solid var(--b2);background:var(--s2);">

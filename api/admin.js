@@ -344,33 +344,62 @@ export default async function handler(req, res) {
   }
 
   if (action === 'setSalary') {
-    if (!entry) return res.status(404).json({ error: `Player "${name}" not found` });
-    const [id, player] = entry;
     const newSalary = Number(salary);
-    await redis.hset('players', { [id]: { ...player, salary: newSalary } });
-
-    // REVERSE SYNC: only meaningful for real Discord accounts — manually
-    // added / legacy entries are keyed by a "manual_..." string, not a
-    // Discord snowflake, so there's no Discord member to update.
-    let discordNote = '';
-    if (/^\d{15,20}$/.test(id)) {
-      try {
-        const result = await syncDiscordSalaryRole(id, newSalary);
-        if (result.skipped) {
-          discordNote = ` (Discord not updated: ${result.reason})`;
-        } else if (!result.targetRoleFound) {
-          discordNote = ` (Discord role "${salaryToRoleName(newSalary)}" not found — create a role with that exact name)`;
-        }
-      } catch (err) {
-        discordNote = ` (Discord role update failed: ${err.message})`;
-      }
+    if (!Number.isFinite(newSalary) || newSalary < 0) {
+      return res.status(400).json({ error: 'Invalid salary' });
     }
 
+    if (entry) {
+      const [id, player] = entry;
+      await redis.hset('players', { [id]: { ...player, salary: newSalary } });
+
+      // REVERSE SYNC: only meaningful for real Discord accounts — manually
+      // added / legacy entries are keyed by a "manual_..." string, not a
+      // Discord snowflake, so there's no Discord member to update.
+      let discordNote = '';
+      if (/^\d{15,20}$/.test(id)) {
+        try {
+          const result = await syncDiscordSalaryRole(id, newSalary);
+          if (result.skipped) {
+            discordNote = ` (Discord not updated: ${result.reason})`;
+          } else if (!result.targetRoleFound) {
+            discordNote = ` (Discord role "${salaryToRoleName(newSalary)}" not found — create a role with that exact name)`;
+          }
+        } catch (err) {
+          discordNote = ` (Discord role update failed: ${err.message})`;
+        }
+      }
+
+      await logAudit({
+        actor, action: 'Set Salary', target: player.name,
+        details: `$${(player.salary ?? 0).toLocaleString()} → $${newSalary.toLocaleString()}${discordNote}`
+      });
+      return res.json({ ok: true, message: `${player.name} salary set to $${newSalary.toLocaleString()}${discordNote}` });
+    }
+
+    // COACH CAP: not found in 'players' — a coach's cap lives separately in
+    // the 'coaches' hash (moved there, preserved, when they became a coach;
+    // see sync.js/purgeStaff above). Coaches must still be editable by
+    // admins, so fall back to looking them up there. This branch never
+    // touches the 'players' hash or the player salary cap system — it only
+    // ever writes to 'coaches' and counts toward the separate $30M Coach
+    // Salary Cap.
+    const coachesRaw = await redis.hgetall('coaches') || {};
+    const coachesList = Object.entries(coachesRaw).map(([k, v]) => [k, typeof v === 'string' ? JSON.parse(v) : v]);
+    const coachEntry = (targetId && coachesList.find(([key]) => key === targetId))
+      || coachesList.find(([, c]) => c.name?.toLowerCase() === name?.toLowerCase());
+
+    if (!coachEntry) return res.status(404).json({ error: `Player "${name}" not found` });
+
+    const [coachId, coach] = coachEntry;
+    const oldCap = typeof coach.cap === 'number' ? coach.cap : 0;
+    await redis.hset('coaches', { [coachId]: { ...coach, cap: newSalary } });
+
     await logAudit({
-      actor, action: 'Set Salary', target: player.name,
-      details: `$${(player.salary ?? 0).toLocaleString()} → $${newSalary.toLocaleString()}${discordNote}`
+      actor, action: 'Set Coach Cap', target: coach.name,
+      details: `$${oldCap.toLocaleString()} → $${newSalary.toLocaleString()} (Coach Salary Cap)`
     });
-    return res.json({ ok: true, message: `${player.name} salary set to $${newSalary.toLocaleString()}${discordNote}` });
+    return res.json({ ok: true, message: `${coach.name} coach cap set to $${newSalary.toLocaleString()}` });
   }
 
   // BULK REVERSE SYNC: push every current player's salary bracket onto
