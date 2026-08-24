@@ -1300,6 +1300,11 @@ select.fc{
           <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><circle cx="6" cy="6" r="4.5" stroke="currentColor" stroke-width="1.3"/><path d="M9.5 9.5L12.5 12.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
           <input type="text" id="admin-search" placeholder="Filter by name or team…" oninput="renderAdminRoster()">
         </div>
+        <select id="admin-role-filter" class="aroster-move-select" style="flex:none;width:auto;" onchange="renderAdminRoster()">
+          <option value="all">All</option>
+          <option value="players">Players only</option>
+          <option value="coaches">Coaches only</option>
+        </select>
       </div>
       <div id="admin-roster-table"></div>
     </div>
@@ -2329,15 +2334,19 @@ function switchAdminTab(tab, btn) {
 /* ── ADMIN ROSTER ── */
 function renderAdminRoster() {
   const q = (document.getElementById('admin-search')?.value || '').toLowerCase();
+  const roleFilter = document.getElementById('admin-role-filter')?.value || 'all';
   // Coaches are pulled from a separate store (their cap moved out of
   // 'players' when they became a coach — see api/sync.js) but admins still
   // need to be able to adjust it here, so merge them into the same rows,
   // flagged so we know not to offer team-move/remove for them (those act
   // on the player roster system, which coaches are no longer part of).
-  const combined = [
+  const combinedAll = [
     ...allPlayers.map(p => ({ ...p, isCoach: false })),
     ...allCoaches.map(c => ({ id: c.id, name: c.name, team: c.team || 'Free Agent', salary: typeof c.cap === 'number' ? c.cap : 0, isCoach: true })),
   ];
+  const combined = roleFilter === 'players' ? combinedAll.filter(p => !p.isCoach)
+    : roleFilter === 'coaches' ? combinedAll.filter(p => p.isCoach)
+    : combinedAll;
   const sorted = [...combined].sort((a, b) => (a.team || '').localeCompare(b.team || '') || a.name.localeCompare(b.name));
   const filtered = q ? sorted.filter(p => p.name.toLowerCase().includes(q) || (p.team || '').toLowerCase().includes(q)) : sorted;
   const container = document.getElementById('admin-roster-table');
