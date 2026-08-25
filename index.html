@@ -31,7 +31,7 @@
   --t6:#ef4444;--t6-dim:rgba(239,68,68,.12);
   --t7:#7f1d1d;--t7-dim:rgba(127,29,29,.22);
 }
-*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
 html{scroll-behavior:smooth}
 body{
   background:var(--bg);color:var(--tx);
@@ -193,6 +193,18 @@ select.fc{
   background-color:var(--s2);
 }
 
+/* GLOBAL GRID-OVERFLOW SAFETY NET
+   Bare `1fr` grid tracks default their minimum size to the content's
+   min-content width, not 0 — so a long team/player name silently blew the
+   whole row wider than its container (clipped by .ht-wrap's overflow:hidden,
+   which is what made the CAP%/BAR columns appear to "float" with nothing
+   readable next to them on narrow screens). Forcing min-width:0 on every
+   grid row + its children lets 1fr actually shrink and truncate via the
+   ellipsis rules already in place, on every breakpoint, not just the ones
+   we remembered to hand-tune. */
+.ht-hd,.hr,.std-hd,.srow,.ht-3col,.hr-3col,.ht-4col,.hr-4col{min-width:0;}
+.ht-hd>*,.hr>*,.std-hd>*,.srow>*{min-width:0;}
+
 /* ── TEAMS TABLE (match-history style) ── */
 .ht-wrap{
   width:100%;background:var(--s1);border:1px solid var(--b);
@@ -232,6 +244,7 @@ select.fc{
 }
 .hr:last-child{border-bottom:none}
 .hr:hover{background:rgba(255,255,255,.02)}
+.hr:active{background:rgba(255,255,255,.045)}
 
 /* left accent by cap status */
 .hr::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;}
@@ -289,8 +302,8 @@ select.fc{
 
 /* cap bar cell */
 .hbar-cell{display:flex;align-items:center;gap:6px;}
-.hbar-track{flex:1;height:3px;background:var(--b2);border-radius:2px;overflow:hidden;}
-.hbar-fill{height:100%;border-radius:2px;transition:width .4s ease;}
+.hbar-track{flex:1;height:3px;background:var(--b2);border-radius:2px;overflow:hidden;display:block;}
+.hbar-fill{display:block;height:100%;border-radius:2px;transition:width .45s cubic-bezier(.22,1,.36,1);}
 .hbar-fill.safe{background:var(--gr)}
 .hbar-fill.warn{background:var(--am)}
 .hbar-fill.over{background:var(--red)}
@@ -920,10 +933,28 @@ select.fc{
   .sec-hd-top{margin-bottom:8px}
 
   /* teams table compact */
-  .ht-hd{grid-template-columns:24px 28px 1fr 56px 76px;padding:7px 12px;}
-  .ht-hd span:nth-child(7){display:none}
-  .hr{grid-template-columns:24px 28px 1fr 56px 76px;padding:7px 12px;}
-  .hbar-cell{display:none}
+  /* teams table → compact card layout. Rebuilt with named grid-areas
+     instead of just nuking the Bar column: the cap bar is the whole point
+     of this view, so on mobile it now spans a full-width second line
+     (with its % readout right beside it) instead of disappearing. */
+  .ht-hd{display:none}
+  .hr{
+    grid-template-columns:30px 1fr auto;
+    grid-template-areas:
+      "logo name salary"
+      "pct  bar  bar";
+    row-gap:8px;column-gap:10px;
+    padding:12px 14px;
+  }
+  .hn{display:none}
+  .hlogo{grid-area:logo;}
+  .hname{grid-area:name;}
+  .hplayers{display:none}
+  .hsalary{grid-area:salary;text-align:right;font-size:12px;}
+  .hpct{grid-area:pct;text-align:left;font-size:11px;font-weight:600;}
+  .hbar-cell{grid-area:bar;}
+  .hbar-track{height:5px;}
+  .harrow{display:none}
 
   /* standings compact */
   .std-hd,.srow{grid-template-columns:22px 24px 1fr 40px 58px;}
