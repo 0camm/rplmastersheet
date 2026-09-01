@@ -10,7 +10,8 @@
 // change the strings below — nothing else needs to change.
 export const SALARY_BRACKETS = [
   { amount: 2000000,  role: '$2,000,000'  },
-  { amount: 5000000,  role: '$5,000,000'  },
+  { amount: 4000000,  role: '$4,000,000'  }, // role id 1544445347848523837
+  { amount: 6000000,  role: '$6,000,000'  }, // role id 1544445286116622457
   { amount: 8000000,  role: '$8,000,000'  },
   { amount: 10000000, role: '$10,000,000' },
   { amount: 12000000, role: '$12,000,000' },
