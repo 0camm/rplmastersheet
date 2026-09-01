@@ -18,6 +18,7 @@ export const SALARY_BRACKETS = [
   { amount: 18000000, role: '$18,000,000' },
   { amount: 20000000, role: '$20,000,000' },
   { amount: 22000000, role: '$22,000,000' },
+  { amount: 24000000, role: '$24,000,000' },
 ];
 
 // Same "nearest step" logic as index.html's nearestStepIndex(), so a salary
