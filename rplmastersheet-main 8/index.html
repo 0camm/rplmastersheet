@@ -1445,7 +1445,7 @@ select.fc{
 /* ══════════════════════════════════════════
    CONSTANTS & STATE
 ══════════════════════════════════════════ */
-const CAP = 60000000;
+const CAP = 64000000;
 const MIN_ROSTER = 10;
 // Coach Salary Cap — completely separate from the $60M player CAP above.
 // A player's cap is preserved (not reset) when they become a coach, and
@@ -1545,15 +1545,15 @@ function capVisualStatus(pct) {
 /* ── CAP HEALTH TIER SCALE ──
    Independent, finer-grained color scale layered on top of the existing
    over/warn/safe grouping. Buckets are in millions of committed salary
-   (cap = $60M), so a team's raw spend maps directly onto 0–60+. */
+   (cap = $64M), so a team's raw spend maps directly onto 0–64+. */
 const CAP_TIERS = [
-  { id: 1, cls: 'tier-1', max: 10, label: 'Very Healthy', desc: '$0M – $10M committed' },
-  { id: 2, cls: 'tier-2', max: 20, label: 'Healthy',       desc: '$11M – $20M committed' },
-  { id: 3, cls: 'tier-3', max: 30, label: 'Moderate',      desc: '$21M – $30M committed' },
-  { id: 4, cls: 'tier-4', max: 40, label: 'Getting High',  desc: '$31M – $40M committed' },
-  { id: 5, cls: 'tier-5', max: 50, label: 'High',          desc: '$41M – $50M committed' },
-  { id: 6, cls: 'tier-6', max: 60, label: 'Very High',     desc: '$51M – $60M committed' },
-  { id: 7, cls: 'tier-7', max: Infinity, label: 'Critical', desc: '$61M+ committed' },
+  { id: 1, cls: 'tier-1', max: 11, label: 'Very Healthy', desc: '$0M – $11M committed' },
+  { id: 2, cls: 'tier-2', max: 21, label: 'Healthy',       desc: '$12M – $21M committed' },
+  { id: 3, cls: 'tier-3', max: 32, label: 'Moderate',      desc: '$22M – $32M committed' },
+  { id: 4, cls: 'tier-4', max: 43, label: 'Getting High',  desc: '$33M – $43M committed' },
+  { id: 5, cls: 'tier-5', max: 53, label: 'High',          desc: '$44M – $53M committed' },
+  { id: 6, cls: 'tier-6', max: 64, label: 'Very High',     desc: '$54M – $64M committed' },
+  { id: 7, cls: 'tier-7', max: Infinity, label: 'Critical', desc: '$65M+ committed' },
 ];
 
 // totalDollars -> tier object. Buckets are evaluated against the salary
@@ -2464,7 +2464,7 @@ async function confirmMove(rowKey, encodedId, encodedName) {
   finally { btn.textContent = origText; btn.disabled = false; }
 }
 
-const SALARY_STEPS = [2000000, 5000000, 8000000, 10000000, 12000000, 15000000, 18000000, 20000000, 22000000, 24000000];
+const SALARY_STEPS = [2000000, 5000000, 8000000, 10000000, 12000000, 14000000, 16000000, 18000000, 20000000, 22000000, 24000000];
 
 function nearestStepIndex(salary) {
   let best = 0, bestDist = Infinity;
